@@ -51,6 +51,12 @@ export default function UserManagement() {
   const [selectedUser, setSelectedUser] = useState<UserData | null>(null);
   const [newRole, setNewRole] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
+  const [pendingTasksInfo, setPendingTasksInfo] = useState<{
+    pendingTasksCount: number;
+    totalTasksCount: number;
+    userId: string;
+    username: string;
+  } | null>(null);
 
   const {
     isOpen: isEditOpen,
@@ -61,6 +67,12 @@ export default function UserManagement() {
     isOpen: isDeleteOpen,
     onOpen: onDeleteOpen,
     onClose: onDeleteClose,
+  } = useDisclosure();
+
+  const {
+    isOpen: isPendingTasksOpen,
+    onOpen: onPendingTasksOpen,
+    onClose: onPendingTasksClose,
   } = useDisclosure();
 
   const { user, isLoggedIn } = useAuth();
@@ -172,24 +184,31 @@ export default function UserManagement() {
     }
   };
 
-  const handleDeleteUser = async () => {
+  const handleDeleteUser = async (action: string = "check") => {
     if (!selectedUser) return;
 
     try {
       setIsProcessing(true);
-      const response = await fetch(`/api/admin/users?id=${selectedUser.id}`, {
-        method: "DELETE",
-        headers: {
-          "x-user": JSON.stringify(user),
-        },
-      });
+      const response = await fetch(
+        `/api/admin/users?id=${selectedUser.id}&action=${action}`,
+        {
+          method: "DELETE",
+          headers: {
+            "x-user": JSON.stringify(user),
+          },
+        }
+      );
 
       const data = await response.json();
 
       if (data.success) {
         toast({
           title: "ユーザー削除成功",
-          description: `${selectedUser.username}を削除しました`,
+          description: `${selectedUser.username}を削除しました${
+            action === "shareAll"
+              ? "。未完了タスクは共有タスクに追加されました"
+              : ""
+          }`,
           status: "success",
           duration: 3000,
           isClosable: true,
@@ -198,6 +217,16 @@ export default function UserManagement() {
         // ユーザーリストを更新
         fetchUsers();
         onDeleteClose();
+        onPendingTasksClose();
+      } else if (data.needsAction) {
+        // 未完了タスクがある場合
+        setPendingTasksInfo({
+          pendingTasksCount: data.pendingTasksCount,
+          totalTasksCount: data.totalTasksCount,
+          userId: data.userId,
+          username: data.username,
+        });
+        onPendingTasksOpen();
       } else {
         toast({
           title: "ユーザー削除失敗",
@@ -342,7 +371,7 @@ export default function UserManagement() {
               </ModalContent>
             </Modal>
 
-            {/* 削除確認モーダル */}
+            {/* ユーザー削除確認モーダル */}
             <Modal isOpen={isDeleteOpen} onClose={onDeleteClose}>
               <ModalOverlay />
               <ModalContent>
@@ -350,28 +379,60 @@ export default function UserManagement() {
                 <ModalCloseButton />
                 <ModalBody>
                   {selectedUser && (
-                    <>
-                      <Text mb={4}>
-                        ユーザー <strong>{selectedUser.username}</strong>{" "}
-                        を削除してもよろしいですか？
-                      </Text>
-                      <Text color="red.500" fontWeight="bold">
-                        この操作は元に戻せません。
-                      </Text>
-                    </>
+                    <Text>本当に {selectedUser.username} を削除しますか？</Text>
                   )}
                 </ModalBody>
                 <ModalFooter>
+                  <Button mr={3} onClick={onDeleteClose}>
+                    キャンセル
+                  </Button>
                   <Button
                     colorScheme="red"
-                    mr={3}
-                    onClick={handleDeleteUser}
+                    onClick={() => handleDeleteUser()}
                     isLoading={isProcessing}
                   >
                     削除する
                   </Button>
-                  <Button variant="ghost" onClick={onDeleteClose}>
+                </ModalFooter>
+              </ModalContent>
+            </Modal>
+
+            {/* 未完了タスク確認モーダル */}
+            <Modal isOpen={isPendingTasksOpen} onClose={onPendingTasksClose}>
+              <ModalOverlay />
+              <ModalContent>
+                <ModalHeader>未完了タスクの確認</ModalHeader>
+                <ModalCloseButton />
+                <ModalBody>
+                  {pendingTasksInfo && (
+                    <>
+                      <Text mb={4}>
+                        {pendingTasksInfo.username} には{" "}
+                        {pendingTasksInfo.pendingTasksCount}{" "}
+                        件の未完了タスクがあります。
+                      </Text>
+                      <Text mb={4}>どのように処理しますか？</Text>
+                    </>
+                  )}
+                </ModalBody>
+                <ModalFooter>
+                  <Button mr={3} onClick={onPendingTasksClose}>
                     キャンセル
+                  </Button>
+                  <Button
+                    colorScheme="blue"
+                    mr={3}
+                    onClick={() => handleDeleteUser("shareAll")}
+                    isLoading={isProcessing}
+                  >
+                    共有タスクに追加して削除
+                  </Button>
+                  <Button
+                    colorScheme="red"
+                    onClick={() => handleDeleteUser("deleteAll")}
+                    isLoading={isProcessing}
+                  >
+                    タスクごと削除
                   </Button>
                 </ModalFooter>
               </ModalContent>
