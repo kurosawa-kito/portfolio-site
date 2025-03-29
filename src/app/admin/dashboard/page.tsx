@@ -19,20 +19,24 @@ import TaskList from "@/components/TaskList";
 import { useRouter } from "next/navigation";
 
 type User = {
-  id: number;
+  id: string;
   username: string;
   role: string;
 };
 
 type Task = {
-  id: number;
+  id: string;
   title: string;
   description: string;
-  status: "pending" | "completed";
-  priority: "low" | "medium" | "high";
+  status: string;
+  priority: string;
   due_date: string;
-  assigned_to: number;
-  created_by: number;
+  assigned_to: string;
+  created_by: string;
+  assigned_to_username?: string;
+  created_by_username?: string;
+  created_at: string;
+  updated_at: string;
 };
 
 export default function AdminDashboard() {
@@ -63,7 +67,11 @@ export default function AdminDashboard() {
 
     const fetchUsers = async () => {
       try {
-        const res = await fetch("/api/admin/users");
+        const res = await fetch("/api/admin/users", {
+          headers: {
+            "x-user": JSON.stringify(user),
+          },
+        });
         const data = await res.json();
         if (data.success) setUsers(data.users);
       } catch (error) {
@@ -78,7 +86,7 @@ export default function AdminDashboard() {
       }
     };
     fetchUsers();
-  }, [toast, isLoggedIn]);
+  }, [toast, isLoggedIn, user]);
 
   useEffect(() => {
     // ログインしていない場合は処理しない
@@ -88,7 +96,11 @@ export default function AdminDashboard() {
       if (!selectedUser) return;
       setIsLoading(true);
       try {
-        const res = await fetch(`/api/admin/tasks?userId=${selectedUser}`);
+        const res = await fetch(`/api/admin/tasks?userId=${selectedUser}`, {
+          headers: {
+            "x-user": JSON.stringify(user),
+          },
+        });
         const data = await res.json();
         if (data.success) setTasks(data.tasks);
       } catch (error) {
@@ -105,7 +117,7 @@ export default function AdminDashboard() {
       }
     };
     fetchTasks();
-  }, [selectedUser, toast, isLoggedIn]);
+  }, [selectedUser, toast, isLoggedIn, user]);
 
   // ログインしていない場合は何も表示しない
   if (!isLoggedIn) {

@@ -390,14 +390,14 @@ export default function UserManagement() {
                     onClick={() => handleDeleteUser("shareAll")}
                     isLoading={isProcessing}
                   >
-                    共有タスクに追加して削除
+                    共有タスクへ追加
                   </Button>
                   <Button
                     colorScheme="red"
                     onClick={() => handleDeleteUser("deleteAll")}
                     isLoading={isProcessing}
                   >
-                    タスクごと削除
+                    すべて削除
                   </Button>
                 </ModalFooter>
               </ModalContent>
