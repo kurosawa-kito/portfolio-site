@@ -57,6 +57,17 @@ export default function TaskHeader() {
                   管理者ダッシュボード
                 </Text>
               </Link>
+              <Link href="/admin/users" passHref>
+                <Text
+                  fontSize="md"
+                  fontWeight="medium"
+                  color="green.600"
+                  cursor="pointer"
+                  _hover={{ color: "green.700" }}
+                >
+                  ユーザー管理
+                </Text>
+              </Link>
             </>
           )}
           <Link href="/member/tasks" passHref>
