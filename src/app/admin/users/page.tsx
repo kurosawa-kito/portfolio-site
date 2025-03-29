@@ -57,6 +57,7 @@ export default function UserManagement() {
     userId: string;
     username: string;
   } | null>(null);
+  const [deleteAction, setDeleteAction] = useState<string>("check");
 
   const {
     isOpen: isEditOpen,
@@ -151,6 +152,7 @@ export default function UserManagement() {
 
       if (data.success) {
         // タスクがない場合は直接削除確認モーダルを表示
+        setDeleteAction("deleteAll");
         onDeleteConfirmOpen();
       } else if (data.needsAction) {
         // 未完了タスクがある場合は未完了タスク確認モーダルを表示
@@ -187,10 +189,8 @@ export default function UserManagement() {
   const handleDeleteUser = async (action: string = "check") => {
     if (!selectedUser) return;
 
-    // 削除確認モーダルを閉じる（ただしcheckの場合は閉じない）
-    if (action !== "check") {
-      onDeleteConfirmClose();
-    }
+    // 削除確認モーダルを閉じる
+    onDeleteConfirmClose();
 
     try {
       setIsProcessing(true);
@@ -222,7 +222,6 @@ export default function UserManagement() {
         // ユーザーリストを更新
         fetchUsers();
         onPendingTasksClose();
-        onDeleteConfirmClose();
       } else if (data.needsAction) {
         // 未完了タスクがある場合
         setPendingTasksInfo({
@@ -455,14 +454,22 @@ export default function UserManagement() {
                   <Button
                     colorScheme="blue"
                     mr={3}
-                    onClick={() => handleDeleteUser("shareAll")}
+                    onClick={() => {
+                      onPendingTasksClose();
+                      setDeleteAction("shareAll");
+                      onDeleteConfirmOpen();
+                    }}
                     isLoading={isProcessing}
                   >
                     共有タスクへ追加
                   </Button>
                   <Button
                     colorScheme="red"
-                    onClick={() => onDeleteConfirmOpen()}
+                    onClick={() => {
+                      onPendingTasksClose();
+                      setDeleteAction("deleteAll");
+                      onDeleteConfirmOpen();
+                    }}
                     isLoading={isProcessing}
                   >
                     すべて削除
@@ -489,7 +496,7 @@ export default function UserManagement() {
                   <Button
                     colorScheme="red"
                     mr={3}
-                    onClick={() => handleDeleteUser("deleteAll")}
+                    onClick={() => handleDeleteUser(deleteAction)}
                     isLoading={isProcessing}
                   >
                     削除する
