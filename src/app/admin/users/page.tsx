@@ -332,36 +332,6 @@ export default function UserManagement() {
               </Box>
             )}
 
-            {/* 削除確認モーダル */}
-            <Modal isOpen={isDeleteConfirmOpen} onClose={onDeleteConfirmClose}>
-              <ModalOverlay />
-              <ModalContent>
-                <ModalHeader>ユーザー削除の確認</ModalHeader>
-                <ModalCloseButton />
-                <ModalBody>
-                  {selectedUser && (
-                    <Text mb={4}>
-                      <strong>{selectedUser.username}</strong> を削除しますか？
-                      この操作は取り消せません。
-                    </Text>
-                  )}
-                </ModalBody>
-                <ModalFooter>
-                  <Button
-                    colorScheme="red"
-                    mr={3}
-                    onClick={() => handleDeleteUser("check")}
-                    isLoading={isProcessing}
-                  >
-                    削除する
-                  </Button>
-                  <Button variant="ghost" onClick={onDeleteConfirmClose}>
-                    キャンセル
-                  </Button>
-                </ModalFooter>
-              </ModalContent>
-            </Modal>
-
             {/* 権限編集モーダル */}
             <Modal isOpen={isEditOpen} onClose={onEditClose}>
               <ModalOverlay />
@@ -396,6 +366,36 @@ export default function UserManagement() {
                     変更する
                   </Button>
                   <Button variant="ghost" onClick={onEditClose}>
+                    キャンセル
+                  </Button>
+                </ModalFooter>
+              </ModalContent>
+            </Modal>
+
+            {/* 削除確認モーダル */}
+            <Modal isOpen={isDeleteConfirmOpen} onClose={onDeleteConfirmClose}>
+              <ModalOverlay />
+              <ModalContent>
+                <ModalHeader>ユーザー削除の確認</ModalHeader>
+                <ModalCloseButton />
+                <ModalBody>
+                  {selectedUser && (
+                    <Text mb={4}>
+                      <strong>{selectedUser.username}</strong> を削除しますか？
+                      この操作は取り消せません。
+                    </Text>
+                  )}
+                </ModalBody>
+                <ModalFooter>
+                  <Button
+                    colorScheme="red"
+                    mr={3}
+                    onClick={() => handleDeleteUser("check")}
+                    isLoading={isProcessing}
+                  >
+                    削除する
+                  </Button>
+                  <Button variant="ghost" onClick={onDeleteConfirmClose}>
                     キャンセル
                   </Button>
                 </ModalFooter>
