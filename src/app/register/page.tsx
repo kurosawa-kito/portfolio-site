@@ -8,6 +8,7 @@ import {
   FormLabel,
   Input,
   VStack,
+  Heading,
   Text,
   useToast,
   Container,
@@ -18,7 +19,6 @@ import {
 } from "@chakra-ui/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import PageTitle from "@/components/PageTitle";
 
 export default function Register() {
   const [username, setUsername] = useState("");
@@ -104,10 +104,14 @@ export default function Register() {
       <Card bg={bgColor} borderWidth="1px" borderColor={borderColor}>
         <CardBody>
           <VStack spacing={8} align="stretch">
-            <PageTitle
-              title="新規ユーザー登録"
-              gradient="linear(to-r, green.500, teal.500)"
-            />
+            <Heading
+              size="lg"
+              bgGradient="linear(to-r, green.500, teal.500)"
+              bgClip="text"
+              textAlign="center"
+            >
+              新規ユーザー登録
+            </Heading>
 
             <form onSubmit={handleRegister}>
               <VStack spacing={4}>

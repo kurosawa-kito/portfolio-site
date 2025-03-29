@@ -8,6 +8,7 @@ import {
   FormLabel,
   Input,
   VStack,
+  Heading,
   Text,
   useToast,
   Container,
@@ -19,7 +20,6 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import PageTitle from "@/components/PageTitle";
 
 export default function Login() {
   const [username, setUsername] = useState("");
@@ -64,7 +64,14 @@ export default function Login() {
       <Card bg={bgColor} borderWidth="1px" borderColor={borderColor}>
         <CardBody>
           <VStack spacing={8} align="stretch">
-            <PageTitle title="ログイン" />
+            <Heading
+              size="lg"
+              bgGradient="linear(to-r, blue.500, purple.500)"
+              bgClip="text"
+              textAlign="center"
+            >
+              ログイン
+            </Heading>
 
             <form onSubmit={handleLogin}>
               <VStack spacing={4}>

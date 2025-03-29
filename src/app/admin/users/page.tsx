@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import {
   Box,
   Container,
-  Heading,
   Table,
   Thead,
   Tbody,
@@ -71,19 +70,6 @@ export default function UserManagement() {
   const borderColor = useColorModeValue("gray.200", "gray.700");
 
   useEffect(() => {
-    // 管理者以外はリダイレクト
-    if (isLoggedIn && user && user.role !== "admin") {
-      toast({
-        title: "アクセス権限がありません",
-        description: "管理者専用ページです",
-        status: "error",
-        duration: 3000,
-        isClosable: true,
-      });
-      router.push("/member/tasks");
-      return;
-    }
-
     if (isLoggedIn && user) {
       fetchUsers();
     }
@@ -239,21 +225,19 @@ export default function UserManagement() {
     return null;
   }
 
-  // 管理者以外は何も表示しない
-  if (user.role !== "admin") {
-    return null;
-  }
-
   return (
     <Container maxW="container.lg" py={8}>
       <Card bg={bgColor} borderWidth="1px" borderColor={borderColor} mb={6}>
         <CardBody>
-          <PageTitle
-            title="ユーザー管理"
-            gradient="linear(to-r, purple.500, blue.500)"
-          />
+          <PageTitle>ユーザー管理</PageTitle>
 
-          {isLoading ? (
+          {user.role !== "admin" ? (
+            <Alert status="error" mt={4}>
+              <AlertIcon />
+              <AlertTitle>アクセス権限がありません</AlertTitle>
+              <AlertDescription>管理者専用ページです</AlertDescription>
+            </Alert>
+          ) : isLoading ? (
             <Box textAlign="center" py={10}>
               <Spinner size="xl" color="blue.500" />
               <Text mt={4}>ユーザー情報を読み込み中...</Text>
