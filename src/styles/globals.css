@@ -1,3 +1,4 @@
+@import "bootstrap/dist/css/bootstrap.min.css";
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -7,11 +8,10 @@
   --foreground: #171717;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+@layer base {
+  body {
+    @apply bg-white text-gray-900 dark:bg-gray-900 dark:text-white;
+  }
 }
 
 @media (prefers-color-scheme: dark) {
@@ -21,8 +21,109 @@
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* Material-UI DatePickerのz-index修正 */
+.MuiPickersPopper-root,
+.MuiDialog-root,
+.MuiPopover-root,
+.MuiPaper-root {
+  z-index: 9999 !important;
+}
+
+.MuiPickersModal-dialogRoot {
+  z-index: 9999 !important;
+}
+
+/* カレンダーピッカーが適切に表示されるようにする */
+div[role="dialog"] {
+  z-index: 9999 !important;
+}
+
+/* Material-UIカレンダーがChakra UIモーダルより上に表示されるようにする */
+.MuiDialog-container {
+  z-index: 9999 !important;
+}
+
+/* Chakra UI上に表示するためのオーバーライド */
+.ChakraModal + .MuiPopover-root {
+  z-index: 9999 !important;
+}
+
+/* モーダル内のDatePicker */
+.chakra-modal__content [class*="MuiOutlinedInput"] {
+  position: relative;
+  z-index: 1;
+}
+
+/* DatePickerポップアップ */
+.MuiPickersBasePicker-container,
+.MuiPickersBasePicker-pickerView {
+  z-index: 9999 !important;
+}
+
+/* ポップオーバー適用 */
+.MuiPopover-paper {
+  z-index: 9999 !important;
+}
+
+/* カレンダー入力フィールドのキャレット（下向き三角形）を非表示 */
+.MuiInput-root .MuiSvgIcon-root:not(.MuiInputAdornment-root .MuiSvgIcon-root),
+.MuiOutlinedInput-root
+  .MuiSvgIcon-root:not(.MuiInputAdornment-root .MuiSvgIcon-root) {
+  display: none !important;
+}
+
+/* キャレットを非表示にする追加セレクタ */
+.MuiSelect-icon,
+.MuiSelect-iconOutlined,
+.MuiNativeSelect-icon,
+.MuiPickersArrowSwitcher-root,
+.MuiPickersArrowSwitcher-iconButton,
+.MuiPickersArrowSwitcher-spacer {
+  display: none !important;
+}
+
+/* DatePickerのトライアングルアイコンを非表示 */
+.MuiInputBase-root > svg:not([class*="EventIcon"]) {
+  display: none !important;
+}
+
+/* イベントアイコン（カレンダーアイコン）のみ表示 */
+.MuiInputAdornment-root .MuiSvgIcon-root {
+  display: inline-flex !important;
+}
+
+/* アウトラインと凡例（fieldset要素）を非表示 */
+.MuiOutlinedInput-notchedOutline,
+.PrivateNotchedOutline-root-3,
+fieldset.MuiOutlinedInput-notchedOutline,
+.MuiOutlinedInput-root fieldset {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  display: none !important;
+}
+
+/* 入力フィールドのカスタムスタイル（アウトラインの代わりに） */
+.MuiOutlinedInput-root {
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 0.375rem !important;
+  transition: border-color 0.2s ease-in-out !important;
+}
+
+.MuiOutlinedInput-root:hover,
+.MuiOutlinedInput-root.Mui-focused {
+  border-color: #3182ce !important;
+}
+
+.MuiOutlinedInput-root.Mui-focused {
+  border-width: 2px !important;
+}
+
+/* 凡例要素の非表示 */
+.PrivateNotchedOutline-legend-4,
+legend.MuiOutlinedInput-notchedOutline,
+.MuiOutlinedInput-notchedOutline legend {
+  display: none !important;
+  width: 0 !important;
+  padding: 0 !important;
 }
