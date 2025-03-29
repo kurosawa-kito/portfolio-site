@@ -129,6 +129,132 @@ export default function UserManagement() {
     onDeleteConfirmOpen();
   };
 
+  // ユーザー削除前のチェック処理
+  const handleCheckBeforeDelete = async (userData: UserData) => {
+    if (!userData) return;
+
+    setSelectedUser(userData);
+    setIsProcessing(true);
+
+    try {
+      const response = await fetch(
+        `/api/admin/users?id=${userData.id}&action=check`,
+        {
+          method: "DELETE",
+          headers: {
+            "x-user": JSON.stringify(user),
+          },
+        }
+      );
+
+      const data = await response.json();
+
+      if (data.success) {
+        // タスクがない場合は直接削除確認モーダルを表示
+        onDeleteConfirmOpen();
+      } else if (data.needsAction) {
+        // 未完了タスクがある場合は未完了タスク確認モーダルを表示
+        setPendingTasksInfo({
+          pendingTasksCount: data.pendingTasksCount,
+          totalTasksCount: data.totalTasksCount,
+          userId: data.userId,
+          username: data.username,
+        });
+        onPendingTasksOpen();
+      } else {
+        toast({
+          title: "エラー",
+          description: data.message || "ユーザーの削除チェックに失敗しました",
+          status: "error",
+          duration: 3000,
+          isClosable: true,
+        });
+      }
+    } catch (error) {
+      console.error("ユーザー削除チェックエラー:", error);
+      toast({
+        title: "エラー",
+        description: "サーバーエラーが発生しました",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleDeleteUser = async (action: string = "check") => {
+    if (!selectedUser) return;
+
+    // 削除確認モーダルを閉じる（ただしcheckの場合は閉じない）
+    if (action !== "check") {
+      onDeleteConfirmClose();
+    }
+
+    try {
+      setIsProcessing(true);
+      const response = await fetch(
+        `/api/admin/users?id=${selectedUser.id}&action=${action}`,
+        {
+          method: "DELETE",
+          headers: {
+            "x-user": JSON.stringify(user),
+          },
+        }
+      );
+
+      const data = await response.json();
+
+      if (data.success) {
+        toast({
+          title: "ユーザー削除成功",
+          description: `${selectedUser.username}を削除しました${
+            action === "shareAll"
+              ? "。未完了タスクは共有タスクに追加されました"
+              : ""
+          }`,
+          status: "success",
+          duration: 3000,
+          isClosable: true,
+        });
+
+        // ユーザーリストを更新
+        fetchUsers();
+        onPendingTasksClose();
+        onDeleteConfirmClose();
+      } else if (data.needsAction) {
+        // 未完了タスクがある場合
+        setPendingTasksInfo({
+          pendingTasksCount: data.pendingTasksCount,
+          totalTasksCount: data.totalTasksCount,
+          userId: data.userId,
+          username: data.username,
+        });
+        onPendingTasksOpen();
+      } else {
+        toast({
+          title: "ユーザー削除失敗",
+          description: data.message || "ユーザーの削除に失敗しました",
+          status: "error",
+          duration: 3000,
+          isClosable: true,
+        });
+      }
+    } catch (error) {
+      console.error("ユーザー削除エラー:", error);
+      toast({
+        title: "エラー",
+        description: "サーバーエラーが発生しました",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
   const handleUpdateRole = async () => {
     if (!selectedUser) return;
 
@@ -171,74 +297,6 @@ export default function UserManagement() {
       }
     } catch (error) {
       console.error("権限更新エラー:", error);
-      toast({
-        title: "エラー",
-        description: "サーバーエラーが発生しました",
-        status: "error",
-        duration: 3000,
-        isClosable: true,
-      });
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  const handleDeleteUser = async (action: string = "check") => {
-    if (!selectedUser) return;
-
-    // 削除確認モーダルを閉じる
-    onDeleteConfirmClose();
-
-    try {
-      setIsProcessing(true);
-      const response = await fetch(
-        `/api/admin/users?id=${selectedUser.id}&action=${action}`,
-        {
-          method: "DELETE",
-          headers: {
-            "x-user": JSON.stringify(user),
-          },
-        }
-      );
-
-      const data = await response.json();
-
-      if (data.success) {
-        toast({
-          title: "ユーザー削除成功",
-          description: `${selectedUser.username}を削除しました${
-            action === "shareAll"
-              ? "。未完了タスクは共有タスクに追加されました"
-              : ""
-          }`,
-          status: "success",
-          duration: 3000,
-          isClosable: true,
-        });
-
-        // ユーザーリストを更新
-        fetchUsers();
-        onPendingTasksClose();
-      } else if (data.needsAction) {
-        // 未完了タスクがある場合
-        setPendingTasksInfo({
-          pendingTasksCount: data.pendingTasksCount,
-          totalTasksCount: data.totalTasksCount,
-          userId: data.userId,
-          username: data.username,
-        });
-        onPendingTasksOpen();
-      } else {
-        toast({
-          title: "ユーザー削除失敗",
-          description: data.message || "ユーザーの削除に失敗しました",
-          status: "error",
-          duration: 3000,
-          isClosable: true,
-        });
-      }
-    } catch (error) {
-      console.error("ユーザー削除エラー:", error);
       toast({
         title: "エラー",
         description: "サーバーエラーが発生しました",
@@ -321,7 +379,7 @@ export default function UserManagement() {
                             size="sm"
                             colorScheme="red"
                             variant="ghost"
-                            onClick={() => handleOpenDeleteConfirm(userData)}
+                            onClick={() => handleCheckBeforeDelete(userData)}
                             isDisabled={userData.id === user.id}
                           />
                         </Td>
@@ -372,36 +430,6 @@ export default function UserManagement() {
               </ModalContent>
             </Modal>
 
-            {/* 削除確認モーダル */}
-            <Modal isOpen={isDeleteConfirmOpen} onClose={onDeleteConfirmClose}>
-              <ModalOverlay />
-              <ModalContent>
-                <ModalHeader>ユーザー削除の確認</ModalHeader>
-                <ModalCloseButton />
-                <ModalBody>
-                  {selectedUser && (
-                    <Text mb={4}>
-                      <strong>{selectedUser.username}</strong> を削除しますか？
-                      この操作は取り消せません。
-                    </Text>
-                  )}
-                </ModalBody>
-                <ModalFooter>
-                  <Button
-                    colorScheme="red"
-                    mr={3}
-                    onClick={() => handleDeleteUser("check")}
-                    isLoading={isProcessing}
-                  >
-                    削除する
-                  </Button>
-                  <Button variant="ghost" onClick={onDeleteConfirmClose}>
-                    キャンセル
-                  </Button>
-                </ModalFooter>
-              </ModalContent>
-            </Modal>
-
             {/* 未完了タスク確認モーダル */}
             <Modal isOpen={isPendingTasksOpen} onClose={onPendingTasksClose}>
               <ModalOverlay />
@@ -434,10 +462,40 @@ export default function UserManagement() {
                   </Button>
                   <Button
                     colorScheme="red"
-                    onClick={() => handleDeleteUser("deleteAll")}
+                    onClick={() => onDeleteConfirmOpen()}
                     isLoading={isProcessing}
                   >
                     すべて削除
+                  </Button>
+                </ModalFooter>
+              </ModalContent>
+            </Modal>
+
+            {/* 削除確認モーダル */}
+            <Modal isOpen={isDeleteConfirmOpen} onClose={onDeleteConfirmClose}>
+              <ModalOverlay />
+              <ModalContent>
+                <ModalHeader>ユーザー削除の確認</ModalHeader>
+                <ModalCloseButton />
+                <ModalBody>
+                  {selectedUser && (
+                    <Text mb={4}>
+                      <strong>{selectedUser.username}</strong> を削除しますか？
+                      この操作は取り消せません。
+                    </Text>
+                  )}
+                </ModalBody>
+                <ModalFooter>
+                  <Button
+                    colorScheme="red"
+                    mr={3}
+                    onClick={() => handleDeleteUser("deleteAll")}
+                    isLoading={isProcessing}
+                  >
+                    削除する
+                  </Button>
+                  <Button variant="ghost" onClick={onDeleteConfirmClose}>
+                    キャンセル
                   </Button>
                 </ModalFooter>
               </ModalContent>
