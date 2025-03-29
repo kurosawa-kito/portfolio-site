@@ -108,7 +108,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (user) {
       // タスク管理ツール関連のページパスのリスト
-      const taskRelatedPaths = ["/member/tasks", "/admin/dashboard", "/shared"];
+      const taskRelatedPaths = [
+        "/member/tasks",
+        "/admin/dashboard",
+        "/shared",
+        "/admin/users",
+      ];
 
       // 現在のパスがタスク管理ツール関連でない場合はヘッダーを非表示に
       const isTaskRelatedPath = taskRelatedPaths.some((path) =>

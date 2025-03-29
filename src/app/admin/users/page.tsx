@@ -227,10 +227,9 @@ export default function UserManagement() {
 
   return (
     <Container maxW="container.lg" py={8}>
+      <PageTitle>ユーザー管理</PageTitle>
       <Card bg={bgColor} borderWidth="1px" borderColor={borderColor} mb={6}>
         <CardBody>
-          <PageTitle>ユーザー管理</PageTitle>
-
           {user.role !== "admin" ? (
             <Alert status="error" mt={4}>
               <AlertIcon />
