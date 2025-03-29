@@ -2,20 +2,6 @@ import { sql } from "@vercel/postgres";
 import bcrypt from "bcrypt";
 
 export async function POST() {
-  // mainブランチの本番環境では実行しない
-  if (
-    process.env.VERCEL_ENV === "production" &&
-    process.env.VERCEL_GIT_COMMIT_REF === "main"
-  ) {
-    return Response.json(
-      {
-        success: false,
-        message: "本番環境のmainブランチではシードが無効化されています",
-      },
-      { status: 403 }
-    );
-  }
-
   try {
     // 管理者ユーザーのパスワードをハッシュ化
     const adminPassword = await bcrypt.hash("admin123", 10);
