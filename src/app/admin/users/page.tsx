@@ -228,7 +228,7 @@ export default function UserManagement() {
 
   return (
     <Container maxW="960px" py={4}>
-      <VStack spacing={6}>
+      <VStack spacing={6} align="stretch" width="100%">
         <PageTitle>ユーザー管理</PageTitle>
         <Card bg={bgColor} borderWidth="1px" borderColor={borderColor}>
           <CardBody>
@@ -250,7 +250,7 @@ export default function UserManagement() {
                 <AlertDescription>ユーザーが見つかりません</AlertDescription>
               </Alert>
             ) : (
-              <Box overflowX="auto">
+              <Box overflowX="auto" width="100%">
                 <Table variant="simple">
                   <Thead>
                     <Tr>
