@@ -227,7 +227,7 @@ export default function UserManagement() {
   }
 
   return (
-    <Container maxW="container.lg" py={4}>
+    <Container maxW="960px" py={4}>
       <VStack spacing={6}>
         <PageTitle>ユーザー管理</PageTitle>
         <Card bg={bgColor} borderWidth="1px" borderColor={borderColor}>
