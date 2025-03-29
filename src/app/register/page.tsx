@@ -19,6 +19,7 @@ import {
 } from "@chakra-ui/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function Register() {
   const [username, setUsername] = useState("");
@@ -32,6 +33,7 @@ export default function Register() {
   });
   const toast = useToast();
   const router = useRouter();
+  const { login } = useAuth();
   const bgColor = useColorModeValue("white", "gray.800");
   const borderColor = useColorModeValue("gray.200", "gray.700");
 
@@ -129,12 +131,27 @@ export default function Register() {
       if (data.success) {
         toast({
           title: "ユーザー登録成功",
-          description: "ログインページに移動します",
+          description: "ログインしています...",
           status: "success",
           duration: 3000,
           isClosable: true,
         });
-        router.push("/login");
+
+        // 登録後、自動的にログイン処理を行う
+        try {
+          await login(username, password);
+          // ログイン成功（リダイレクトはAuthContext内のlogin関数で処理される）
+        } catch (loginError) {
+          console.error("自動ログインエラー:", loginError);
+          toast({
+            title: "自動ログインに失敗しました",
+            description: "ログインページへ移動します",
+            status: "warning",
+            duration: 3000,
+            isClosable: true,
+          });
+          router.push("/login");
+        }
       } else {
         toast({
           title: "登録失敗",
