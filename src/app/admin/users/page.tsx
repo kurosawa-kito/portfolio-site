@@ -37,6 +37,7 @@ import {
 import { DeleteIcon, EditIcon } from "@chakra-ui/icons";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
+import PageTitle from "@/components/PageTitle";
 
 type UserData = {
   id: string;
@@ -247,9 +248,10 @@ export default function UserManagement() {
     <Container maxW="container.lg" py={8}>
       <Card bg={bgColor} borderWidth="1px" borderColor={borderColor} mb={6}>
         <CardBody>
-          <Heading size="lg" mb={6} textAlign="center">
-            ユーザー管理
-          </Heading>
+          <PageTitle
+            title="ユーザー管理"
+            gradient="linear(to-r, purple.500, blue.500)"
+          />
 
           {isLoading ? (
             <Box textAlign="center" py={10}>

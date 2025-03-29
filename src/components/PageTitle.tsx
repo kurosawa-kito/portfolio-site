@@ -1,20 +1,27 @@
-import { Heading, Box } from "@chakra-ui/react";
+import { Heading, Box, useColorModeValue } from "@chakra-ui/react";
 
 interface PageTitleProps {
-  children: React.ReactNode;
+  title: string;
+  gradient?: string;
+  mb?: number;
+  textAlign?: "left" | "center" | "right";
 }
 
-export default function PageTitle({ children }: PageTitleProps) {
+export default function PageTitle({
+  title,
+  gradient = "linear(to-r, blue.500, purple.500)",
+  mb = 6,
+  textAlign = "center",
+}: PageTitleProps) {
   return (
-    <Box w="100%">
+    <Box mb={mb}>
       <Heading
         size="lg"
-        bgGradient="linear(to-r, blue.500, purple.500)"
+        bgGradient={gradient}
         bgClip="text"
-        textAlign="center"
-        mb={4}
+        textAlign={textAlign}
       >
-        {children}
+        {title}
       </Heading>
     </Box>
   );

@@ -8,7 +8,6 @@ import {
   FormLabel,
   Input,
   VStack,
-  Heading,
   Text,
   useToast,
   Container,
@@ -20,6 +19,7 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import PageTitle from "@/components/PageTitle";
 
 export default function Login() {
   const [username, setUsername] = useState("");
@@ -64,14 +64,7 @@ export default function Login() {
       <Card bg={bgColor} borderWidth="1px" borderColor={borderColor}>
         <CardBody>
           <VStack spacing={8} align="stretch">
-            <Heading
-              size="lg"
-              bgGradient="linear(to-r, blue.500, purple.500)"
-              bgClip="text"
-              textAlign="center"
-            >
-              ログイン
-            </Heading>
+            <PageTitle title="ログイン" />
 
             <form onSubmit={handleLogin}>
               <VStack spacing={4}>
@@ -108,26 +101,6 @@ export default function Login() {
                 </Button>
               </VStack>
             </form>
-
-            <Box textAlign="center">
-              <Text mb={2}>テストユーザー情報</Text>
-              <VStack spacing={2} align="start" bg="gray.50" p={4} rounded="md">
-                <Text>
-                  <strong>管理者ユーザー:</strong>
-                  <br />
-                  ユーザー名: admin
-                  <br />
-                  パスワード: admin123
-                </Text>
-                <Text>
-                  <strong>一般ユーザー:</strong>
-                  <br />
-                  ユーザー名: user
-                  <br />
-                  パスワード: user123
-                </Text>
-              </VStack>
-            </Box>
 
             <Box textAlign="center">
               <Link href="/products" passHref>

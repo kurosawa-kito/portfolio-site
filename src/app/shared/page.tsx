@@ -18,8 +18,14 @@ import {
   Spinner,
   Container,
   Flex,
+  Input,
+  CardHeader,
+  Divider,
+  FormControl,
+  FormLabel,
+  Select,
 } from "@chakra-ui/react";
-import { DeleteIcon, AddIcon, EditIcon } from "@chakra-ui/icons";
+import { DeleteIcon, AddIcon, EditIcon, CheckIcon } from "@chakra-ui/icons";
 import { useAuth } from "@/contexts/AuthContext";
 import PageTitle from "@/components/PageTitle";
 import TaskModal from "@/components/TaskModal";
@@ -440,10 +446,17 @@ export default function SharedBoard() {
   }
 
   return (
-    <Container maxW="4xl" py={4}>
-      <VStack spacing={6} align="stretch">
-        <PageTitle>共有ボード</PageTitle>
+    <Container maxW="container.xl" py={8}>
+      <Card bg={bgColor} borderWidth="1px" borderColor={borderColor} mb={6}>
+        <CardBody>
+          <PageTitle
+            title="共有ボード"
+            gradient="linear(to-r, purple.500, pink.500)"
+          />
+        </CardBody>
+      </Card>
 
+      <VStack spacing={6} align="stretch">
         {/* 共有ノート投稿セクション */}
         <Card bg={bgColor} borderWidth="1px" borderColor={borderColor}>
           <CardBody>

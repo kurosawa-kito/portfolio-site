@@ -10,6 +10,8 @@ import {
   Button,
   useColorModeValue,
   Flex,
+  Card,
+  CardBody,
 } from "@chakra-ui/react";
 import { AddIcon } from "@chakra-ui/icons";
 import { useAuth } from "@/contexts/AuthContext";
@@ -47,6 +49,8 @@ export default function TasksPage() {
   const toast = useToast();
   const router = useRouter();
   const subtitleBg = useColorModeValue("blue.50", "blue.900");
+  const bgColor = useColorModeValue("white", "gray.800");
+  const borderColor = useColorModeValue("gray.200", "gray.700");
 
   // ログインチェック
   useEffect(() => {
@@ -221,7 +225,11 @@ export default function TasksPage() {
   return (
     <Container maxW="4xl" py={4}>
       <VStack spacing={6} align="stretch">
-        <PageTitle>タスク管理</PageTitle>
+        <Card mb={6} bg={bgColor} borderWidth="1px" borderColor={borderColor}>
+          <CardBody>
+            <PageTitle title="タスク管理" />
+          </CardBody>
+        </Card>
 
         <Flex justify="space-between" align="center">
           <Box
