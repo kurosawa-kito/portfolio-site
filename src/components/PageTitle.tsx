@@ -12,7 +12,7 @@ export default function PageTitle({ children }: PageTitleProps) {
         bgGradient="linear(to-r, blue.500, purple.500)"
         bgClip="text"
         textAlign="center"
-        mb={4}
+        mb={2}
       >
         {children}
       </Heading>

@@ -226,7 +226,7 @@ export default function UserManagement() {
   }
 
   return (
-    <Container maxW="container.lg" py={8}>
+    <Container maxW="container.lg" py={4}>
       <PageTitle>ユーザー管理</PageTitle>
       <Card bg={bgColor} borderWidth="1px" borderColor={borderColor} mb={6}>
         <CardBody>

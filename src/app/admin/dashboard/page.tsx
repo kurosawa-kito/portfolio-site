@@ -11,6 +11,7 @@ import {
   CardBody,
   useColorModeValue,
   Divider,
+  Container,
 } from "@chakra-ui/react";
 import { useAuth } from "@/contexts/AuthContext";
 import PageTitle from "@/components/PageTitle";
@@ -127,7 +128,7 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="container mx-auto p-4" style={{ maxWidth: "960px" }}>
+    <Container maxW="960px" py={4}>
       <VStack spacing={6} align="stretch" width="100%">
         <PageTitle>管理者ダッシュボード</PageTitle>
 
@@ -184,6 +185,6 @@ export default function AdminDashboard() {
           </>
         )}
       </VStack>
-    </div>
+    </Container>
   );
 }
