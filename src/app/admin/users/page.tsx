@@ -64,12 +64,6 @@ export default function UserManagement() {
     onClose: onEditClose,
   } = useDisclosure();
   const {
-    isOpen: isDeleteOpen,
-    onOpen: onDeleteOpen,
-    onClose: onDeleteClose,
-  } = useDisclosure();
-
-  const {
     isOpen: isPendingTasksOpen,
     onOpen: onPendingTasksOpen,
     onClose: onPendingTasksClose,
@@ -123,11 +117,6 @@ export default function UserManagement() {
     setSelectedUser(userData);
     setNewRole(userData.role);
     onEditOpen();
-  };
-
-  const handleOpenDeleteModal = (userData: UserData) => {
-    setSelectedUser(userData);
-    onDeleteOpen();
   };
 
   const handleUpdateRole = async () => {
@@ -216,7 +205,6 @@ export default function UserManagement() {
 
         // ユーザーリストを更新
         fetchUsers();
-        onDeleteClose();
         onPendingTasksClose();
       } else if (data.needsAction) {
         // 未完了タスクがある場合
@@ -320,7 +308,10 @@ export default function UserManagement() {
                             size="sm"
                             colorScheme="red"
                             variant="ghost"
-                            onClick={() => handleOpenDeleteModal(userData)}
+                            onClick={() => {
+                              setSelectedUser(userData);
+                              handleDeleteUser("check");
+                            }}
                             isDisabled={userData.id === user.id}
                           />
                         </Td>
@@ -366,32 +357,6 @@ export default function UserManagement() {
                   </Button>
                   <Button variant="ghost" onClick={onEditClose}>
                     キャンセル
-                  </Button>
-                </ModalFooter>
-              </ModalContent>
-            </Modal>
-
-            {/* ユーザー削除確認モーダル */}
-            <Modal isOpen={isDeleteOpen} onClose={onDeleteClose}>
-              <ModalOverlay />
-              <ModalContent>
-                <ModalHeader>ユーザー削除の確認</ModalHeader>
-                <ModalCloseButton />
-                <ModalBody>
-                  {selectedUser && (
-                    <Text>本当に {selectedUser.username} を削除しますか？</Text>
-                  )}
-                </ModalBody>
-                <ModalFooter>
-                  <Button mr={3} onClick={onDeleteClose}>
-                    キャンセル
-                  </Button>
-                  <Button
-                    colorScheme="red"
-                    onClick={() => handleDeleteUser()}
-                    isLoading={isProcessing}
-                  >
-                    削除する
                   </Button>
                 </ModalFooter>
               </ModalContent>

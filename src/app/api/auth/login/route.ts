@@ -14,6 +14,18 @@ export const users = [
     password: "user123",
     role: "user",
   },
+  {
+    id: "user3",
+    username: "dev1",
+    password: "dev123",
+    role: "user",
+  },
+  {
+    id: "user4",
+    username: "dev2",
+    password: "dev123",
+    role: "user",
+  },
 ];
 
 export async function POST(request: NextRequest) {

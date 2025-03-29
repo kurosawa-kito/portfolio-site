@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { users } from "../../auth/login/route";
 import { User } from "@/types/user";
+import { tasks } from "../../tasks/route";
+import { sharedTasks } from "../../shared/tasks/route";
 
 // ユーザー一覧を取得
 export async function GET(request: NextRequest) {
@@ -130,6 +132,7 @@ export async function DELETE(request: NextRequest) {
 
     const url = new URL(request.url);
     const userId = url.searchParams.get("id");
+    const action = url.searchParams.get("action") || "check";
 
     if (!userId) {
       return NextResponse.json(
@@ -166,6 +169,65 @@ export async function DELETE(request: NextRequest) {
       }
     }
 
+    // ユーザーに割り当てられたタスクを検索
+    const userTasks = tasks.filter((task) => task.assigned_to === userId);
+
+    // まずタスクの数を確認する
+    if (action === "check") {
+      // タスクが存在する場合は必ず処理選択モーダルを表示
+      if (userTasks.length > 0) {
+        const pendingTasks = userTasks.filter(
+          (task: any) => task.status === "pending"
+        );
+        return NextResponse.json({
+          success: false,
+          needsAction: true,
+          message: "ユーザーのタスクがあります",
+          pendingTasksCount: pendingTasks.length,
+          totalTasksCount: userTasks.length,
+          userId: userId,
+          username: users[userIndex].username,
+        });
+      }
+    }
+
+    // 共有タスクに追加
+    if (action === "shareAll") {
+      const pendingTasks = userTasks.filter(
+        (task: any) => task.status === "pending"
+      );
+
+      // 未完了タスクを共有タスクに追加
+      for (const task of pendingTasks as any[]) {
+        const newSharedTask = {
+          id: `shared-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+          title: `[元ユーザー: ${users[userIndex].username}] ${task.title}`,
+          description: task.description,
+          due_date: task.due_date,
+          priority: task.priority,
+          created_at: new Date().toISOString(),
+          created_by: requestingUser.id,
+          created_by_username: requestingUser.username,
+          status: "pending", // 必須フィールド
+        };
+
+        sharedTasks.push(newSharedTask);
+      }
+    }
+
+    // ユーザーのすべてのタスクを削除（共有タスクに追加した後でも削除）
+    const taskIndicesToRemove = [];
+    for (let i = 0; i < tasks.length; i++) {
+      if (tasks[i].assigned_to === userId) {
+        taskIndicesToRemove.push(i);
+      }
+    }
+
+    // 降順でインデックスを削除（昇順で削除すると、後続のインデックスがずれる）
+    for (let i = taskIndicesToRemove.length - 1; i >= 0; i--) {
+      tasks.splice(taskIndicesToRemove[i], 1);
+    }
+
     // ユーザーを削除
     const deletedUser = users.splice(userIndex, 1)[0];
 
@@ -176,6 +238,10 @@ export async function DELETE(request: NextRequest) {
         id: deletedUser.id,
         username: deletedUser.username,
       },
+      tasksHandled:
+        action === "shareAll"
+          ? "共有タスクに追加しました"
+          : "タスクを削除しました",
     });
   } catch (error) {
     console.error("ユーザー削除エラー:", error);
