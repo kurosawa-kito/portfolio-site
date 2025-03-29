@@ -25,51 +25,32 @@ export default function Register() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [errors, setErrors] = useState({
+    username: "",
+    password: "",
+    confirmPassword: "",
+  });
   const toast = useToast();
   const router = useRouter();
   const bgColor = useColorModeValue("white", "gray.800");
   const borderColor = useColorModeValue("gray.200", "gray.700");
 
-  const handleRegister = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // バリデーション関数
+  const validateUsername = (value: string) => {
+    if (value.length < 3) {
+      return "ユーザー名は3文字以上で入力してください";
+    }
+    return "";
+  };
 
-    // バリデーション
-    if (username.length < 3) {
-      toast({
-        title: "ユーザー名が短すぎます",
-        description: "3文字以上のユーザー名を設定してください",
-        status: "error",
-        duration: 3000,
-        isClosable: true,
-      });
-      return;
+  const validatePassword = (value: string) => {
+    if (value.length < 6) {
+      return "パスワードは6文字以上で入力してください";
     }
 
-    if (password !== confirmPassword) {
-      toast({
-        title: "パスワードが一致しません",
-        status: "error",
-        duration: 3000,
-        isClosable: true,
-      });
-      return;
-    }
-
-    if (password.length < 6) {
-      toast({
-        title: "パスワードが短すぎます",
-        description: "6文字以上のパスワードを設定してください",
-        status: "error",
-        duration: 3000,
-        isClosable: true,
-      });
-      return;
-    }
-
-    // パスワード強度のチェック - 英大文字、英小文字、数字の組み合わせ
-    const hasUpperCase = /[A-Z]/.test(password);
-    const hasLowerCase = /[a-z]/.test(password);
-    const hasNumber = /[0-9]/.test(password);
+    const hasUpperCase = /[A-Z]/.test(value);
+    const hasLowerCase = /[a-z]/.test(value);
+    const hasNumber = /[0-9]/.test(value);
 
     if (
       !(
@@ -78,14 +59,58 @@ export default function Register() {
         (hasLowerCase && hasNumber)
       )
     ) {
-      toast({
-        title: "パスワードが脆弱です",
-        description:
-          "英大文字、英小文字、数字のうち少なくとも2種類を組み合わせてください",
-        status: "error",
-        duration: 4000,
-        isClosable: true,
-      });
+      return "英大文字、英小文字、数字のうち少なくとも2種類を組み合わせてください";
+    }
+
+    return "";
+  };
+
+  const validateConfirmPassword = (value: string) => {
+    if (value !== password) {
+      return "パスワードが一致しません";
+    }
+    return "";
+  };
+
+  // フォーカスアウト時のハンドラー
+  const handleUsernameBlur = () => {
+    setErrors({
+      ...errors,
+      username: validateUsername(username),
+    });
+  };
+
+  const handlePasswordBlur = () => {
+    setErrors({
+      ...errors,
+      password: validatePassword(password),
+    });
+  };
+
+  const handleConfirmPasswordBlur = () => {
+    setErrors({
+      ...errors,
+      confirmPassword: validateConfirmPassword(confirmPassword),
+    });
+  };
+
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    // すべてのフィールドのバリデーションを行う
+    const usernameError = validateUsername(username);
+    const passwordError = validatePassword(password);
+    const confirmPasswordError = validateConfirmPassword(confirmPassword);
+
+    // エラー状態を更新
+    setErrors({
+      username: usernameError,
+      password: passwordError,
+      confirmPassword: confirmPasswordError,
+    });
+
+    // いずれかのエラーがある場合は処理を中止
+    if (usernameError || passwordError || confirmPasswordError) {
       return;
     }
 
@@ -149,43 +174,61 @@ export default function Register() {
 
             <form onSubmit={handleRegister}>
               <VStack spacing={4}>
-                <FormControl isRequired>
+                <FormControl isRequired isInvalid={!!errors.username}>
                   <FormLabel>ユーザー名</FormLabel>
                   <Input
                     type="text"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
+                    onBlur={handleUsernameBlur}
                     size="lg"
                     placeholder="ユーザー名を入力"
                   />
                   <Text fontSize="sm" color="gray.500" mt={1}>
                     3文字以上で入力してください
                   </Text>
+                  {errors.username && (
+                    <Text fontSize="sm" color="red.500" mt={1}>
+                      {errors.username}
+                    </Text>
+                  )}
                 </FormControl>
 
-                <FormControl isRequired>
+                <FormControl isRequired isInvalid={!!errors.password}>
                   <FormLabel>パスワード</FormLabel>
                   <Input
                     type="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
+                    onBlur={handlePasswordBlur}
                     size="lg"
                     placeholder="パスワードを入力"
                   />
                   <Text fontSize="sm" color="gray.500" mt={1}>
                     6文字以上で入力してください。英大文字、英小文字、数字のうち少なくとも2種類を組み合わせる必要があります。
                   </Text>
+                  {errors.password && (
+                    <Text fontSize="sm" color="red.500" mt={1}>
+                      {errors.password}
+                    </Text>
+                  )}
                 </FormControl>
 
-                <FormControl isRequired>
+                <FormControl isRequired isInvalid={!!errors.confirmPassword}>
                   <FormLabel>パスワード（確認）</FormLabel>
                   <Input
                     type="password"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
+                    onBlur={handleConfirmPasswordBlur}
                     size="lg"
                     placeholder="パスワードを再入力"
                   />
+                  {errors.confirmPassword && (
+                    <Text fontSize="sm" color="red.500" mt={1}>
+                      {errors.confirmPassword}
+                    </Text>
+                  )}
                 </FormControl>
 
                 <Button
