@@ -34,6 +34,17 @@ export default function Register() {
     e.preventDefault();
 
     // バリデーション
+    if (username.length < 3) {
+      toast({
+        title: "ユーザー名が短すぎます",
+        description: "3文字以上のユーザー名を設定してください",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
+      return;
+    }
+
     if (password !== confirmPassword) {
       toast({
         title: "パスワードが一致しません",
@@ -50,6 +61,29 @@ export default function Register() {
         description: "6文字以上のパスワードを設定してください",
         status: "error",
         duration: 3000,
+        isClosable: true,
+      });
+      return;
+    }
+
+    // パスワード強度のチェック - 英大文字、英小文字、数字の組み合わせ
+    const hasUpperCase = /[A-Z]/.test(password);
+    const hasLowerCase = /[a-z]/.test(password);
+    const hasNumber = /[0-9]/.test(password);
+
+    if (
+      !(
+        (hasUpperCase && hasLowerCase) ||
+        (hasUpperCase && hasNumber) ||
+        (hasLowerCase && hasNumber)
+      )
+    ) {
+      toast({
+        title: "パスワードが脆弱です",
+        description:
+          "英大文字、英小文字、数字のうち少なくとも2種類を組み合わせてください",
+        status: "error",
+        duration: 4000,
         isClosable: true,
       });
       return;
@@ -124,6 +158,9 @@ export default function Register() {
                     size="lg"
                     placeholder="ユーザー名を入力"
                   />
+                  <Text fontSize="sm" color="gray.500" mt={1}>
+                    3文字以上で入力してください
+                  </Text>
                 </FormControl>
 
                 <FormControl isRequired>
@@ -133,8 +170,11 @@ export default function Register() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     size="lg"
-                    placeholder="パスワードを入力（6文字以上）"
+                    placeholder="パスワードを入力"
                   />
+                  <Text fontSize="sm" color="gray.500" mt={1}>
+                    6文字以上で入力してください。英大文字、英小文字、数字のうち少なくとも2種類を組み合わせる必要があります。
+                  </Text>
                 </FormControl>
 
                 <FormControl isRequired>
