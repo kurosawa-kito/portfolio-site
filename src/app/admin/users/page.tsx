@@ -32,6 +32,7 @@ import {
   useColorModeValue,
   Card,
   CardBody,
+  VStack,
 } from "@chakra-ui/react";
 import { DeleteIcon, EditIcon } from "@chakra-ui/icons";
 import { useAuth } from "@/contexts/AuthContext";
@@ -227,155 +228,157 @@ export default function UserManagement() {
 
   return (
     <Container maxW="container.lg" py={4}>
-      <PageTitle>ユーザー管理</PageTitle>
-      <Card bg={bgColor} borderWidth="1px" borderColor={borderColor} mb={6}>
-        <CardBody>
-          {user.role !== "admin" ? (
-            <Alert status="error" mt={4}>
-              <AlertIcon />
-              <AlertTitle>アクセス権限がありません</AlertTitle>
-              <AlertDescription>管理者専用ページです</AlertDescription>
-            </Alert>
-          ) : isLoading ? (
-            <Box textAlign="center" py={10}>
-              <Spinner size="xl" color="blue.500" />
-              <Text mt={4}>ユーザー情報を読み込み中...</Text>
-            </Box>
-          ) : users.length === 0 ? (
-            <Alert status="info">
-              <AlertIcon />
-              <AlertTitle>情報</AlertTitle>
-              <AlertDescription>ユーザーが見つかりません</AlertDescription>
-            </Alert>
-          ) : (
-            <Box overflowX="auto">
-              <Table variant="simple">
-                <Thead>
-                  <Tr>
-                    <Th>ユーザー名</Th>
-                    <Th>権限</Th>
-                    <Th textAlign="center">操作</Th>
-                  </Tr>
-                </Thead>
-                <Tbody>
-                  {users.map((userData) => (
-                    <Tr key={userData.id}>
-                      <Td>{userData.username}</Td>
-                      <Td>
-                        <Badge
-                          colorScheme={
-                            userData.role === "admin" ? "purple" : "blue"
-                          }
-                        >
-                          {userData.role === "admin"
-                            ? "管理者"
-                            : "一般ユーザー"}
-                        </Badge>
-                      </Td>
-                      <Td textAlign="center">
-                        <IconButton
-                          aria-label="権限を編集"
-                          icon={<EditIcon />}
-                          size="sm"
-                          colorScheme="blue"
-                          variant="ghost"
-                          mr={2}
-                          onClick={() => handleOpenEditModal(userData)}
-                          isDisabled={userData.id === user.id}
-                        />
-                        <IconButton
-                          aria-label="ユーザーを削除"
-                          icon={<DeleteIcon />}
-                          size="sm"
-                          colorScheme="red"
-                          variant="ghost"
-                          onClick={() => handleOpenDeleteModal(userData)}
-                          isDisabled={userData.id === user.id}
-                        />
-                      </Td>
+      <VStack spacing={6}>
+        <PageTitle>ユーザー管理</PageTitle>
+        <Card bg={bgColor} borderWidth="1px" borderColor={borderColor}>
+          <CardBody>
+            {user.role !== "admin" ? (
+              <Alert status="error" mt={4}>
+                <AlertIcon />
+                <AlertTitle>アクセス権限がありません</AlertTitle>
+                <AlertDescription>管理者専用ページです</AlertDescription>
+              </Alert>
+            ) : isLoading ? (
+              <Box textAlign="center" py={10}>
+                <Spinner size="xl" color="blue.500" />
+                <Text mt={4}>ユーザー情報を読み込み中...</Text>
+              </Box>
+            ) : users.length === 0 ? (
+              <Alert status="info">
+                <AlertIcon />
+                <AlertTitle>情報</AlertTitle>
+                <AlertDescription>ユーザーが見つかりません</AlertDescription>
+              </Alert>
+            ) : (
+              <Box overflowX="auto">
+                <Table variant="simple">
+                  <Thead>
+                    <Tr>
+                      <Th>ユーザー名</Th>
+                      <Th>権限</Th>
+                      <Th textAlign="center">操作</Th>
                     </Tr>
-                  ))}
-                </Tbody>
-              </Table>
-            </Box>
-          )}
+                  </Thead>
+                  <Tbody>
+                    {users.map((userData) => (
+                      <Tr key={userData.id}>
+                        <Td>{userData.username}</Td>
+                        <Td>
+                          <Badge
+                            colorScheme={
+                              userData.role === "admin" ? "purple" : "blue"
+                            }
+                          >
+                            {userData.role === "admin"
+                              ? "管理者"
+                              : "一般ユーザー"}
+                          </Badge>
+                        </Td>
+                        <Td textAlign="center">
+                          <IconButton
+                            aria-label="権限を編集"
+                            icon={<EditIcon />}
+                            size="sm"
+                            colorScheme="blue"
+                            variant="ghost"
+                            mr={2}
+                            onClick={() => handleOpenEditModal(userData)}
+                            isDisabled={userData.id === user.id}
+                          />
+                          <IconButton
+                            aria-label="ユーザーを削除"
+                            icon={<DeleteIcon />}
+                            size="sm"
+                            colorScheme="red"
+                            variant="ghost"
+                            onClick={() => handleOpenDeleteModal(userData)}
+                            isDisabled={userData.id === user.id}
+                          />
+                        </Td>
+                      </Tr>
+                    ))}
+                  </Tbody>
+                </Table>
+              </Box>
+            )}
 
-          {/* 権限編集モーダル */}
-          <Modal isOpen={isEditOpen} onClose={onEditClose}>
-            <ModalOverlay />
-            <ModalContent>
-              <ModalHeader>ユーザー権限の変更</ModalHeader>
-              <ModalCloseButton />
-              <ModalBody>
-                {selectedUser && (
-                  <>
-                    <Text mb={4}>
-                      <strong>{selectedUser.username}</strong>{" "}
-                      の権限を変更します。
-                    </Text>
-                    <Select
-                      value={newRole}
-                      onChange={(e) => setNewRole(e.target.value)}
-                      mb={4}
-                    >
-                      <option value="user">一般ユーザー</option>
-                      <option value="admin">管理者</option>
-                    </Select>
-                  </>
-                )}
-              </ModalBody>
-              <ModalFooter>
-                <Button
-                  colorScheme="blue"
-                  mr={3}
-                  onClick={handleUpdateRole}
-                  isLoading={isProcessing}
-                >
-                  変更する
-                </Button>
-                <Button variant="ghost" onClick={onEditClose}>
-                  キャンセル
-                </Button>
-              </ModalFooter>
-            </ModalContent>
-          </Modal>
+            {/* 権限編集モーダル */}
+            <Modal isOpen={isEditOpen} onClose={onEditClose}>
+              <ModalOverlay />
+              <ModalContent>
+                <ModalHeader>ユーザー権限の変更</ModalHeader>
+                <ModalCloseButton />
+                <ModalBody>
+                  {selectedUser && (
+                    <>
+                      <Text mb={4}>
+                        <strong>{selectedUser.username}</strong>{" "}
+                        の権限を変更します。
+                      </Text>
+                      <Select
+                        value={newRole}
+                        onChange={(e) => setNewRole(e.target.value)}
+                        mb={4}
+                      >
+                        <option value="user">一般ユーザー</option>
+                        <option value="admin">管理者</option>
+                      </Select>
+                    </>
+                  )}
+                </ModalBody>
+                <ModalFooter>
+                  <Button
+                    colorScheme="blue"
+                    mr={3}
+                    onClick={handleUpdateRole}
+                    isLoading={isProcessing}
+                  >
+                    変更する
+                  </Button>
+                  <Button variant="ghost" onClick={onEditClose}>
+                    キャンセル
+                  </Button>
+                </ModalFooter>
+              </ModalContent>
+            </Modal>
 
-          {/* 削除確認モーダル */}
-          <Modal isOpen={isDeleteOpen} onClose={onDeleteClose}>
-            <ModalOverlay />
-            <ModalContent>
-              <ModalHeader>ユーザー削除の確認</ModalHeader>
-              <ModalCloseButton />
-              <ModalBody>
-                {selectedUser && (
-                  <>
-                    <Text mb={4}>
-                      ユーザー <strong>{selectedUser.username}</strong>{" "}
-                      を削除してもよろしいですか？
-                    </Text>
-                    <Text color="red.500" fontWeight="bold">
-                      この操作は元に戻せません。
-                    </Text>
-                  </>
-                )}
-              </ModalBody>
-              <ModalFooter>
-                <Button
-                  colorScheme="red"
-                  mr={3}
-                  onClick={handleDeleteUser}
-                  isLoading={isProcessing}
-                >
-                  削除する
-                </Button>
-                <Button variant="ghost" onClick={onDeleteClose}>
-                  キャンセル
-                </Button>
-              </ModalFooter>
-            </ModalContent>
-          </Modal>
-        </CardBody>
-      </Card>
+            {/* 削除確認モーダル */}
+            <Modal isOpen={isDeleteOpen} onClose={onDeleteClose}>
+              <ModalOverlay />
+              <ModalContent>
+                <ModalHeader>ユーザー削除の確認</ModalHeader>
+                <ModalCloseButton />
+                <ModalBody>
+                  {selectedUser && (
+                    <>
+                      <Text mb={4}>
+                        ユーザー <strong>{selectedUser.username}</strong>{" "}
+                        を削除してもよろしいですか？
+                      </Text>
+                      <Text color="red.500" fontWeight="bold">
+                        この操作は元に戻せません。
+                      </Text>
+                    </>
+                  )}
+                </ModalBody>
+                <ModalFooter>
+                  <Button
+                    colorScheme="red"
+                    mr={3}
+                    onClick={handleDeleteUser}
+                    isLoading={isProcessing}
+                  >
+                    削除する
+                  </Button>
+                  <Button variant="ghost" onClick={onDeleteClose}>
+                    キャンセル
+                  </Button>
+                </ModalFooter>
+              </ModalContent>
+            </Modal>
+          </CardBody>
+        </Card>
+      </VStack>
     </Container>
   );
 }
