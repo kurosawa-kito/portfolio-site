@@ -5,9 +5,13 @@ import { Flex, Text, Box } from "@chakra-ui/react";
 import LogoutButton from "./LogoutButton";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEffect } from "react";
+import { usePathname } from "next/navigation";
+import { useColorModeValue } from "@chakra-ui/react";
 
 export default function TaskHeader() {
   const { user, isLoggedIn, showTaskHeader, setShowTaskHeader } = useAuth();
+  const pathname = usePathname();
+  const bgColor = useColorModeValue("white", "gray.800");
 
   // ログイン時にタスクヘッダーを表示
   useEffect(() => {
@@ -29,7 +33,7 @@ export default function TaskHeader() {
       left={0}
       right={0}
       zIndex={100}
-      bg="white"
+      bg={bgColor}
       borderBottom="1px"
       borderColor="gray.200"
       boxShadow="sm"
@@ -61,9 +65,9 @@ export default function TaskHeader() {
                 <Text
                   fontSize="md"
                   fontWeight="medium"
-                  color="green.600"
+                  color="blue.600"
                   cursor="pointer"
-                  _hover={{ color: "green.700" }}
+                  _hover={{ color: "blue.700" }}
                 >
                   ユーザー管理
                 </Text>

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 // Mock users data for demonstration
-const users = [
+export const users = [
   {
     id: "user1",
     username: "admin",

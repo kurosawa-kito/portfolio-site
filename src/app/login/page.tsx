@@ -134,8 +134,17 @@ export default function Login() {
                 <ChakraLink
                   color="blue.500"
                   _hover={{ textDecoration: "none" }}
+                  mr={4}
                 >
                   Products
+                </ChakraLink>
+              </Link>
+              <Link href="/register" passHref>
+                <ChakraLink
+                  color="green.500"
+                  _hover={{ textDecoration: "none" }}
+                >
+                  新規ユーザー登録
                 </ChakraLink>
               </Link>
             </Box>
