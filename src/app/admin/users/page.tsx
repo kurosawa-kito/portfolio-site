@@ -251,7 +251,7 @@ export default function UserManagement() {
               </Alert>
             ) : (
               <Box overflowX="auto" width="100%">
-                <Table variant="simple">
+                <Table variant="simple" width="100%">
                   <Thead>
                     <Tr>
                       <Th>ユーザー名</Th>
