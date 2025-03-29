@@ -274,7 +274,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const { title, description, due_date, priority } = await request.json();
+  const { title, description, due_date, priority } = await request.json();
     const userStr = request.headers.get("x-user");
     if (!userStr) {
       return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
@@ -313,7 +313,7 @@ export async function POST(request: NextRequest) {
 
 export async function PATCH(request: NextRequest) {
   try {
-    const { id, status } = await request.json();
+  const { id, status } = await request.json();
     const userStr = request.headers.get("x-user");
     if (!userStr) {
       return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
