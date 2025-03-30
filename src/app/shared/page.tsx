@@ -247,11 +247,8 @@ export default function SharedBoard() {
     try {
       console.log("タスク追加開始:", { taskId, user });
 
-      // APIエンドポイントの構築 (URLとパスが正しいことを確認)
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL || "";
-      const apiUrl = baseUrl
-        ? `${baseUrl}/api/shared/tasks`
-        : "/api/shared/tasks";
+      // 正しいAPIエンドポイントを使用
+      const apiUrl = "/api/shared/tasks";
 
       console.log("APIリクエスト送信先:", apiUrl);
 
@@ -285,17 +282,33 @@ export default function SharedBoard() {
 
       console.log("APIレスポンスステータス:", response.status);
 
+      const responseText = await response.text();
+      let data;
+
+      try {
+        // レスポンスがJSONの場合はパース
+        data = responseText ? JSON.parse(responseText) : {};
+      } catch (e) {
+        console.error(
+          "レスポンスのJSONパースエラー:",
+          e,
+          "レスポンステキスト:",
+          responseText
+        );
+        data = { error: "不正なレスポンス形式" };
+      }
+
       if (!response.ok) {
-        const errorData = await response.text();
         console.error("タスク追加APIエラー:", {
           status: response.status,
           statusText: response.statusText,
-          error: errorData,
+          data: data,
         });
-        throw new Error(`APIエラー: ${response.status} ${errorData}`);
+        throw new Error(
+          `APIエラー: ${response.status} ${data.error || responseText}`
+        );
       }
 
-      const data = await response.json();
       console.log("タスク追加成功レスポンス:", data);
       setAddedTaskIds(data.taskIds || []);
 
@@ -378,16 +391,32 @@ export default function SharedBoard() {
       // デバッグログ
       console.log(`共有タスク削除リクエスト:`, {
         taskId,
-        endpoint: `/api/shared/tasks?id=${taskId}`,
+        endpoint: `/api/shared/tasks/${taskId}`,
       });
 
-      const response = await fetch(`/api/shared/tasks?id=${taskId}`, {
+      const response = await fetch(`/api/shared/tasks/${taskId}`, {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
           "x-user": JSON.stringify(user),
         },
       });
+
+      const responseText = await response.text();
+      let data;
+
+      try {
+        // レスポンスがJSONの場合はパース
+        data = responseText ? JSON.parse(responseText) : {};
+      } catch (e) {
+        console.error(
+          "レスポンスのJSONパースエラー:",
+          e,
+          "レスポンステキスト:",
+          responseText
+        );
+        data = { error: "不正なレスポンス形式" };
+      }
 
       if (response.ok) {
         // タスクリストから削除したタスクを除外
@@ -400,12 +429,15 @@ export default function SharedBoard() {
           isClosable: true,
         });
       } else {
-        const errorText = await response.text();
         console.error("削除エラーレスポンス:", {
           status: response.status,
-          text: errorText,
+          data: data,
         });
-        throw new Error(`共有タスクの削除に失敗しました: ${response.status}`);
+        throw new Error(
+          `共有タスクの削除に失敗しました: ${response.status} ${
+            data.error || responseText
+          }`
+        );
       }
     } catch (error) {
       console.error("共有タスク削除エラー:", error);
