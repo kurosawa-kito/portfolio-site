@@ -58,23 +58,50 @@ export default function TasksPage() {
     }
   }, [isLoggedIn, router, setShowTaskHeader]);
 
-  // タスク一覧を取得 (useCallbackでメモ化)
+  // タスク一覧を取得
   const fetchTasks = useCallback(async () => {
-    if (!user) return;
-
     setIsLoading(true);
     try {
+      // リクエストヘッダーにリフレッシュフラグを追加
       const response = await fetch("/api/tasks", {
         headers: {
           "x-user": JSON.stringify(user),
+          "x-refresh": "true", // キャッシュをバイパス
           "Cache-Control": "no-cache, no-store",
           Pragma: "no-cache",
         },
+        // キャッシュを完全に無効化
+        cache: "no-store",
       });
 
       if (response.ok) {
         const data = await response.json();
+        console.log(`タスク一覧を取得しました: ${data.length}件`);
+
+        // 共有タスク含む詳細ログ
+        const sharedTasksCount = data.filter((t: any) =>
+          t.id.startsWith("shared-")
+        ).length;
+        if (sharedTasksCount > 0) {
+          console.log(
+            `標準タスク: ${
+              data.length - sharedTasksCount
+            }件, 共有タスク: ${sharedTasksCount}件`
+          );
+          console.log(
+            "共有タスク一覧:",
+            data
+              .filter((t: any) => t.id.startsWith("shared-"))
+              .map((t: any) => ({
+                id: t.id,
+                title: t.title,
+              }))
+          );
+        }
+
         setTasks(data);
+      } else {
+        throw new Error("タスクの取得に失敗しました");
       }
     } catch (error) {
       console.error("タスク取得エラー:", error);

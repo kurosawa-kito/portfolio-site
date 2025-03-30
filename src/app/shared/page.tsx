@@ -360,6 +360,17 @@ export default function SharedBoard() {
           console.log("ユーザーのタスク一覧を更新しました");
           const tasksData = await refreshResponse.json();
           console.log("更新されたタスク一覧:", tasksData.length, "件");
+
+          // 更新されたタスク一覧の詳細ログを強化
+          const sharedTasksCount = tasksData.filter((t: any) =>
+            t.id.startsWith("shared-")
+          ).length;
+          console.log(
+            `標準タスク: ${
+              tasksData.length - sharedTasksCount
+            }件, 共有タスク: ${sharedTasksCount}件`
+          );
+
           console.log(
             "更新されたタスク詳細:",
             tasksData.map((t: any) => ({
@@ -367,8 +378,21 @@ export default function SharedBoard() {
               title:
                 t.title.substring(0, 20) + (t.title.length > 20 ? "..." : ""),
               status: t.status,
+              isShared: t.id.startsWith("shared-"),
             }))
           );
+
+          // タスク一覧ページの強制更新が必要な場合、ユーザーに通知
+          if (sharedTasksCount > 0 && addedTaskIds.includes(taskId as string)) {
+            toast({
+              title: "タスクが正常に追加されました",
+              description:
+                "タスク管理ページに移動して一覧を更新すると、新しいタスクが表示されます。",
+              status: "success",
+              duration: 5000,
+              isClosable: true,
+            });
+          }
         } else {
           console.warn("タスク一覧の更新に失敗:", refreshResponse.status);
         }

@@ -212,6 +212,17 @@ export async function GET(request: NextRequest) {
         const data = await userAddedTasksResponse.json();
         userAddedTaskIds = data.taskIds || [];
         console.log("ユーザーの追加済みタスクID:", userAddedTaskIds);
+
+        // 追加: ユーザーの追加済みタスクIDの詳細をログ
+        if (userAddedTaskIds.length > 0) {
+          console.log(
+            `ユーザー ${
+              user.id
+            } の追加済み共有タスクID: ${userAddedTaskIds.join(", ")}`
+          );
+        } else {
+          console.log(`ユーザー ${user.id} は共有タスクを追加していません`);
+        }
       } else {
         throw new Error(
           `追加済みタスクID取得失敗: ${userAddedTasksResponse.status}`
@@ -281,6 +292,22 @@ export async function GET(request: NextRequest) {
     console.log(
       `ユーザータスク(${userTasks.length})と共有タスク(${userAddedSharedTasks.length})を結合: 計${allTasks.length}件`
     );
+
+    // 追加: 返却するタスク一覧の詳細をログ出力
+    if (allTasks.length > 0) {
+      console.log(
+        "返却するタスク一覧:",
+        allTasks.map((task) => ({
+          id: task.id,
+          title:
+            task.title.substring(0, 30) + (task.title.length > 30 ? "..." : ""),
+          status: task.status,
+          isShared: task.id.startsWith("shared-"),
+        }))
+      );
+    } else {
+      console.log("返却するタスクがありません");
+    }
 
     // 5. 期限順に並べ替え
     allTasks.sort(
