@@ -408,7 +408,7 @@ export default function SharedBoard() {
       toast({
         title: "タスクが正常に追加されました",
         status: "success",
-        duration: 8000,
+        duration: 3000,
         isClosable: true,
         render: () => (
           <Box p={3} color="white" bg="green.500" borderRadius="md">
