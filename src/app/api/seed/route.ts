@@ -1,6 +1,6 @@
 // 本番環境ではシーダーを無効化
 export async function POST() {
-  console.log("シーダーは本番環境では無効化されています");
+  console.log("シーダーは本番環境では無効化されています。");
 
   return Response.json(
     {
