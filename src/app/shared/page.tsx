@@ -283,10 +283,14 @@ export default function SharedBoard() {
         taskIdAsString: String(taskId),
       });
 
-      // 正しいAPIエンドポイントを使用
-      const apiUrl = "/api/shared/tasks";
+      // 選択したタスクを取得
+      const selectedTask = tasks.find((task) => task.id === taskId);
 
-      console.log("APIリクエスト送信先:", apiUrl);
+      if (!selectedTask) {
+        throw new Error(`ID ${taskId} のタスクが見つかりません`);
+      }
+
+      console.log("追加対象タスク:", selectedTask);
 
       if (!user || !user.id) {
         throw new Error("ユーザー情報が見つかりません");
@@ -299,12 +303,20 @@ export default function SharedBoard() {
         role: user.role,
       });
 
+      // 通常のタスク作成と同じAPIを使用する
+      const apiUrl = "/api/tasks";
+
+      console.log("APIリクエスト送信先:", apiUrl);
+
+      // 新しいタスクとして作成するリクエストボディ
       const requestBody = {
-        action: "addTaskToUser",
-        taskId: String(taskId), // 確実に文字列に変換
+        title: `[共有] ${selectedTask.title}`,
+        description: selectedTask.description,
+        due_date: selectedTask.due_date,
+        priority: selectedTask.priority,
       };
 
-      console.log("リクエストボディ:", requestBody);
+      console.log("タスク作成リクエストボディ:", requestBody);
 
       // ユーザー情報の詳細ログ
       const userInfo = {
@@ -314,9 +326,9 @@ export default function SharedBoard() {
       };
       console.log("送信するユーザー情報:", JSON.stringify(userInfo));
 
-      // リクエストの送信
+      // リクエストの送信（POSTメソッドでタスクを作成）
       const response = await fetch(apiUrl, {
-        method: "PATCH",
+        method: "POST",
         headers: {
           "Content-Type": "application/json",
           "x-user": JSON.stringify(userInfo),
@@ -363,117 +375,70 @@ export default function SharedBoard() {
       console.log("タスク追加成功レスポンス:", data);
 
       // 成功時にUIを更新
-      if (data.taskIds) {
-        // 追加済みタスクIDsを更新
-        console.log("追加済みタスクIDsを更新:", data.taskIds);
-        setAddedTaskIds(data.taskIds);
+      // 追加済みタスクIDsを更新して追加ボタンの状態を変える
+      const taskIdStr = String(taskId);
+      setAddedTaskIds((prev) => [...prev, taskIdStr]);
 
-        // タスク追加ボタンの状態を更新
-        const taskIdStr = String(taskId);
-        if (!addedTaskIds.includes(taskIdStr)) {
-          setAddedTaskIds((prev) => [...prev, taskIdStr]);
-        }
-      }
-
-      // ユーザーのタスク一覧を更新するためのリクエスト
+      // 旧APIとの互換性のために、共有タスクリストにも追加する
       try {
-        console.log("ユーザーのタスク一覧を更新するリクエストを送信...");
-        // ユーザーのタスク一覧を更新するためにユーザーのタスクページに通知
-        const refreshResponse = await fetch("/api/tasks", {
-          method: "GET",
+        console.log("共有タスクリストに追加記録...");
+        const recordResponse = await fetch("/api/shared/tasks", {
+          method: "PATCH",
           headers: {
-            "x-user": JSON.stringify({
-              id: user.id,
-              username: user.username,
-              role: user.role,
-            }),
-            "x-refresh": "true", // カスタムヘッダーでキャッシュをバイパス
-            "Cache-Control": "no-cache, no-store",
-            Pragma: "no-cache",
+            "Content-Type": "application/json",
+            "x-user": JSON.stringify(userInfo),
           },
-          // キャッシュを完全に無効化
-          cache: "no-store",
+          body: JSON.stringify({
+            action: "addTaskToUser",
+            taskId: taskIdStr,
+          }),
         });
 
-        if (refreshResponse.ok) {
-          console.log("ユーザーのタスク一覧を更新しました");
-          const tasksData = await refreshResponse.json();
-          console.log("更新されたタスク一覧:", tasksData.length, "件");
-
-          // 更新されたタスク一覧の詳細ログを強化
-          const sharedTasksCount = tasksData.filter((t: any) =>
-            t.id.startsWith("shared-")
-          ).length;
-          console.log(
-            `標準タスク: ${
-              tasksData.length - sharedTasksCount
-            }件, 共有タスク: ${sharedTasksCount}件`
-          );
-
-          console.log(
-            "更新されたタスク詳細:",
-            tasksData.map((t: any) => ({
-              id: t.id,
-              title:
-                t.title.substring(0, 20) + (t.title.length > 20 ? "..." : ""),
-              status: t.status,
-              isShared: t.id.startsWith("shared-"),
-            }))
-          );
-
-          // タスク一覧ページの強制更新フラグを設定し、ユーザーにナビゲーションを促す
-          if (typeof window !== "undefined") {
-            sessionStorage.setItem("forceTaskRefresh", "true");
-          }
-
-          // 正常に追加されたことを確認
-          const taskAdded = tasksData.some((t: any) => t.id === taskId);
-
-          toast({
-            title: "タスクが正常に追加されました",
-            description: taskAdded
-              ? "タスクが正常に追加されました。タスク管理ページで確認できます。"
-              : "タスクは追加されましたが、表示には再読み込みが必要な場合があります。",
-            status: "success",
-            duration: 5000,
-            isClosable: true,
-          });
-
-          // 別途ナビゲーションを促すトースト
-          if (taskAdded) {
-            setTimeout(() => {
-              toast({
-                title: "タスク管理ページへ移動しますか？",
-                status: "info",
-                duration: 10000,
-                isClosable: true,
-                render: () => (
-                  <Box p={3} color="white" bg="blue.500" borderRadius="md">
-                    <VStack align="stretch" spacing={3}>
-                      <Text fontWeight="bold">
-                        タスク管理ページへ移動しますか？
-                      </Text>
-                      <Text fontSize="sm">
-                        追加したタスクを確認するにはタスク管理ページへ移動してください
-                      </Text>
-                      <Button
-                        colorScheme="whiteAlpha"
-                        onClick={() => router.push("/member/tasks")}
-                      >
-                        タスク管理へ移動
-                      </Button>
-                    </VStack>
-                  </Box>
-                ),
-              });
-            }, 1000);
-          }
+        if (recordResponse.ok) {
+          const recordData = await recordResponse.json();
+          console.log("共有タスクリスト追加記録成功:", recordData);
         } else {
-          console.warn("タスク一覧の更新に失敗:", refreshResponse.status);
+          console.warn("共有タスクリスト追加記録失敗:", recordResponse.status);
         }
-      } catch (refreshError) {
-        console.warn("ユーザーのタスク一覧更新中にエラー:", refreshError);
+      } catch (recordError) {
+        console.warn("共有タスクリスト追加記録エラー:", recordError);
       }
+
+      // タスク管理ページに追加されたことをトースト通知
+      toast({
+        title: "タスクが正常に追加されました",
+        description:
+          "タスクがあなたのタスク一覧に追加されました。タスク管理ページで確認できます。",
+        status: "success",
+        duration: 5000,
+        isClosable: true,
+      });
+
+      // タスク管理ページへ移動を促すトースト
+      setTimeout(() => {
+        toast({
+          title: "タスク管理ページへ移動しますか？",
+          status: "info",
+          duration: 10000,
+          isClosable: true,
+          render: () => (
+            <Box p={3} color="white" bg="blue.500" borderRadius="md">
+              <VStack align="stretch" spacing={3}>
+                <Text fontWeight="bold">タスク管理ページへ移動しますか？</Text>
+                <Text fontSize="sm">
+                  追加したタスクを確認するにはタスク管理ページへ移動してください
+                </Text>
+                <Button
+                  colorScheme="whiteAlpha"
+                  onClick={() => router.push("/member/tasks")}
+                >
+                  タスク管理へ移動
+                </Button>
+              </VStack>
+            </Box>
+          ),
+        });
+      }, 1000);
 
       // タスクリストを更新（追加済みタスクの状態更新のため）
       await fetchTasks();
