@@ -67,6 +67,8 @@ export default function TasksPage() {
       const response = await fetch("/api/tasks", {
         headers: {
           "x-user": JSON.stringify(user),
+          "Cache-Control": "no-cache, no-store",
+          Pragma: "no-cache",
         },
       });
 
@@ -208,10 +210,10 @@ export default function TasksPage() {
 
   // ページロード時にタスク一覧を取得
   useEffect(() => {
-    if (isLoggedIn) {
+    if (user) {
       fetchTasks();
     }
-  }, [fetchTasks, isLoggedIn]);
+  }, [user]);
 
   // ログインしていない場合は何も表示しない
   if (!isLoggedIn) {

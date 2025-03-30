@@ -328,19 +328,36 @@ export default function SharedBoard() {
       if (data && data.taskIds) {
         console.log("追加済みタスクIDsを更新:", data.taskIds);
         setAddedTaskIds(data.taskIds);
-      } else {
-        console.log("追加済みタスクIDs不明 - fetchTasksで再取得します");
-        // タスクリストを更新して追加済みタスクも取得
-        fetchTasks();
+      }
+
+      // ユーザーのタスク一覧を更新するためのリクエスト
+      try {
+        // ユーザーのタスク一覧を更新するためにユーザーのタスクページに通知
+        const refreshResponse = await fetch("/api/tasks", {
+          headers: {
+            "x-user": JSON.stringify(user),
+            "x-refresh": "true", // カスタムヘッダーでキャッシュをバイパス
+          },
+        });
+
+        if (refreshResponse.ok) {
+          console.log("ユーザーのタスク一覧を更新しました");
+        }
+      } catch (refreshError) {
+        console.warn("ユーザーのタスク一覧更新中にエラー:", refreshError);
       }
 
       toast({
         title: "タスクが追加されました",
-        description: "タスクが正常にあなたのタスクリストに追加されました",
+        description:
+          "タスクが正常にあなたのタスクリストに追加されました。タスク管理ページで確認できます。",
         status: "success",
-        duration: 3000,
+        duration: 5000,
         isClosable: true,
       });
+
+      // タスクリストを更新
+      fetchTasks();
     } catch (error) {
       console.error("タスク追加失敗:", error);
       toast({

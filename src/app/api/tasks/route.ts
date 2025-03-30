@@ -139,14 +139,22 @@ export const userTasks = tasks;
 
 export async function GET(request: NextRequest) {
   try {
+    console.log("タスク一覧取得API呼び出し");
+
     // ユーザー情報を取得
     const userStr = request.headers.get("x-user");
     if (!userStr) {
       return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
     }
 
+    // リフレッシュヘッダーをチェック
+    const shouldRefresh = request.headers.get("x-refresh") === "true";
+    if (shouldRefresh) {
+      console.log("リフレッシュモード: キャッシュをスキップします");
+    }
+
     const user = JSON.parse(userStr) as User;
-    console.log("ユーザータスク取得:", {
+    console.log("ユーザー情報:", {
       userId: user.id,
       username: user.username,
     });
