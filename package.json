@@ -7,8 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "seed": "curl -X POST http://localhost:3000/api/seed-local",
-    "migrate": "curl -X POST http://localhost:3000/api/migrate-local"
+    // "seed": "curl -X POST http://localhost:3000/api/seed-local",
+    // "migrate": "curl -X POST http://localhost:3000/api/migrate-local"
   },
   "dependencies": {
     "@chakra-ui/icons": "^2.2.4",
