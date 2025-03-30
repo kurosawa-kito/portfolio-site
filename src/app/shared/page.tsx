@@ -382,16 +382,52 @@ export default function SharedBoard() {
             }))
           );
 
-          // タスク一覧ページの強制更新が必要な場合、ユーザーに通知
-          if (sharedTasksCount > 0 && addedTaskIds.includes(taskId as string)) {
-            toast({
-              title: "タスクが正常に追加されました",
-              description:
-                "タスク管理ページに移動して一覧を更新すると、新しいタスクが表示されます。",
-              status: "success",
-              duration: 5000,
-              isClosable: true,
-            });
+          // タスク一覧ページの強制更新フラグを設定し、ユーザーにナビゲーションを促す
+          if (typeof window !== "undefined") {
+            sessionStorage.setItem("forceTaskRefresh", "true");
+          }
+
+          // 正常に追加されたことを確認
+          const taskAdded = tasksData.some((t: any) => t.id === taskId);
+
+          toast({
+            title: "タスクが正常に追加されました",
+            description: taskAdded
+              ? "タスクが正常に追加されました。タスク管理ページで確認できます。"
+              : "タスクは追加されましたが、表示には再読み込みが必要な場合があります。",
+            status: "success",
+            duration: 5000,
+            isClosable: true,
+          });
+
+          // 別途ナビゲーションを促すトースト
+          if (taskAdded) {
+            setTimeout(() => {
+              toast({
+                title: "タスク管理ページへ移動しますか？",
+                status: "info",
+                duration: 10000,
+                isClosable: true,
+                render: () => (
+                  <Box p={3} color="white" bg="blue.500" borderRadius="md">
+                    <VStack align="stretch" spacing={3}>
+                      <Text fontWeight="bold">
+                        タスク管理ページへ移動しますか？
+                      </Text>
+                      <Text fontSize="sm">
+                        追加したタスクを確認するにはタスク管理ページへ移動してください
+                      </Text>
+                      <Button
+                        colorScheme="whiteAlpha"
+                        onClick={() => router.push("/member/tasks")}
+                      >
+                        タスク管理へ移動
+                      </Button>
+                    </VStack>
+                  </Box>
+                ),
+              });
+            }, 1000);
           }
         } else {
           console.warn("タスク一覧の更新に失敗:", refreshResponse.status);
@@ -399,15 +435,6 @@ export default function SharedBoard() {
       } catch (refreshError) {
         console.warn("ユーザーのタスク一覧更新中にエラー:", refreshError);
       }
-
-      toast({
-        title: "タスクが追加されました",
-        description:
-          "タスクが正常にあなたのタスクリストに追加されました。タスク管理ページで確認できます。",
-        status: "success",
-        duration: 5000,
-        isClosable: true,
-      });
 
       // タスクリストを更新（追加済みタスクの状態更新のため）
       await fetchTasks();

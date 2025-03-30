@@ -238,9 +238,25 @@ export default function TasksPage() {
   // ページロード時にタスク一覧を取得
   useEffect(() => {
     if (user) {
+      console.log("タスク一覧ページ読み込み - タスク取得開始");
       fetchTasks();
+
+      // ブラウザ環境でのみ実行
+      if (typeof window !== "undefined") {
+        // 共有タスクが追加された後のページアクセスでキャッシュを強制クリア
+        const forceRefresh = sessionStorage.getItem("forceTaskRefresh");
+        if (forceRefresh === "true") {
+          console.log("強制リフレッシュモードでタスクを再取得します");
+          sessionStorage.removeItem("forceTaskRefresh");
+
+          // 少し遅延させてタスクを再取得（APIの状態が更新される時間を確保）
+          setTimeout(() => {
+            fetchTasks();
+          }, 1000);
+        }
+      }
     }
-  }, [user]);
+  }, [user, fetchTasks]);
 
   // ログインしていない場合は何も表示しない
   if (!isLoggedIn) {

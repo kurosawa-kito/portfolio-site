@@ -82,8 +82,32 @@ export const updateUserAddedTasks = (
 };
 
 // 共有タスク一覧を取得するAPI
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const url = new URL(request.url);
+    const pathSegments = url.pathname.split("/");
+    const taskId = pathSegments[pathSegments.length - 1];
+
+    // '/api/shared/tasks/[taskId]' の形式の場合、特定のタスクを返す
+    if (taskId && taskId !== "tasks") {
+      console.log(`特定の共有タスクを取得するリクエスト: ID=${taskId}`);
+
+      const task = sharedTasks.find((t) => t.id === taskId);
+
+      if (task) {
+        console.log(`タスクID ${taskId} が見つかりました:`, task.title);
+        return NextResponse.json(task, { status: 200 });
+      } else {
+        console.log(`タスクID ${taskId} が見つかりませんでした`);
+        return NextResponse.json(
+          { error: "指定されたタスクが見つかりません" },
+          { status: 404 }
+        );
+      }
+    }
+
+    // 通常の一覧取得
+    console.log("共有タスク一覧を取得するリクエスト");
     return NextResponse.json(sharedTasks, { status: 200 });
   } catch (error) {
     console.error("共有タスク取得エラー:", error);

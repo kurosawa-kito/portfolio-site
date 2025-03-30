@@ -238,6 +238,12 @@ export async function GET(request: NextRequest) {
     // 追加済みのタスクIDがある場合のみ処理
     if (userAddedTaskIds.length > 0) {
       console.log(`${userAddedTaskIds.length}個の共有タスクを処理中...`);
+      console.log(`処理する共有タスクID: ${userAddedTaskIds.join(", ")}`);
+      console.log(
+        `全共有タスク数: ${sharedTasks.length}件, ID一覧: ${sharedTasks
+          .map((t) => t.id)
+          .join(", ")}`
+      );
 
       for (const taskId of userAddedTaskIds) {
         // 対応する共有タスクを検索
@@ -246,6 +252,7 @@ export async function GET(request: NextRequest) {
         console.log(`ID ${taskId} の共有タスク検索結果:`, {
           found: !!sharedTask,
           title: sharedTask?.title || "なし",
+          allSharedTaskIds: sharedTasks.map((t) => t.id),
         });
 
         if (sharedTask) {
@@ -267,10 +274,65 @@ export async function GET(request: NextRequest) {
 
           userAddedSharedTasks.push(userTask);
           console.log(
-            `共有タスク "${sharedTask.title}" をユーザータスク "${userTask.title}" に変換`
+            `共有タスク "${sharedTask.title}" をユーザータスク "${userTask.title}" に変換完了`
           );
         } else {
-          console.log(`警告: ID ${taskId} の共有タスクが見つかりません`);
+          console.log(
+            `警告: ID ${taskId} の共有タスクが見つかりません。直接検索を試みます。`
+          );
+
+          // 直接APIから特定の共有タスクを取得してみる（バックアップ処理）
+          try {
+            const specificTaskUrl = new URL(
+              `/api/shared/tasks/${taskId}`,
+              "http://localhost:3000"
+            ).toString();
+
+            const specificTaskResponse = await fetch(specificTaskUrl, {
+              headers: { "x-user": userStr },
+            });
+
+            if (specificTaskResponse.ok) {
+              const specificTask = await specificTaskResponse.json();
+              console.log(
+                `ID ${taskId} の共有タスクを直接取得成功:`,
+                specificTask.title || "不明なタイトル"
+              );
+
+              // 直接取得したタスクをユーザータスクに変換
+              const userTask: Task = {
+                id: specificTask.id,
+                title: `[共有] ${specificTask.title}`,
+                description: specificTask.description || "",
+                status: "pending",
+                due_date:
+                  specificTask.due_date ||
+                  new Date().toISOString().split("T")[0],
+                priority: specificTask.priority || "medium",
+                assigned_to: user.id,
+                assigned_to_username: user.username,
+                created_by: specificTask.created_by || user.id,
+                created_by_username:
+                  specificTask.created_by_username || user.username,
+                created_at: specificTask.created_at || new Date().toISOString(),
+                updated_at: specificTask.created_at || new Date().toISOString(),
+              };
+
+              userAddedSharedTasks.push(userTask);
+              console.log(
+                `共有タスク "${specificTask.title}" を直接APIから取得してユーザータスクに変換完了`
+              );
+            } else {
+              console.log(
+                `ID ${taskId} の共有タスクを直接取得できませんでした: ${specificTaskResponse.status}`
+              );
+            }
+          } catch (specificError) {
+            console.error(
+              `ID ${taskId} の共有タスク直接取得エラー:`,
+              specificError
+            );
+          }
         }
       }
     }
@@ -284,6 +346,15 @@ export async function GET(request: NextRequest) {
           title: task.title,
           status: task.status,
         }))
+      );
+    } else {
+      console.log(
+        "警告: 追加済みタスクIDはあるが、変換された共有タスクがありません"
+      );
+      console.log("ユーザー追加済みタスクID:", userAddedTaskIds);
+      console.log(
+        "利用可能な共有タスク:",
+        sharedTasks.map((t) => ({ id: t.id, title: t.title }))
       );
     }
 
