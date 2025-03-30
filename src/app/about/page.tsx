@@ -1,3 +1,4 @@
+// 自己紹介ページ
 export default function About() {
   return (
     <div className="container mx-auto p-4">
