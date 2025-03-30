@@ -115,18 +115,38 @@ export default function SharedBoard() {
     setIsLoadingTasks(true);
     try {
       // 共有タスク一覧を取得
+      console.log("共有タスク一覧取得開始...");
       const tasksResponse = await fetch("/api/shared/tasks", {
         headers: {
           "x-user": JSON.stringify(user),
+          // キャッシュを防止
+          "Cache-Control": "no-cache, no-store",
+          Pragma: "no-cache",
         },
+        cache: "no-store",
       });
 
       if (tasksResponse.ok) {
         const tasksData = await tasksResponse.json();
+        console.log(`共有タスク一覧取得成功: ${tasksData.length}件`);
+        console.log(
+          "取得した共有タスク:",
+          tasksData.map((t: any) => ({
+            id: t.id,
+            title: t.title.substring(0, 15) + "...",
+          }))
+        );
         setTasks(tasksData);
+      } else {
+        console.error(
+          "共有タスク一覧取得エラー:",
+          tasksResponse.status,
+          tasksResponse.statusText
+        );
       }
 
       // ユーザーが追加済みのタスクIDを取得
+      console.log("追加済みタスクID取得開始...");
       const addedTasksResponse = await fetch("/api/shared/tasks", {
         method: "PATCH",
         headers: {
@@ -140,7 +160,14 @@ export default function SharedBoard() {
 
       if (addedTasksResponse.ok) {
         const { taskIds } = await addedTasksResponse.json();
+        console.log("追加済みタスクID取得成功:", taskIds);
         setAddedTaskIds(taskIds);
+      } else {
+        console.error(
+          "追加済みタスクID取得エラー:",
+          addedTasksResponse.status,
+          addedTasksResponse.statusText
+        );
       }
     } catch (error) {
       console.error("共有タスク取得エラー:", error);
