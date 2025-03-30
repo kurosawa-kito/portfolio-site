@@ -404,41 +404,29 @@ export default function SharedBoard() {
         console.warn("共有タスクリスト追加記録エラー:", recordError);
       }
 
-      // タスク管理ページに追加されたことをトースト通知
+      // タスク管理ページに追加されたことをトースト通知（統合版）
       toast({
         title: "タスクが正常に追加されました",
-        description:
-          "タスクがあなたのタスク一覧に追加されました。タスク管理ページで確認できます。",
         status: "success",
-        duration: 5000,
+        duration: 8000,
         isClosable: true,
+        render: () => (
+          <Box p={3} color="white" bg="green.500" borderRadius="md">
+            <VStack align="stretch" spacing={3}>
+              <Text fontWeight="bold">タスクが正常に追加されました</Text>
+              <Text fontSize="sm">
+                タスクがあなたのタスク一覧に追加されました。タスク管理ページで確認できます。
+              </Text>
+              <Button
+                colorScheme="whiteAlpha"
+                onClick={() => router.push("/member/tasks")}
+              >
+                タスク管理へ移動
+              </Button>
+            </VStack>
+          </Box>
+        ),
       });
-
-      // タスク管理ページへ移動を促すトースト
-      setTimeout(() => {
-        toast({
-          title: "タスク管理ページへ移動しますか？",
-          status: "info",
-          duration: 10000,
-          isClosable: true,
-          render: () => (
-            <Box p={3} color="white" bg="blue.500" borderRadius="md">
-              <VStack align="stretch" spacing={3}>
-                <Text fontWeight="bold">タスク管理ページへ移動しますか？</Text>
-                <Text fontSize="sm">
-                  追加したタスクを確認するにはタスク管理ページへ移動してください
-                </Text>
-                <Button
-                  colorScheme="whiteAlpha"
-                  onClick={() => router.push("/member/tasks")}
-                >
-                  タスク管理へ移動
-                </Button>
-              </VStack>
-            </Box>
-          ),
-        });
-      }, 1000);
 
       // タスクリストを更新（追加済みタスクの状態更新のため）
       await fetchTasks();
