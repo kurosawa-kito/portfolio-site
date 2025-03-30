@@ -22,7 +22,7 @@
 //       VALUES ('user', 'user@example.com', ${userPassword}, 'member');
 //     `;
 
-//     // サンプルプロジェクトを追加
+//     // サンプルプロジェクトを追加a
 //     await sql`
 //       INSERT INTO projects (name, description, start_date, end_date)
 //       VALUES ('サンプルプロジェクト', 'これはサンプルプロジェクトです', CURRENT_DATE, CURRENT_DATE + INTERVAL '1 month');

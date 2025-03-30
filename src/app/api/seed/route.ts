@@ -1,3 +1,4 @@
+// 本番環境ではシーダーを無効化
 // import { sql } from "@vercel/postgres";
 // import bcrypt from "bcrypt";
 
