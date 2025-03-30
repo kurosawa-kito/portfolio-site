@@ -419,7 +419,10 @@ export default function SharedBoard() {
               </Text>
               <Button
                 colorScheme="whiteAlpha"
-                onClick={() => router.push("/member/tasks")}
+                onClick={() => {
+                  toast.closeAll(); // すべてのトーストを閉じる
+                  router.push("/member/tasks");
+                }}
               >
                 タスク管理へ移動
               </Button>
