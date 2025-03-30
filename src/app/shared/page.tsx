@@ -147,6 +147,23 @@ export default function SharedBoard() {
 
       // ユーザーが追加済みのタスクIDを取得
       console.log("追加済みタスクID取得開始...");
+      // ローカルストレージから追加済みタスクIDを取得
+      const localTaskIds = localStorage.getItem(`addedTaskIds_${user.id}`);
+      let savedTaskIds: string[] = [];
+
+      if (localTaskIds) {
+        try {
+          savedTaskIds = JSON.parse(localTaskIds);
+          console.log(
+            "ローカルストレージから取得した追加済みタスクID:",
+            savedTaskIds
+          );
+        } catch (e) {
+          console.error("ローカルストレージのデータ解析エラー:", e);
+        }
+      }
+
+      // APIからも追加済みタスクIDを取得して統合
       const addedTasksResponse = await fetch("/api/shared/tasks", {
         method: "PATCH",
         headers: {
@@ -164,14 +181,31 @@ export default function SharedBoard() {
 
       if (addedTasksResponse.ok) {
         const { taskIds } = await addedTasksResponse.json();
-        console.log("追加済みタスクID取得成功:", taskIds);
-        setAddedTaskIds(taskIds);
+        console.log("APIから取得した追加済みタスクID:", taskIds);
+
+        // APIとローカルストレージから取得したIDを統合して重複を除去
+        const combinedTaskIds = [...new Set([...savedTaskIds, ...taskIds])];
+        console.log("統合した追加済みタスクID:", combinedTaskIds);
+
+        // 最新のタスクIDセットをローカルストレージに保存
+        localStorage.setItem(
+          `addedTaskIds_${user.id}`,
+          JSON.stringify(combinedTaskIds)
+        );
+
+        // ステートに設定
+        setAddedTaskIds(combinedTaskIds);
       } else {
         console.error(
           "追加済みタスクID取得エラー:",
           addedTasksResponse.status,
           addedTasksResponse.statusText
         );
+
+        // APIから取得できない場合はローカルストレージのデータだけを使用
+        if (savedTaskIds.length > 0) {
+          setAddedTaskIds(savedTaskIds);
+        }
       }
     } catch (error) {
       console.error("共有タスク取得エラー:", error);
@@ -377,7 +411,15 @@ export default function SharedBoard() {
       // 成功時にUIを更新
       // 追加済みタスクIDsを更新して追加ボタンの状態を変える
       const taskIdStr = String(taskId);
-      setAddedTaskIds((prev) => [...prev, taskIdStr]);
+      setAddedTaskIds((prev) => {
+        const updatedIds = [...prev, taskIdStr];
+        // ローカルストレージにも保存
+        localStorage.setItem(
+          `addedTaskIds_${user.id}`,
+          JSON.stringify(updatedIds)
+        );
+        return updatedIds;
+      });
 
       // 旧APIとの互換性のために、共有タスクリストにも追加する
       try {
