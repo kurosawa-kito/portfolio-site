@@ -226,15 +226,22 @@ export async function GET(request: NextRequest) {
 
     // 追加済みのタスクIDがある場合のみ処理
     if (userAddedTaskIds.length > 0) {
+      console.log(`${userAddedTaskIds.length}個の共有タスクを処理中...`);
+
       for (const taskId of userAddedTaskIds) {
         // 対応する共有タスクを検索
         const sharedTask = sharedTasks.find((task) => task.id === taskId);
+
+        console.log(`ID ${taskId} の共有タスク検索結果:`, {
+          found: !!sharedTask,
+          title: sharedTask?.title || "なし",
+        });
 
         if (sharedTask) {
           // 共有タスクをユーザータスクに変換
           const userTask: Task = {
             id: sharedTask.id,
-            title: sharedTask.title,
+            title: `[共有] ${sharedTask.title}`, // タイトルに[共有]を付けて区別
             description: sharedTask.description,
             status: "pending", // 共有タスクのデフォルトステータス
             due_date: sharedTask.due_date,
@@ -249,15 +256,25 @@ export async function GET(request: NextRequest) {
 
           userAddedSharedTasks.push(userTask);
           console.log(
-            `共有タスク "${sharedTask.title}" をユーザータスクに変換`
+            `共有タスク "${sharedTask.title}" をユーザータスク "${userTask.title}" に変換`
           );
         } else {
-          console.log(`ID ${taskId} の共有タスクが見つかりません`);
+          console.log(`警告: ID ${taskId} の共有タスクが見つかりません`);
         }
       }
     }
 
     console.log(`変換された共有タスク: ${userAddedSharedTasks.length}件`);
+    if (userAddedSharedTasks.length > 0) {
+      console.log(
+        "変換された共有タスクの詳細:",
+        userAddedSharedTasks.map((task) => ({
+          id: task.id,
+          title: task.title,
+          status: task.status,
+        }))
+      );
+    }
 
     // 4. ユーザータスクと共有タスクを結合
     const allTasks = [...userTasks, ...userAddedSharedTasks];

@@ -338,20 +338,39 @@ export default function SharedBoard() {
 
       // ユーザーのタスク一覧を更新するためのリクエスト
       try {
+        console.log("ユーザーのタスク一覧を更新するリクエストを送信...");
         // ユーザーのタスク一覧を更新するためにユーザーのタスクページに通知
         const refreshResponse = await fetch("/api/tasks", {
+          method: "GET",
           headers: {
-            "x-user": JSON.stringify(user),
+            "x-user": JSON.stringify({
+              id: user.id,
+              username: user.username,
+              role: user.role,
+            }),
             "x-refresh": "true", // カスタムヘッダーでキャッシュをバイパス
             "Cache-Control": "no-cache, no-store",
             Pragma: "no-cache",
           },
+          // キャッシュを完全に無効化
+          cache: "no-store",
         });
 
         if (refreshResponse.ok) {
           console.log("ユーザーのタスク一覧を更新しました");
           const tasksData = await refreshResponse.json();
           console.log("更新されたタスク一覧:", tasksData.length, "件");
+          console.log(
+            "更新されたタスク詳細:",
+            tasksData.map((t: any) => ({
+              id: t.id,
+              title:
+                t.title.substring(0, 20) + (t.title.length > 20 ? "..." : ""),
+              status: t.status,
+            }))
+          );
+        } else {
+          console.warn("タスク一覧の更新に失敗:", refreshResponse.status);
         }
       } catch (refreshError) {
         console.warn("ユーザーのタスク一覧更新中にエラー:", refreshError);
