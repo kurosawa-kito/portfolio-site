@@ -66,7 +66,7 @@ export async function PUT(
       description,
       due_date,
       priority,
-      is_all_day,
+      ...(is_all_day !== undefined ? { is_all_day } : {}),
       updated_at: new Date().toISOString(),
     };
 
