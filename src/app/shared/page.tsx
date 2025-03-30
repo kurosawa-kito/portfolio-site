@@ -245,7 +245,13 @@ export default function SharedBoard() {
     setIsAddingTask((prev) => ({ ...prev, [taskId]: true }));
 
     try {
-      console.log("タスク追加開始:", { taskId, user });
+      // taskIdの詳細なログ
+      console.log("タスク追加開始:", {
+        taskId,
+        taskIdType: typeof taskId,
+        taskIdAsString: String(taskId),
+        user,
+      });
 
       // 正しいAPIエンドポイントを使用
       const apiUrl = "/api/shared/tasks";
@@ -263,6 +269,13 @@ export default function SharedBoard() {
         role: user.role,
       });
 
+      const requestBody = {
+        action: "addTaskToUser",
+        taskId: String(taskId), // 確実に文字列に変換
+      };
+
+      console.log("リクエストボディ:", requestBody);
+
       // リクエストの送信
       const response = await fetch(apiUrl, {
         method: "PATCH",
@@ -274,20 +287,20 @@ export default function SharedBoard() {
             role: user.role,
           }),
         },
-        body: JSON.stringify({
-          action: "addTaskToUser",
-          taskId: taskId.toString(), // 確実に文字列に変換
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       console.log("APIレスポンスステータス:", response.status);
 
       const responseText = await response.text();
+      console.log("生レスポンス:", responseText);
+
       let data;
 
       try {
         // レスポンスがJSONの場合はパース
         data = responseText ? JSON.parse(responseText) : {};
+        console.log("パース後のレスポンスデータ:", data);
       } catch (e) {
         console.error(
           "レスポンスのJSONパースエラー:",
@@ -310,7 +323,16 @@ export default function SharedBoard() {
       }
 
       console.log("タスク追加成功レスポンス:", data);
-      setAddedTaskIds(data.taskIds || []);
+
+      // 追加済みタスクIDsを更新
+      if (data && data.taskIds) {
+        console.log("追加済みタスクIDsを更新:", data.taskIds);
+        setAddedTaskIds(data.taskIds);
+      } else {
+        console.log("追加済みタスクIDs不明 - fetchTasksで再取得します");
+        // タスクリストを更新して追加済みタスクも取得
+        fetchTasks();
+      }
 
       toast({
         title: "タスクが追加されました",
@@ -319,9 +341,6 @@ export default function SharedBoard() {
         duration: 3000,
         isClosable: true,
       });
-
-      // タスクリストを更新
-      fetchTasks();
     } catch (error) {
       console.error("タスク追加失敗:", error);
       toast({
