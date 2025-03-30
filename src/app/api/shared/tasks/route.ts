@@ -85,6 +85,8 @@ export const updateUserAddedTasks = (
   newTasks: { userId: string; taskIds: string[] }[]
 ): void => {
   persistedUserAddedTasks = JSON.stringify(newTasks);
+  // デバッグ用：更新された値を出力
+  console.log("更新されたuserAddedTasks:", persistedUserAddedTasks);
 };
 
 // 共有タスク一覧を取得するAPI
@@ -114,7 +116,15 @@ export async function GET(request: NextRequest) {
 
     // 通常の一覧取得
     console.log("共有タスク一覧を取得するリクエスト");
-    return NextResponse.json(sharedTasks, { status: 200 });
+    // キャッシュを防止するためのヘッダーを追加
+    return NextResponse.json(sharedTasks, {
+      status: 200,
+      headers: {
+        "Cache-Control": "no-cache, no-store, must-revalidate",
+        Pragma: "no-cache",
+        Expires: "0",
+      },
+    });
   } catch (error) {
     console.error("共有タスク取得エラー:", error);
     return NextResponse.json(
@@ -348,7 +358,14 @@ export async function PATCH(request: NextRequest) {
         {
           taskIds: userAddedTask?.taskIds || [],
         },
-        { status: 200 }
+        {
+          status: 200,
+          headers: {
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            Pragma: "no-cache",
+            Expires: "0",
+          },
+        }
       );
     }
 
@@ -359,6 +376,8 @@ export async function PATCH(request: NextRequest) {
         userId: user.id,
         taskId,
         requestBody: body,
+        userRole: user.role,
+        userIdType: typeof user.id,
       });
 
       // タスクIDのチェック
@@ -381,16 +400,22 @@ export async function PATCH(request: NextRequest) {
         )}`
       );
 
-      const task = sharedTasks.find((task) => task.id === taskIdStr);
+      // IDの前後の空白を削除して検索
+      const trimmedTaskId = taskIdStr.trim();
+      const task = sharedTasks.find((task) => {
+        const trimmedId = task.id.trim();
+        const match = trimmedId === trimmedTaskId;
+        console.log(`比較: "${trimmedId}" === "${trimmedTaskId}" = ${match}`);
+        return match;
+      });
 
       console.log("タスク存在確認:", {
         taskIdStr,
+        trimmedTaskId,
         taskFound: !!task,
         taskTitle: task?.title || "見つかりません",
         tasksCount: sharedTasks.length,
-        exactComparison: sharedTasks.map(
-          (t) => `"${t.id}" === "${taskIdStr}" = ${t.id === taskIdStr}`
-        ),
+        allTaskIds: sharedTasks.map((t) => t.id),
       });
 
       // タスクが見つからない場合はエラーメッセージを強化して返す
@@ -409,6 +434,10 @@ export async function PATCH(request: NextRequest) {
 
         // 現在の追加済みタスク一覧を取得
         const userAddedTasks = getUserAddedTasks();
+        console.log(
+          "現在のuserAddedTasks（タスク検索失敗時）:",
+          JSON.stringify(userAddedTasks)
+        );
 
         // ユーザーのタスク追加状況を確認
         let userAddedTask = userAddedTasks.find(
@@ -422,6 +451,10 @@ export async function PATCH(request: NextRequest) {
             taskIds: [taskIdStr],
           };
           userAddedTasks.push(userAddedTask);
+          console.log("新規ユーザーとしてタスクIDを追加（タスク検索失敗時）:", {
+            userId: user.id,
+            taskId: taskIdStr,
+          });
         }
         // 既に追加済みの場合はスキップ
         else if (userAddedTask.taskIds.includes(taskIdStr)) {
@@ -436,6 +469,11 @@ export async function PATCH(request: NextRequest) {
         // 新しいタスクを追加
         else {
           userAddedTask.taskIds.push(taskIdStr);
+          console.log("既存ユーザーにタスクIDを追加（タスク検索失敗時）:", {
+            userId: user.id,
+            taskId: taskIdStr,
+            allTaskIds: userAddedTask.taskIds,
+          });
         }
 
         // 変更を永続化
@@ -493,6 +531,7 @@ export async function PATCH(request: NextRequest) {
         console.log("既存ユーザーにタスク追加:", {
           userId: user.id,
           taskId: taskIdStr,
+          allTaskIds: userAddedTask.taskIds,
         });
       }
 

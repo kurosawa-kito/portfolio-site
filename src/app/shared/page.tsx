@@ -152,10 +152,14 @@ export default function SharedBoard() {
         headers: {
           "Content-Type": "application/json",
           "x-user": JSON.stringify(user),
+          // キャッシュを防止
+          "Cache-Control": "no-cache, no-store",
+          Pragma: "no-cache",
         },
         body: JSON.stringify({
           action: "getUserAddedTasks",
         }),
+        cache: "no-store",
       });
 
       if (addedTasksResponse.ok) {
@@ -302,18 +306,26 @@ export default function SharedBoard() {
 
       console.log("リクエストボディ:", requestBody);
 
+      // ユーザー情報の詳細ログ
+      const userInfo = {
+        id: user.id,
+        username: user.username,
+        role: user.role,
+      };
+      console.log("送信するユーザー情報:", JSON.stringify(userInfo));
+
       // リクエストの送信
       const response = await fetch(apiUrl, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
-          "x-user": JSON.stringify({
-            id: user.id,
-            username: user.username,
-            role: user.role,
-          }),
+          "x-user": JSON.stringify(userInfo),
+          // キャッシュを防止
+          "Cache-Control": "no-cache, no-store",
+          Pragma: "no-cache",
         },
         body: JSON.stringify(requestBody),
+        cache: "no-store",
       });
 
       console.log("APIレスポンスステータス:", response.status);
