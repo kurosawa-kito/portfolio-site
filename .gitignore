@@ -39,3 +39,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# ローカル環境専用のシーダー
+/src/app/api/seed-local/
