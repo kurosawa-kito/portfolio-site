@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { User } from "@/types/user";
 import { tasks } from "../route";
+import {
+  sharedTasks,
+  getUserAddedTasks,
+  updateUserAddedTasks,
+} from "../../shared/tasks/route";
 
 // タスクインターフェース（APIルートと一致させる）
 interface Task {
@@ -75,13 +80,14 @@ export async function PUT(
   }
 }
 
-// タスクの削除APIエンドポイント
+// タスクを削除するAPI
 export async function DELETE(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
     const taskId = params.id;
+    console.log(`タスク削除リクエスト: ${taskId}`);
 
     // ユーザー情報を取得
     const userHeader = request.headers.get("x-user");
@@ -91,22 +97,76 @@ export async function DELETE(
 
     const user = JSON.parse(userHeader) as User;
 
-    // タスクの存在確認
-    const taskIndex = tasks.findIndex((task) => task.id === taskId);
-    if (taskIndex === -1) {
+    // 共有タスクかどうか判定
+    const isSharedTask = taskId.startsWith("shared-");
+
+    if (isSharedTask) {
+      console.log(`共有タスク削除処理: ${taskId}`);
+
+      // 共有タスクの存在確認
+      const taskIndex = sharedTasks.findIndex((task) => task.id === taskId);
+
+      if (taskIndex === -1) {
+        console.log(`共有タスク ${taskId} が見つかりません`);
+        return NextResponse.json(
+          { error: "指定された共有タスクが見つかりません" },
+          { status: 404 }
+        );
+      }
+
+      // 管理者または作成者のみ共有タスク削除可能
+      if (
+        user.role !== "admin" &&
+        sharedTasks[taskIndex].created_by !== user.id
+      ) {
+        return NextResponse.json(
+          { error: "この共有タスクを削除する権限がありません" },
+          { status: 403 }
+        );
+      }
+
+      // 共有タスクを削除
+      const deletedTask = sharedTasks.splice(taskIndex, 1)[0];
+
+      // ユーザーの追加済みタスク一覧からも削除
+      const userAddedTasks = getUserAddedTasks();
+      const updatedUserAddedTasks = userAddedTasks.map((item) => ({
+        ...item,
+        taskIds: item.taskIds.filter((id) => id !== taskId),
+      }));
+
+      updateUserAddedTasks(updatedUserAddedTasks);
+
+      console.log(`共有タスク ${taskId} を削除しました`);
       return NextResponse.json(
-        { error: "指定されたタスクが見つかりません" },
-        { status: 404 }
+        { message: "共有タスクを削除しました", deletedTask },
+        { status: 200 }
+      );
+    } else {
+      console.log(`通常タスク削除処理: ${taskId}`);
+
+      // 通常タスクの存在確認
+      const taskIndex = tasks.findIndex(
+        (task) => task.id === taskId && task.assigned_to === user.id
+      );
+
+      if (taskIndex === -1) {
+        console.log(`タスク ${taskId} が見つからないか、削除権限がありません`);
+        return NextResponse.json(
+          { error: "タスクが見つからないか、削除権限がありません" },
+          { status: 404 }
+        );
+      }
+
+      // タスクを削除
+      const deletedTask = tasks.splice(taskIndex, 1)[0];
+
+      console.log(`タスク ${taskId} を削除しました`);
+      return NextResponse.json(
+        { message: "タスクを削除しました", deletedTask },
+        { status: 200 }
       );
     }
-
-    // タスクを削除
-    const deletedTask = tasks.splice(taskIndex, 1)[0];
-
-    return NextResponse.json(
-      { message: "タスクを削除しました", deletedTask },
-      { status: 200 }
-    );
   } catch (error) {
     console.error("タスク削除エラー:", error);
     return NextResponse.json(

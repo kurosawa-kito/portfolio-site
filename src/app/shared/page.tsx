@@ -250,7 +250,6 @@ export default function SharedBoard() {
         taskId,
         taskIdType: typeof taskId,
         taskIdAsString: String(taskId),
-        user,
       });
 
       // 正しいAPIエンドポイントを使用
@@ -324,10 +323,17 @@ export default function SharedBoard() {
 
       console.log("タスク追加成功レスポンス:", data);
 
-      // 追加済みタスクIDsを更新
-      if (data && data.taskIds) {
+      // 成功時にUIを更新
+      if (data.taskIds) {
+        // 追加済みタスクIDsを更新
         console.log("追加済みタスクIDsを更新:", data.taskIds);
         setAddedTaskIds(data.taskIds);
+
+        // タスク追加ボタンの状態を更新
+        const taskIdStr = String(taskId);
+        if (!addedTaskIds.includes(taskIdStr)) {
+          setAddedTaskIds((prev) => [...prev, taskIdStr]);
+        }
       }
 
       // ユーザーのタスク一覧を更新するためのリクエスト
@@ -337,11 +343,15 @@ export default function SharedBoard() {
           headers: {
             "x-user": JSON.stringify(user),
             "x-refresh": "true", // カスタムヘッダーでキャッシュをバイパス
+            "Cache-Control": "no-cache, no-store",
+            Pragma: "no-cache",
           },
         });
 
         if (refreshResponse.ok) {
           console.log("ユーザーのタスク一覧を更新しました");
+          const tasksData = await refreshResponse.json();
+          console.log("更新されたタスク一覧:", tasksData.length, "件");
         }
       } catch (refreshError) {
         console.warn("ユーザーのタスク一覧更新中にエラー:", refreshError);
@@ -356,8 +366,8 @@ export default function SharedBoard() {
         isClosable: true,
       });
 
-      // タスクリストを更新
-      fetchTasks();
+      // タスクリストを更新（追加済みタスクの状態更新のため）
+      await fetchTasks();
     } catch (error) {
       console.error("タスク追加失敗:", error);
       toast({
