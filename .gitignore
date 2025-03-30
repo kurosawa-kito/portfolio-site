@@ -40,5 +40,6 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# ローカル環境専用のシーダー
+# ローカル環境専用のファイル
 /src/app/api/seed-local/
+/src/app/api/migrate-local/
