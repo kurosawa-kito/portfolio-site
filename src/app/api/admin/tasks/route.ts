@@ -47,7 +47,6 @@ export async function GET(request: NextRequest) {
           userStr = decodedStr;
         }
       } catch (e) {
-        console.error("Base64デコードエラー:", e);
         return NextResponse.json(
           { error: "ユーザー情報のデコードに失敗しました" },
           { status: 400 }
@@ -98,16 +97,11 @@ export async function GET(request: NextRequest) {
 
     const userTasks = result.rows as Task[];
 
-    console.log(
-      `ユーザー ${userId} に割り当てられたタスク: ${userTasks.length}件`
-    );
-
     return NextResponse.json({
       success: true,
       tasks: userTasks,
     });
   } catch (error) {
-    console.error("管理者タスク取得エラー:", error);
     return NextResponse.json(
       { success: false, message: "タスク情報の取得に失敗しました" },
       { status: 500 }

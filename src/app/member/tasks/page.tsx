@@ -95,8 +95,6 @@ export default function TasksPage() {
         Pragma: "no-cache",
       };
 
-      console.log("タスク取得リクエスト送信中...", { user });
-
       const response = await fetch("/api/tasks", {
         headers,
         cache: "no-store",
@@ -104,43 +102,14 @@ export default function TasksPage() {
 
       if (response.ok) {
         const data = await response.json();
-        console.log(`タスク一覧を取得しました: ${data.length}件`);
-
-        // 共有タスク含む詳細ログ
-        const sharedTasksCount = data.filter((t: any) =>
-          String(t.id).startsWith("shared-")
-        ).length;
-        if (sharedTasksCount > 0) {
-          console.log(
-            `標準タスク: ${
-              data.length - sharedTasksCount
-            }件, 共有タスク: ${sharedTasksCount}件`
-          );
-          console.log(
-            "共有タスク一覧:",
-            data
-              .filter((t: any) => String(t.id).startsWith("shared-"))
-              .map((t: any) => ({
-                id: t.id,
-                title: t.title,
-              }))
-          );
-        }
-
         setTasks(data);
       } else {
         const errorText = await response.text();
-        console.error("タスク取得APIエラー:", {
-          status: response.status,
-          statusText: response.statusText,
-          body: errorText,
-        });
         throw new Error(
           `タスクの取得に失敗しました: ${response.status} ${response.statusText}`
         );
       }
     } catch (error) {
-      console.error("タスク取得エラー:", error);
       toast({
         title: "エラー",
         description: "タスクの取得に失敗しました",
@@ -196,7 +165,6 @@ export default function TasksPage() {
         });
       }
     } catch (error) {
-      console.error("タスク更新エラー:", error);
       toast({
         title: "エラー",
         description: "タスクの更新に失敗しました",
@@ -214,25 +182,10 @@ export default function TasksPage() {
   };
 
   // タスク削除の処理
-  const handleDeleteTask = async (id: string | number) => {
+  const handleDeleteTask = async (taskId: string | number) => {
     try {
-      // 確認処理
-      if (!window.confirm("本当にこのタスクを削除しますか？")) {
-        return;
-      }
-
-      // IDを文字列に変換
-      const taskId = id.toString();
-
-      // 共有タスクと通常タスクを区別
-      const isSharedTask = taskId.startsWith("shared-");
-      const endpoint = isSharedTask
-        ? `/api/shared/tasks/${taskId}`
-        : `/api/tasks/${taskId}`;
-
-      console.log(
-        `タスク削除: ${isSharedTask ? "共有タスク" : "通常タスク"} ID=${taskId}`
-      );
+      setIsDeleteConfirmOpen(true);
+      setDeletingTaskId(taskId);
 
       // ユーザー情報をBase64エンコードして非ASCII文字の問題を回避
       const userStr = JSON.stringify(user);
@@ -242,44 +195,36 @@ export default function TasksPage() {
           ? safeBase64Encode(userStr, user)
           : Buffer.from(userStr).toString("base64");
 
-      // ヘッダーを別変数に定義
+      // 削除用のヘッダーを定義
       const deleteHeaders = {
-        "Content-Type": "application/json",
         "x-user-base64": userBase64,
       };
 
-      const response = await fetch(endpoint, {
+      const response = await fetch(`/api/tasks/${taskId}`, {
         method: "DELETE",
         headers: deleteHeaders,
       });
 
       if (response.ok) {
-        // タスクリストから削除したタスクを除外
-        setTasks((prevTasks) => prevTasks.filter((task) => task.id !== id));
-
+        // 削除成功したらリストから削除
+        setTasks((prevTasks) => prevTasks.filter((task) => task.id !== taskId));
         toast({
-          title: `${isSharedTask ? "共有タスク" : "タスク"}を削除しました`,
+          title: "タスク削除",
+          description: "タスクを削除しました",
           status: "success",
           duration: 3000,
           isClosable: true,
         });
+        // モーダルを閉じる
+        setIsDeleteConfirmOpen(false);
       } else {
-        const errorData = await response.text();
-        console.error("タスク削除APIエラー:", {
-          status: response.status,
-          statusText: response.statusText,
-          error: errorData,
-        });
-        throw new Error(
-          `削除に失敗しました: ${response.status} ${errorData || ""}`
-        );
+        const errorData = await response.json();
+        throw new Error(errorData.error || "タスクの削除に失敗しました");
       }
     } catch (error) {
-      console.error("タスク削除エラー:", error);
       toast({
         title: "エラー",
-        description:
-          error instanceof Error ? error.message : "タスクの削除に失敗しました",
+        description: "タスクの削除に失敗しました",
         status: "error",
         duration: 3000,
         isClosable: true,
@@ -293,37 +238,33 @@ export default function TasksPage() {
     setEditingTask(null);
   };
 
-  // ページロード時にタスク一覧を取得
+  // 初期データの読み込み
   useEffect(() => {
-    console.log("タスク一覧ページのuseEffect実行", {
-      isUserAvailable: !!user,
-      userDetails: user
-        ? { id: user.id, username: user.username, role: user.role }
-        : "ユーザー情報なし",
-    });
+    if (isLoggedIn) {
+      // 自動更新を設定
+      const loadInitialData = async () => {
+        // 強制リフレッシュモードかどうかをチェック
+        const urlParams = new URLSearchParams(window.location.search);
+        const refresh = urlParams.get("refresh") === "true";
 
-    if (user) {
-      console.log("タスク一覧ページ読み込み - タスク取得開始");
-      fetchTasks();
-
-      // ブラウザ環境でのみ実行
-      if (typeof window !== "undefined") {
-        // 共有タスクが追加された後のページアクセスでキャッシュを強制クリア
-        const forceRefresh = sessionStorage.getItem("forceTaskRefresh");
-        if (forceRefresh === "true") {
-          console.log("強制リフレッシュモードでタスクを再取得します");
-          sessionStorage.removeItem("forceTaskRefresh");
-
-          // 少し遅延させてタスクを再取得（APIの状態が更新される時間を確保）
-          setTimeout(() => {
-            fetchTasks();
-          }, 1000);
+        if (refresh) {
+          // 強制更新の場合、URLからクエリパラメータを削除
+          window.history.replaceState(
+            {},
+            document.title,
+            window.location.pathname
+          );
+          // タスクを取得
+          await fetchTasks();
+        } else {
+          // 通常の読み込み
+          fetchTasks();
         }
-      }
-    } else {
-      console.warn("ユーザー情報が取得できないためタスクを取得できません");
+      };
+
+      loadInitialData();
     }
-  }, [user, fetchTasks]);
+  }, [isLoggedIn, fetchTasks]);
 
   // ログインしていない場合は何も表示しない
   if (!isLoggedIn) {

@@ -6,6 +6,8 @@ import {
   useEffect,
   useState,
   ReactNode,
+  Dispatch,
+  SetStateAction,
 } from "react";
 import { useRouter, usePathname } from "next/navigation";
 
@@ -32,11 +34,12 @@ type User = {
 } | null;
 
 type AuthContextType = {
-  user: User;
-  setUser: (user: User) => void;
+  user: User | null;
+  setUser: Dispatch<SetStateAction<User | null>>;
   isLoggedIn: boolean;
+  setIsLoggedIn: (isLoggedIn: boolean) => void;
   showTaskHeader: boolean;
-  setShowTaskHeader: (show: boolean) => void;
+  setShowTaskHeader: Dispatch<SetStateAction<boolean>>;
   login: (login_id: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   resetSessionTimer: () => void;
@@ -51,6 +54,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User>(null);
   const [showTaskHeader, setShowTaskHeader] = useState(false);
   const [sessionTimer, setSessionTimer] = useState<NodeJS.Timeout | null>(null);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
 
@@ -100,45 +104,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, [user]); // userが変わったときに再設定
 
+  // セッションストレージからユーザーデータを取得
   useEffect(() => {
     // 初期ロード時にセッションストレージからユーザー情報を取得
     try {
       const userStr = sessionStorage.getItem("user");
-      console.log("セッションストレージからユーザー情報を取得", {
-        hasUserData: !!userStr,
-        userDataLength: userStr ? userStr.length : 0,
-      });
 
       if (userStr) {
         try {
           const userData = JSON.parse(userStr);
-          console.log("パース済みユーザーデータ", userData);
 
           // ユーザーIDを数値に変換
           userData.id = parseInt(userData.id);
 
           // 必須フィールドの存在を確認
           if (!userData.id || !userData.username || !userData.role) {
-            console.error(
-              "ユーザーデータの必須フィールドが欠けています",
-              userData
-            );
             // 不完全なデータは使用しない
             sessionStorage.removeItem("user");
             return;
           }
 
           setUser(userData);
-          // ユーザーが存在する場合はヘッダーを表示
+          setIsLoggedIn(true);
           setShowTaskHeader(true);
         } catch (e) {
-          console.error("ユーザーデータのパースに失敗しました", e);
           // 不正なデータを削除
           sessionStorage.removeItem("user");
         }
       }
     } catch (e) {
-      console.error("セッションストレージアクセスエラー", e);
+      // セッションストレージにアクセスできない場合はエラー処理
     }
   }, []);
 
@@ -199,6 +194,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         // 認証状態を更新
         setUser(userData);
+        setIsLoggedIn(true);
+        setShowTaskHeader(true);
 
         // ロールに応じてリダイレクト
         if (data.role === "admin") {
@@ -235,6 +232,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         // 認証状態を更新
         setUser(null);
+        setIsLoggedIn(false);
         // タスクヘッダーを非表示にする
         setShowTaskHeader(false);
 
@@ -252,6 +250,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     user,
     setUser,
     isLoggedIn: !!user,
+    setIsLoggedIn,
     showTaskHeader,
     setShowTaskHeader,
     login,

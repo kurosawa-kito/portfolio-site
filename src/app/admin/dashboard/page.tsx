@@ -98,7 +98,6 @@ export default function AdminDashboard() {
         const data = await res.json();
         if (data.success) setUsers(data.users);
       } catch (error) {
-        console.error("ユーザー取得エラー:", error);
         toast({
           title: "エラー",
           description: "ユーザー情報の取得に失敗しました",
@@ -134,7 +133,6 @@ export default function AdminDashboard() {
         const data = await res.json();
         if (data.success) setTasks(data.tasks);
       } catch (error) {
-        console.error("タスク取得エラー:", error);
         toast({
           title: "エラー",
           description: "タスク情報の取得に失敗しました",

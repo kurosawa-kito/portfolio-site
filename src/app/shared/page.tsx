@@ -137,9 +137,6 @@ export default function SharedBoard() {
 
     setIsLoadingTasks(true);
     try {
-      // 共有タスク一覧を取得
-      console.log("共有タスク一覧取得開始...");
-
       // ユーザー情報をBase64エンコードして非ASCII文字の問題を回避
       const userStr = JSON.stringify(user);
       const userBase64 =
@@ -161,14 +158,6 @@ export default function SharedBoard() {
 
       if (tasksResponse.ok) {
         const tasksData = await tasksResponse.json();
-        console.log(`共有タスク一覧取得成功: ${tasksData.length}件`);
-        console.log(
-          "取得した共有タスク:",
-          tasksData.map((t: any) => ({
-            id: t.id,
-            title: t.title.substring(0, 15) + "...",
-          }))
-        );
         setTasks(tasksData);
       } else {
         console.error(
@@ -179,26 +168,18 @@ export default function SharedBoard() {
       }
 
       // ユーザーが追加済みのタスクIDを取得
-      console.log("追加済みタスクID取得開始...");
-      // ローカルストレージから追加済みタスクIDを取得
       const localTaskIds = localStorage.getItem(`addedTaskIds_${user.id}`);
       let savedTaskIds: string[] = [];
 
       if (localTaskIds) {
         try {
           savedTaskIds = JSON.parse(localTaskIds);
-          console.log(
-            "ローカルストレージから取得した追加済みタスクID:",
-            savedTaskIds
-          );
         } catch (e) {
           console.error("ローカルストレージのデータ解析エラー:", e);
         }
       }
 
       // APIからも追加済みタスクIDを取得して統合
-
-      // ユーザー情報をBase64エンコードして非ASCII文字の問題を回避
       const apiUserBase64 =
         typeof window !== "undefined"
           ? safeBase64Encode(userStr, user)
@@ -223,19 +204,11 @@ export default function SharedBoard() {
 
       if (addedTasksResponse.ok) {
         const { taskIds } = await addedTasksResponse.json();
-        console.log("APIから取得した追加済みタスクID:", taskIds);
-
-        // APIとローカルストレージから取得したIDを統合して重複を除去
         const combinedTaskIds = [...new Set([...savedTaskIds, ...taskIds])];
-        console.log("統合した追加済みタスクID:", combinedTaskIds);
-
-        // 最新のタスクIDセットをローカルストレージに保存
         localStorage.setItem(
           `addedTaskIds_${user.id}`,
           JSON.stringify(combinedTaskIds)
         );
-
-        // ステートに設定
         setAddedTaskIds(combinedTaskIds);
       } else {
         console.error(
@@ -299,18 +272,24 @@ export default function SharedBoard() {
         }),
       });
 
-      if (response.ok) {
-        const newNote = await response.json();
-        setNotes([newNote, ...notes]);
-        setNewNoteContent("");
-        toast({
-          title: "成功",
-          description: "ノートが追加されました",
-          status: "success",
-          duration: 3000,
-          isClosable: true,
-        });
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || "ノートの追加に失敗しました");
       }
+
+      // 成功した場合
+      const data = await response.json().catch(() => ({}));
+
+      toast({
+        title: "成功",
+        description: "ノートを追加しました",
+        status: "success",
+        duration: 3000,
+        isClosable: true,
+      });
+
+      setNotes([data, ...notes]);
+      setNewNoteContent("");
     } catch (error) {
       console.error("ノート追加エラー:", error);
       toast({
@@ -325,8 +304,15 @@ export default function SharedBoard() {
     }
   };
 
-  // ノートを削除
+  // メモ削除
   const deleteNote = async (noteId: string) => {
+    if (
+      !user ||
+      !window.confirm("本当にこのタスクをリストから削除しますか？")
+    ) {
+      return;
+    }
+
     try {
       // ユーザー情報をBase64エンコードして非ASCII文字の問題を回避
       const userStr = JSON.stringify(user);
@@ -335,31 +321,38 @@ export default function SharedBoard() {
           ? safeBase64Encode(userStr, user)
           : Buffer.from(userStr).toString("base64");
 
-      // ノート削除用のヘッダーを定義
+      // 削除用のヘッダーを定義
       const deleteHeaders = {
         "x-user-base64": userBase64,
       };
 
-      const response = await fetch(`/api/shared/notes?id=${noteId}`, {
+      const response = await fetch(`/api/shared/tasks-delete/${noteId}`, {
         method: "DELETE",
         headers: deleteHeaders,
       });
 
-      if (response.ok) {
-        setNotes(notes.filter((note) => note.id !== noteId));
-        toast({
-          title: "成功",
-          description: "ノートが削除されました",
-          status: "success",
-          duration: 3000,
-          isClosable: true,
-        });
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "タスクの削除に失敗しました");
       }
+
+      // 削除成功したらUIを更新
+      toast({
+        title: "成功",
+        description: "タスクをリストから削除しました",
+        status: "success",
+        duration: 3000,
+        isClosable: true,
+      });
+
+      // 追加済みリストから削除
+      setAddedTaskIds((prev) => prev.filter((id) => id !== noteId));
     } catch (error) {
-      console.error("ノート削除エラー:", error);
       toast({
         title: "エラー",
-        description: "ノートの削除に失敗しました",
+        description:
+          error instanceof Error ? error.message : "タスクの削除に失敗しました",
         status: "error",
         duration: 3000,
         isClosable: true,
@@ -372,13 +365,6 @@ export default function SharedBoard() {
     setIsAddingTask((prev) => ({ ...prev, [taskId]: true }));
 
     try {
-      // taskIdの詳細なログ
-      console.log("タスク追加開始:", {
-        taskId,
-        taskIdType: typeof taskId,
-        taskIdAsString: String(taskId),
-      });
-
       // 選択したタスクを取得
       const selectedTask = tasks.find((task) => task.id === taskId);
 
@@ -386,23 +372,12 @@ export default function SharedBoard() {
         throw new Error(`ID ${taskId} のタスクが見つかりません`);
       }
 
-      console.log("追加対象タスク:", selectedTask);
-
       if (!user || !user.id) {
         throw new Error("ユーザー情報が見つかりません");
       }
 
-      // userオブジェクトを確認
-      console.log("ユーザー情報確認:", {
-        userId: user.id,
-        username: user.username,
-        role: user.role,
-      });
-
       // 通常のタスク作成と同じAPIを使用する
       const apiUrl = "/api/tasks";
-
-      console.log("APIリクエスト送信先:", apiUrl);
 
       // 新しいタスクとして作成するリクエストボディ
       const requestBody = {
@@ -412,17 +387,12 @@ export default function SharedBoard() {
         priority: selectedTask.priority,
       };
 
-      console.log("タスク作成リクエストボディ:", requestBody);
-
-      // ユーザー情報の詳細ログ
+      // ユーザー情報をBase64エンコードして非ASCII文字の問題を回避
       const userInfo = {
         id: user.id,
         username: user.username,
         role: user.role,
       };
-      console.log("送信するユーザー情報:", JSON.stringify(userInfo));
-
-      // ユーザー情報をBase64エンコードして非ASCII文字の問題を回避
       const userStr = JSON.stringify(userInfo);
       const userBase64 =
         typeof window !== "undefined"
@@ -445,39 +415,10 @@ export default function SharedBoard() {
         cache: "no-store",
       });
 
-      console.log("APIレスポンスステータス:", response.status);
-
-      const responseText = await response.text();
-      console.log("生レスポンス:", responseText);
-
-      let data;
-
-      try {
-        // レスポンスがJSONの場合はパース
-        data = responseText ? JSON.parse(responseText) : {};
-        console.log("パース後のレスポンスデータ:", data);
-      } catch (e) {
-        console.error(
-          "レスポンスのJSONパースエラー:",
-          e,
-          "レスポンステキスト:",
-          responseText
-        );
-        data = { error: "不正なレスポンス形式" };
-      }
-
       if (!response.ok) {
-        console.error("タスク追加APIエラー:", {
-          status: response.status,
-          statusText: response.statusText,
-          data: data,
-        });
-        throw new Error(
-          `APIエラー: ${response.status} ${data.error || responseText}`
-        );
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || "タスクの追加に失敗しました");
       }
-
-      console.log("タスク追加成功レスポンス:", data);
 
       // 成功時にUIを更新
       // 追加済みタスクIDsを更新して追加ボタンの状態を変える
@@ -623,12 +564,6 @@ export default function SharedBoard() {
         return;
       }
 
-      // デバッグログ
-      console.log(`共有タスク削除リクエスト:`, {
-        taskId,
-        endpoint: `/api/shared/tasks/${taskId}`,
-      });
-
       // ユーザー情報をBase64エンコードして非ASCII文字の問題を回避
       const userStr = JSON.stringify(user);
       const userBase64 =
@@ -647,45 +582,25 @@ export default function SharedBoard() {
         headers: deleteTaskHeaders,
       });
 
-      const responseText = await response.text();
-      let data;
-
-      try {
-        // レスポンスがJSONの場合はパース
-        data = responseText ? JSON.parse(responseText) : {};
-      } catch (e) {
-        console.error(
-          "レスポンスのJSONパースエラー:",
-          e,
-          "レスポンステキスト:",
-          responseText
-        );
-        data = { error: "不正なレスポンス形式" };
-      }
-
-      if (response.ok) {
-        // タスクリストから削除したタスクを除外
-        setTasks((prevTasks) => prevTasks.filter((task) => task.id !== taskId));
-
-        toast({
-          title: "共有タスクを削除しました",
-          status: "success",
-          duration: 3000,
-          isClosable: true,
-        });
-      } else {
-        console.error("削除エラーレスポンス:", {
-          status: response.status,
-          data: data,
-        });
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
         throw new Error(
           `共有タスクの削除に失敗しました: ${response.status} ${
-            data.error || responseText
+            errorData.error || ""
           }`
         );
       }
+
+      // タスクリストから削除したタスクを除外
+      setTasks((prevTasks) => prevTasks.filter((task) => task.id !== taskId));
+
+      toast({
+        title: "共有タスクを削除しました",
+        status: "success",
+        duration: 3000,
+        isClosable: true,
+      });
     } catch (error) {
-      console.error("共有タスク削除エラー:", error);
       toast({
         title: "エラー",
         description:

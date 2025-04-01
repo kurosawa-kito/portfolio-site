@@ -80,7 +80,6 @@ const formatDateTime = (dateString: string, isAllDay?: boolean): string => {
       minute: "2-digit",
     });
   } catch (error) {
-    console.error("日付フォーマットエラー:", error);
     return dateString;
   }
 };
