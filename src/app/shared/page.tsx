@@ -740,7 +740,8 @@ export default function SharedBoard() {
 
                     <Text whiteSpace="pre-wrap">{note.content}</Text>
 
-                    {(note.created_by === user.id || user.role === "admin") && (
+                    {(note.created_by === user.id.toString() ||
+                      user.role === "admin") && (
                       <IconButton
                         aria-label="Delete note"
                         icon={<DeleteIcon />}
@@ -848,7 +849,7 @@ export default function SharedBoard() {
                             ? "中"
                             : "低"}
                         </Badge>
-                        {(user?.id === task.created_by ||
+                        {(task.created_by === user?.id.toString() ||
                           user?.role === "admin") && (
                           <>
                             <IconButton
