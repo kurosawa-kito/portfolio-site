@@ -39,6 +39,22 @@ type Task = {
   updated_at: string;
 };
 
+// マルチバイト文字をエンコードするための安全なbase64エンコード関数
+const safeBase64Encode = (str: string, user: any) => {
+  try {
+    // UTF-8でエンコードしてからbase64に変換
+    return btoa(
+      encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (_, p1) => {
+        return String.fromCharCode(parseInt(p1, 16));
+      })
+    );
+  } catch (e) {
+    console.error("Base64エンコードエラー:", e);
+    // エラー時は単純な文字列を返す（ロールバック）
+    return btoa(JSON.stringify({ id: user?.id || 0 }));
+  }
+};
+
 export default function AdminDashboard() {
   const [users, setUsers] = useState<User[]>([]);
   const [selectedUser, setSelectedUser] = useState<string>("");
@@ -67,9 +83,16 @@ export default function AdminDashboard() {
 
     const fetchUsers = async () => {
       try {
+        // ユーザー情報をBase64エンコードして非ASCII文字の問題を回避
+        const userStr = JSON.stringify(user);
+        const userBase64 =
+          typeof window !== "undefined"
+            ? safeBase64Encode(userStr, user)
+            : Buffer.from(userStr).toString("base64");
+
         const res = await fetch("/api/admin/users", {
           headers: {
-            "x-user": JSON.stringify(user),
+            "x-user-base64": userBase64,
           },
         });
         const data = await res.json();
@@ -96,9 +119,16 @@ export default function AdminDashboard() {
       if (!selectedUser) return;
       setIsLoading(true);
       try {
+        // ユーザー情報をBase64エンコードして非ASCII文字の問題を回避
+        const userStr = JSON.stringify(user);
+        const userBase64 =
+          typeof window !== "undefined"
+            ? safeBase64Encode(userStr, user)
+            : Buffer.from(userStr).toString("base64");
+
         const res = await fetch(`/api/admin/tasks?userId=${selectedUser}`, {
           headers: {
-            "x-user": JSON.stringify(user),
+            "x-user-base64": userBase64,
           },
         });
         const data = await res.json();

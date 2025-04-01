@@ -1,15 +1,93 @@
 import { NextRequest, NextResponse } from "next/server";
 import { User } from "@/types/user";
-import { tasks } from "../../tasks/route";
+import { sql } from "@vercel/postgres";
+
+// タスクのインターフェース定義
+interface Task {
+  id: number;
+  title: string;
+  description: string | null;
+  status: "pending" | "in_progress" | "completed";
+  priority: "low" | "medium" | "high";
+  due_date: string | null;
+  assigned_to: string | number;
+  assigned_to_username?: string;
+  project_id?: number | null;
+  created_by: number;
+  created_by_username?: string;
+  is_shared?: boolean;
+  shared_at?: string | null;
+  created_at?: string;
+  updated_at?: string;
+}
+
+// モック用タスクデータ（本番環境ではDBから取得）
+const mockTasks: Task[] = [
+  {
+    id: 1,
+    title: "デザインレビュー",
+    description: "新UIのデザインレビューを実施",
+    status: "pending",
+    priority: "high",
+    due_date: "2023-06-10",
+    assigned_to: "1",
+    assigned_to_username: "山田太郎",
+    created_by: 1,
+    created_by_username: "管理者",
+  },
+  {
+    id: 2,
+    title: "バグ修正",
+    description: "ログイン画面のバグを修正する",
+    status: "in_progress",
+    priority: "medium",
+    due_date: "2023-06-15",
+    assigned_to: "2",
+    assigned_to_username: "鈴木一郎",
+    created_by: 1,
+    created_by_username: "管理者",
+  },
+];
 
 export async function GET(request: NextRequest) {
   try {
-    const userHeader = request.headers.get("x-user");
-    if (!userHeader) {
+    // ユーザー情報を取得（通常のx-userヘッダーとBase64エンコードされたx-user-base64ヘッダーの両方をサポート）
+    let userStr = request.headers.get("x-user");
+    const userBase64 = request.headers.get("x-user-base64");
+
+    // Base64エンコードされたユーザー情報を優先的に使用
+    if (userBase64) {
+      try {
+        // Base64からデコード (サーバーサイドではBufferを使用)
+        const decodedStr = Buffer.from(userBase64, "base64").toString("utf-8");
+
+        // UTF-8エンコードされたURLエンコード文字列かどうかをチェックして適切に処理
+        try {
+          if (decodedStr.includes("%")) {
+            // URLエンコード文字列の場合はデコード
+            userStr = decodeURIComponent(decodedStr);
+          } else {
+            // 通常の文字列の場合はそのまま使用
+            userStr = decodedStr;
+          }
+        } catch (decodeErr) {
+          // デコードエラーの場合は元の文字列を使用
+          userStr = decodedStr;
+        }
+      } catch (e) {
+        console.error("Base64デコードエラー:", e);
+        return NextResponse.json(
+          { error: "ユーザー情報のデコードに失敗しました" },
+          { status: 400 }
+        );
+      }
+    }
+
+    if (!userStr) {
       return NextResponse.json({ error: "認証エラー" }, { status: 401 });
     }
 
-    const requestingUser = JSON.parse(userHeader) as User;
+    const requestingUser = JSON.parse(userStr) as User;
 
     // 管理者のみアクセス可能
     if (requestingUser.role !== "admin") {
@@ -31,7 +109,9 @@ export async function GET(request: NextRequest) {
     }
 
     // 指定されたユーザーのタスクをフィルタリング
-    const userTasks = tasks.filter((task) => task.assigned_to === userId);
+    const userTasks = mockTasks.filter(
+      (task) => String(task.assigned_to) === userId
+    );
 
     console.log(
       `ユーザー ${userId} に割り当てられたタスク: ${userTasks.length}件`
