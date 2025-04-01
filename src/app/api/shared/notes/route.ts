@@ -1,14 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { User } from "@/types/user";
 
-// 共有ノートのモックデータ
-const sharedNotes: {
+// 共有ノートのインターフェイス定義
+interface SharedNote {
   id: string;
   content: string;
   created_at: string;
   created_by: string;
   created_by_username: string;
-}[] = [
+}
+
+// 共有ノートのモックデータ
+const sharedNotes: SharedNote[] = [
   {
     id: "note1",
     content: "全体会議は毎週金曜日の15:00からです。",
@@ -124,7 +127,7 @@ export async function POST(request: NextRequest) {
     const newNote: SharedNote = {
       id: `note-${Date.now()}`,
       content,
-      created_by: user.id,
+      created_by: String(user.id),
       created_by_username: user.username,
       created_at: new Date().toISOString(),
     };
@@ -155,13 +158,43 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    // ユーザー情報を取得
-    const userHeader = request.headers.get("x-user");
-    if (!userHeader) {
-      return NextResponse.json({ error: "認証エラー" }, { status: 401 });
+    // ユーザー情報を取得（通常のx-userヘッダーとBase64エンコードされたx-user-base64ヘッダーの両方をサポート）
+    let userStr = request.headers.get("x-user");
+    const userBase64 = request.headers.get("x-user-base64");
+
+    // Base64エンコードされたユーザー情報を優先的に使用
+    if (userBase64) {
+      try {
+        // Base64からデコード (サーバーサイドではBufferを使用)
+        const decodedStr = Buffer.from(userBase64, "base64").toString("utf-8");
+
+        // UTF-8エンコードされたURLエンコード文字列かどうかをチェックして適切に処理
+        try {
+          if (decodedStr.includes("%")) {
+            // URLエンコード文字列の場合はデコード
+            userStr = decodeURIComponent(decodedStr);
+          } else {
+            // 通常の文字列の場合はそのまま使用
+            userStr = decodedStr;
+          }
+        } catch (decodeErr) {
+          // デコードエラーの場合は元の文字列を使用
+          userStr = decodedStr;
+        }
+      } catch (e) {
+        console.error("Base64デコードエラー:", e);
+        return NextResponse.json(
+          { error: "ユーザー情報のデコードに失敗しました" },
+          { status: 400 }
+        );
+      }
     }
 
-    const user = JSON.parse(userHeader) as User;
+    if (!userStr) {
+      return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
+    }
+
+    const user = JSON.parse(userStr) as User;
 
     // 削除対象のノートを検索
     const noteIndex = sharedNotes.findIndex((note) => note.id === id);
@@ -175,7 +208,7 @@ export async function DELETE(request: NextRequest) {
     const note = sharedNotes[noteIndex];
 
     // 作成者または管理者のみ削除可能
-    if (note.created_by !== user.id && user.role !== "admin") {
+    if (note.created_by !== String(user.id) && user.role !== "admin") {
       return NextResponse.json(
         { error: "このノートを削除する権限がありません" },
         { status: 403 }

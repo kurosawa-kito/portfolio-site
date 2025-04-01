@@ -196,7 +196,7 @@ export async function POST(request: NextRequest) {
       due_date,
       priority,
       created_at: new Date().toISOString(),
-      created_by: user.id,
+      created_by: String(user.id),
       created_by_username: user.username,
       status: "pending",
     };
@@ -242,7 +242,7 @@ export async function PUT(request: NextRequest) {
     // 管理者または作成者のみタスク更新可能
     if (
       user.role !== "admin" &&
-      sharedTasks[taskIndex].created_by !== user.id
+      sharedTasks[taskIndex].created_by !== String(user.id)
     ) {
       return NextResponse.json(
         { error: "このタスクを更新する権限がありません" },
@@ -318,7 +318,7 @@ export async function DELETE(request: NextRequest) {
     // 管理者または作成者のみタスク削除可能
     if (
       user.role !== "admin" &&
-      sharedTasks[taskIndex].created_by !== user.id
+      sharedTasks[taskIndex].created_by !== String(user.id)
     ) {
       return NextResponse.json(
         { error: "このタスクを削除する権限がありません" },
@@ -402,7 +402,7 @@ export async function PATCH(request: NextRequest) {
       const userAddedTasks = getUserAddedTasks();
 
       const userAddedTask = userAddedTasks.find(
-        (item) => item.userId === user.id
+        (item) => item.userId === String(user.id)
       );
 
       console.log("追加済みタスク取得:", {
@@ -498,16 +498,17 @@ export async function PATCH(request: NextRequest) {
 
         // ユーザーのタスク追加状況を確認
         let userAddedTask = userAddedTasks.find(
-          (item) => item.userId === user.id
+          (item) => item.userId === String(user.id)
         );
 
         // ユーザーが初めてタスクを追加する場合
         if (!userAddedTask) {
-          userAddedTask = {
-            userId: user.id,
+          const newUserTask = {
+            userId: String(user.id),
             taskIds: [taskIdStr],
           };
-          userAddedTasks.push(userAddedTask);
+          userAddedTasks.push(newUserTask);
+          userAddedTask = newUserTask;
           console.log("新規ユーザーとしてタスクIDを追加（タスク検索失敗時）:", {
             userId: user.id,
             taskId: taskIdStr,
@@ -553,16 +554,17 @@ export async function PATCH(request: NextRequest) {
 
       // ユーザーのタスク追加状況を確認
       let userAddedTask = userAddedTasks.find(
-        (item) => item.userId === user.id
+        (item) => item.userId === String(user.id)
       );
 
       // ユーザーが初めてタスクを追加する場合
       if (!userAddedTask) {
-        userAddedTask = {
-          userId: user.id,
-          taskIds: [taskIdStr], // 文字列に統一
+        const newUserTask = {
+          userId: String(user.id),
+          taskIds: [taskIdStr],
         };
-        userAddedTasks.push(userAddedTask);
+        userAddedTasks.push(newUserTask);
+        userAddedTask = newUserTask;
         console.log("初めてのタスク追加:", {
           userId: user.id,
           taskId: taskIdStr,
@@ -584,7 +586,7 @@ export async function PATCH(request: NextRequest) {
       }
       // 新しいタスクを追加
       else {
-        userAddedTask.taskIds.push(taskIdStr); // 文字列に統一
+        userAddedTask.taskIds.push(taskIdStr);
         console.log("既存ユーザーにタスク追加:", {
           userId: user.id,
           taskId: taskIdStr,

@@ -328,9 +328,16 @@ export default function SharedBoard() {
   // ノートを削除
   const deleteNote = async (noteId: string) => {
     try {
+      // ユーザー情報をBase64エンコードして非ASCII文字の問題を回避
+      const userStr = JSON.stringify(user);
+      const userBase64 =
+        typeof window !== "undefined"
+          ? safeBase64Encode(userStr, user)
+          : Buffer.from(userStr).toString("base64");
+
       // ノート削除用のヘッダーを定義
       const deleteHeaders = {
-        "x-user": JSON.stringify(user),
+        "x-user-base64": userBase64,
       };
 
       const response = await fetch(`/api/shared/notes?id=${noteId}`, {
@@ -415,10 +422,17 @@ export default function SharedBoard() {
       };
       console.log("送信するユーザー情報:", JSON.stringify(userInfo));
 
+      // ユーザー情報をBase64エンコードして非ASCII文字の問題を回避
+      const userStr = JSON.stringify(userInfo);
+      const userBase64 =
+        typeof window !== "undefined"
+          ? safeBase64Encode(userStr, user)
+          : Buffer.from(userStr).toString("base64");
+
       // リクエストヘッダーを定義
       const requestHeaders = {
         "Content-Type": "application/json",
-        "x-user": JSON.stringify(userInfo),
+        "x-user-base64": userBase64,
         "Cache-Control": "no-cache, no-store",
         Pragma: "no-cache",
       };
@@ -482,10 +496,17 @@ export default function SharedBoard() {
       try {
         console.log("共有タスクリストに追加記録...");
 
+        // ユーザー情報をBase64エンコードして非ASCII文字の問題を回避
+        const recordUserStr = JSON.stringify(userInfo);
+        const recordUserBase64 =
+          typeof window !== "undefined"
+            ? safeBase64Encode(recordUserStr, user)
+            : Buffer.from(recordUserStr).toString("base64");
+
         // 共有タスクリスト追加用のヘッダーを定義
         const recordHeaders = {
           "Content-Type": "application/json",
-          "x-user": JSON.stringify(userInfo),
+          "x-user-base64": recordUserBase64,
         };
 
         const recordResponse = await fetch("/api/shared/tasks", {
@@ -608,10 +629,17 @@ export default function SharedBoard() {
         endpoint: `/api/shared/tasks/${taskId}`,
       });
 
+      // ユーザー情報をBase64エンコードして非ASCII文字の問題を回避
+      const userStr = JSON.stringify(user);
+      const userBase64 =
+        typeof window !== "undefined"
+          ? safeBase64Encode(userStr, user)
+          : Buffer.from(userStr).toString("base64");
+
       // 共有タスク削除用のヘッダーを定義
       const deleteTaskHeaders = {
         "Content-Type": "application/json",
-        "x-user": JSON.stringify(user),
+        "x-user-base64": userBase64,
       };
 
       const response = await fetch(`/api/shared/tasks/${taskId}`, {
