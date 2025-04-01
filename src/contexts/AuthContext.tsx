@@ -137,8 +137,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  // ユーザー情報が変更されたときにヘッダーの表示状態を更新
+  // ユーザー情報が変更されたときにログイン状態と表示状態を更新
   useEffect(() => {
+    // ユーザー情報が存在する場合はログイン状態を更新
+    setIsLoggedIn(!!user);
+
     if (user) {
       setShowTaskHeader(true);
     } else {
@@ -249,7 +252,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const value = {
     user,
     setUser,
-    isLoggedIn: !!user,
+    isLoggedIn,
     setIsLoggedIn,
     showTaskHeader,
     setShowTaskHeader,

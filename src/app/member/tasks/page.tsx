@@ -66,16 +66,18 @@ export default function TasksPage() {
 
   // ログインチェック
   useEffect(() => {
-    if (!isLoggedIn) {
+    if (!isLoggedIn || !user) {
       router.push("/products");
     } else {
       // タスク管理ヘッダーを表示
       setShowTaskHeader(true);
     }
-  }, [isLoggedIn, router, setShowTaskHeader]);
+  }, [isLoggedIn, user, router, setShowTaskHeader]);
 
   // タスク一覧を取得
   const fetchTasks = useCallback(async () => {
+    if (!user) return;
+
     setIsLoading(true);
     try {
       // リクエストとキャッシュの設定
@@ -124,6 +126,13 @@ export default function TasksPage() {
 
   // タスクステータスを更新
   const handleStatusChange = async (taskId: string, newStatus: string) => {
+    // 楽観的UI更新: 即座にUIを更新
+    setTasks((prevTasks) =>
+      prevTasks.map((task) =>
+        task.id === taskId ? { ...task, status: newStatus } : task
+      )
+    );
+
     try {
       // ユーザー情報をBase64エンコードして非ASCII文字の問題を回避
       const userStr = JSON.stringify(user);
@@ -149,13 +158,6 @@ export default function TasksPage() {
       });
 
       if (response.ok) {
-        // 成功したら、タスクリストを更新
-        setTasks((prevTasks) =>
-          prevTasks.map((task) =>
-            task.id === taskId ? { ...task, status: newStatus } : task
-          )
-        );
-
         toast({
           title: "成功",
           description: "タスクのステータスを更新しました",
@@ -163,8 +165,24 @@ export default function TasksPage() {
           duration: 3000,
           isClosable: true,
         });
+      } else {
+        // 失敗した場合は元に戻す
+        const errorData = await response.json();
+        throw new Error(errorData.error || "タスクの更新に失敗しました");
       }
     } catch (error) {
+      // エラーの場合は元の状態に戻す
+      setTasks((prevTasks) =>
+        prevTasks.map((task) =>
+          task.id === taskId
+            ? {
+                ...task,
+                status: task.status === "completed" ? "pending" : "completed",
+              }
+            : task
+        )
+      );
+
       toast({
         title: "エラー",
         description: "タスクの更新に失敗しました",
@@ -183,10 +201,14 @@ export default function TasksPage() {
 
   // タスク削除の処理
   const handleDeleteTask = async (taskId: string | number) => {
-    try {
-      setIsDeleteConfirmOpen(true);
-      setDeletingTaskId(taskId);
+    if (!window.confirm("本当にこのタスクを削除しますか？")) {
+      return;
+    }
 
+    // 削除中の状態を設定
+    setDeletingTaskId(taskId);
+
+    try {
       // ユーザー情報をBase64エンコードして非ASCII文字の問題を回避
       const userStr = JSON.stringify(user);
 
@@ -215,8 +237,6 @@ export default function TasksPage() {
           duration: 3000,
           isClosable: true,
         });
-        // モーダルを閉じる
-        setIsDeleteConfirmOpen(false);
       } else {
         const errorData = await response.json();
         throw new Error(errorData.error || "タスクの削除に失敗しました");
@@ -224,11 +244,14 @@ export default function TasksPage() {
     } catch (error) {
       toast({
         title: "エラー",
-        description: "タスクの削除に失敗しました",
+        description:
+          error instanceof Error ? error.message : "タスクの削除に失敗しました",
         status: "error",
         duration: 3000,
         isClosable: true,
       });
+    } finally {
+      setDeletingTaskId(null);
     }
   };
 
@@ -240,7 +263,7 @@ export default function TasksPage() {
 
   // 初期データの読み込み
   useEffect(() => {
-    if (isLoggedIn) {
+    if (isLoggedIn && user) {
       // 自動更新を設定
       const loadInitialData = async () => {
         // 強制リフレッシュモードかどうかをチェック
@@ -264,10 +287,10 @@ export default function TasksPage() {
 
       loadInitialData();
     }
-  }, [isLoggedIn, fetchTasks]);
+  }, [isLoggedIn, user, fetchTasks]);
 
   // ログインしていない場合は何も表示しない
-  if (!isLoggedIn) {
+  if (!isLoggedIn || !user) {
     return null;
   }
 
