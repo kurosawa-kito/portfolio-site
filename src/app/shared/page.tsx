@@ -116,12 +116,16 @@ export default function SharedBoard() {
     try {
       // 共有タスク一覧を取得
       console.log("共有タスク一覧取得開始...");
+
+      // ヘッダーを別変数に定義
+      const headers = {
+        "x-user": JSON.stringify(user),
+        "Cache-Control": "no-cache, no-store",
+        Pragma: "no-cache",
+      };
+
       const tasksResponse = await fetch("/api/shared/tasks", {
-        headers: {
-          "x-user": JSON.stringify(user),
-          "Cache-Control": "no-cache, no-store",
-          Pragma: "no-cache",
-        },
+        headers,
         cache: "no-store",
       });
 
@@ -163,14 +167,18 @@ export default function SharedBoard() {
       }
 
       // APIからも追加済みタスクIDを取得して統合
+
+      // ヘッダーを別変数に定義
+      const apiHeaders = {
+        "Content-Type": "application/json",
+        "x-user": JSON.stringify(user),
+        "Cache-Control": "no-cache, no-store",
+        Pragma: "no-cache",
+      };
+
       const addedTasksResponse = await fetch("/api/shared/tasks", {
         method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          "x-user": JSON.stringify(user),
-          "Cache-Control": "no-cache, no-store",
-          Pragma: "no-cache",
-        },
+        headers: apiHeaders,
         body: JSON.stringify({
           action: "getUserAddedTasks",
         }),
@@ -358,15 +366,18 @@ export default function SharedBoard() {
       };
       console.log("送信するユーザー情報:", JSON.stringify(userInfo));
 
+      // リクエストヘッダーを定義
+      const requestHeaders = {
+        "Content-Type": "application/json",
+        "x-user": JSON.stringify(userInfo),
+        "Cache-Control": "no-cache, no-store",
+        Pragma: "no-cache",
+      };
+
       // リクエストの送信（POSTメソッドでタスクを作成）
       const response = await fetch(apiUrl, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-user": JSON.stringify(userInfo),
-          "Cache-Control": "no-cache, no-store",
-          Pragma: "no-cache",
-        },
+        headers: requestHeaders,
         body: JSON.stringify(requestBody),
         cache: "no-store",
       });

@@ -63,13 +63,16 @@ export default function TasksPage() {
     setIsLoading(true);
     try {
       // リクエストとキャッシュの設定
+      // ヘッダーを別変数に定義
+      const headers = {
+        "x-user": JSON.stringify(user),
+        "x-refresh": "true",
+        "Cache-Control": "no-cache, no-store",
+        Pragma: "no-cache",
+      };
+
       const response = await fetch("/api/tasks", {
-        headers: {
-          "x-user": JSON.stringify(user),
-          "x-refresh": "true",
-          "Cache-Control": "no-cache, no-store",
-          Pragma: "no-cache",
-        },
+        headers,
         cache: "no-store",
       });
 
@@ -186,12 +189,15 @@ export default function TasksPage() {
         `タスク削除: ${isSharedTask ? "共有タスク" : "通常タスク"} ID=${taskId}`
       );
 
+      // ヘッダーを別変数に定義
+      const deleteHeaders = {
+        "Content-Type": "application/json",
+        "x-user": JSON.stringify(user),
+      };
+
       const response = await fetch(endpoint, {
         method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-          "x-user": JSON.stringify(user),
-        },
+        headers: deleteHeaders,
       });
 
       if (response.ok) {
