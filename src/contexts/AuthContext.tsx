@@ -10,7 +10,7 @@ import {
 import { useRouter, usePathname } from "next/navigation";
 
 type User = {
-  id: string;
+  id: number;
   username: string;
   role: string;
 } | null;
@@ -89,6 +89,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const userStr = sessionStorage.getItem("user");
     if (userStr) {
       const userData = JSON.parse(userStr);
+      // ユーザーIDを数値に変換
+      userData.id = parseInt(userData.id);
       setUser(userData);
       // ユーザーが存在する場合はヘッダーを表示
       setShowTaskHeader(true);
@@ -134,9 +136,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const data = await res.json();
 
       if (data.success) {
-        // ユーザー情報を保存
+        // ユーザー情報を保存（IDは数値として保存）
         const userData = {
-          id: data.userId || `user${Date.now()}`, // IDがない場合は一時的なものを生成
+          id: parseInt(data.userId), // 数値に変換
           username,
           role: data.role,
         };

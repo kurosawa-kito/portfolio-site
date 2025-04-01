@@ -25,7 +25,19 @@ export async function GET(request: NextRequest) {
   try {
     console.log("タスク一覧取得API呼び出し");
 
-    // データベースから全てのタスクを取得
+    // ユーザー情報を取得
+    const userStr = request.headers.get("x-user");
+    if (!userStr) {
+      return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
+    }
+
+    const user = JSON.parse(userStr) as User;
+    console.log("ユーザー情報:", {
+      userId: user.id,
+      username: user.username,
+    });
+
+    // データベースからユーザーに割り当てられたタスクを取得
     const result = await sql`
       SELECT 
         t.*,
@@ -34,11 +46,14 @@ export async function GET(request: NextRequest) {
       FROM tasks t
       LEFT JOIN users u ON t.assigned_to = u.id
       LEFT JOIN users c ON t.created_by = c.id
+      WHERE t.assigned_to = ${user.id}
       ORDER BY t.due_date ASC;
     `;
 
     const tasks = result.rows as Task[];
-    console.log(`取得したタスク数: ${tasks.length}件`);
+    console.log(
+      `ユーザー ${user.id} に割り当てられたタスク: ${tasks.length}件`
+    );
 
     return NextResponse.json(tasks);
   } catch (error) {
