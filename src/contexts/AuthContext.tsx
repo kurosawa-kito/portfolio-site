@@ -21,7 +21,7 @@ type AuthContextType = {
   isLoggedIn: boolean;
   showTaskHeader: boolean;
   setShowTaskHeader: (show: boolean) => void;
-  login: (username: string, password: string) => Promise<void>;
+  login: (login_id: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   resetSessionTimer: () => void;
 };
@@ -125,12 +125,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [user, pathname]);
 
-  const login = async (username: string, password: string) => {
+  const login = async (login_id: string, password: string) => {
     try {
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ login_id, password }),
       });
 
       const data = await res.json();
@@ -139,7 +139,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // ユーザー情報を保存（IDは数値として保存）
         const userData = {
           id: parseInt(data.userId), // 数値に変換
-          username,
+          username: data.username,
           role: data.role,
         };
 

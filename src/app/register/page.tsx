@@ -23,11 +23,13 @@ import { useAuth } from "@/contexts/AuthContext";
 
 export default function Register() {
   const [username, setUsername] = useState("");
+  const [loginId, setLoginId] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState({
     username: "",
+    loginId: "",
     password: "",
     confirmPassword: "",
   });
@@ -41,6 +43,16 @@ export default function Register() {
   const validateUsername = (value: string) => {
     if (value.length < 3) {
       return "ユーザー名は3文字以上で入力してください";
+    }
+    return "";
+  };
+
+  const validateLoginId = (value: string) => {
+    if (value.length < 3) {
+      return "ログインIDは3文字以上で入力してください";
+    }
+    if (!/^[a-zA-Z0-9]+$/.test(value)) {
+      return "ログインIDは英数字のみ使用できます";
     }
     return "";
   };
@@ -82,6 +94,13 @@ export default function Register() {
     });
   };
 
+  const handleLoginIdBlur = () => {
+    setErrors({
+      ...errors,
+      loginId: validateLoginId(loginId),
+    });
+  };
+
   const handlePasswordBlur = () => {
     setErrors({
       ...errors,
@@ -101,18 +120,25 @@ export default function Register() {
 
     // すべてのフィールドのバリデーションを行う
     const usernameError = validateUsername(username);
+    const loginIdError = validateLoginId(loginId);
     const passwordError = validatePassword(password);
     const confirmPasswordError = validateConfirmPassword(confirmPassword);
 
     // エラー状態を更新
     setErrors({
       username: usernameError,
+      loginId: loginIdError,
       password: passwordError,
       confirmPassword: confirmPasswordError,
     });
 
     // いずれかのエラーがある場合は処理を中止
-    if (usernameError || passwordError || confirmPasswordError) {
+    if (
+      usernameError ||
+      loginIdError ||
+      passwordError ||
+      confirmPasswordError
+    ) {
       return;
     }
 
@@ -123,7 +149,7 @@ export default function Register() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ username, login_id: loginId, password }),
       });
 
       const data = await response.json();
@@ -139,7 +165,7 @@ export default function Register() {
 
         // 登録後、自動的にログイン処理を行う
         try {
-          await login(username, password);
+          await login(loginId, password);
           // ログイン成功（リダイレクトはAuthContext内のlogin関数で処理される）
         } catch (loginError) {
           console.error("自動ログインエラー:", loginError);
@@ -211,6 +237,26 @@ export default function Register() {
                   )}
                 </FormControl>
 
+                <FormControl isRequired isInvalid={!!errors.loginId}>
+                  <FormLabel>ログインID</FormLabel>
+                  <Input
+                    type="text"
+                    value={loginId}
+                    onChange={(e) => setLoginId(e.target.value)}
+                    onBlur={handleLoginIdBlur}
+                    size="lg"
+                    placeholder="ログインIDを入力（英数字のみ）"
+                  />
+                  <Text fontSize="sm" color="gray.500" mt={1}>
+                    3文字以上の英数字で入力してください
+                  </Text>
+                  {errors.loginId && (
+                    <Text fontSize="sm" color="red.500" mt={1}>
+                      {errors.loginId}
+                    </Text>
+                  )}
+                </FormControl>
+
                 <FormControl isRequired isInvalid={!!errors.password}>
                   <FormLabel>パスワード</FormLabel>
                   <Input
@@ -254,6 +300,7 @@ export default function Register() {
                   size="lg"
                   w="full"
                   isLoading={isLoading}
+                  loadingText="登録中"
                   _hover={{ transform: "translateY(-1px)", boxShadow: "md" }}
                 >
                   登録する
@@ -262,13 +309,21 @@ export default function Register() {
             </form>
 
             <Box textAlign="center">
-              <Text>アカウントをお持ちの方は</Text>
+              <Link href="/products" passHref>
+                <ChakraLink
+                  color="blue.500"
+                  _hover={{ textDecoration: "none" }}
+                  mr={4}
+                >
+                  Products
+                </ChakraLink>
+              </Link>
               <Link href="/login" passHref>
                 <ChakraLink
                   color="blue.500"
                   _hover={{ textDecoration: "none" }}
                 >
-                  ログイン
+                  既にアカウントをお持ちの方はこちら
                 </ChakraLink>
               </Link>
             </Box>

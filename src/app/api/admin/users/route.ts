@@ -1,8 +1,26 @@
 import { NextRequest, NextResponse } from "next/server";
-import { users } from "../../auth/login/route";
 import { User } from "@/types/user";
-import { tasks } from "../../tasks/route";
-import { sharedTasks } from "../../shared/tasks/route";
+import { sql } from "@vercel/postgres";
+
+// Task型の定義
+interface Task {
+  id: number;
+  title: string;
+  description: string | null;
+  status: "pending" | "in_progress" | "completed";
+  priority: "low" | "medium" | "high";
+  due_date: string | null;
+  assigned_to: number;
+  created_by: number;
+}
+
+// DB用ユーザー型
+interface DbUser {
+  id: number;
+  username: string;
+  role: string;
+  login_id: string;
+}
 
 // ユーザー一覧を取得
 export async function GET(request: NextRequest) {
@@ -22,12 +40,14 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // パスワードを除外したユーザー情報を返す
-    const safeUsers = users.map((user) => ({
-      id: user.id,
-      username: user.username,
-      role: user.role,
-    }));
+    // データベースからパスワードを除外したユーザー情報を取得
+    const result = await sql`
+      SELECT id, username, role, login_id
+      FROM users
+      ORDER BY id
+    `;
+
+    const safeUsers = result.rows as DbUser[];
 
     return NextResponse.json({
       success: true,
@@ -51,6 +71,11 @@ export async function PUT(request: NextRequest) {
     }
 
     const requestingUser = JSON.parse(userHeader) as User;
+    // idが数値型であることを確認
+    const requestingUserId =
+      typeof requestingUser.id === "string"
+        ? parseInt(requestingUser.id)
+        : requestingUser.id;
 
     // 管理者のみアクセス可能
     if (requestingUser.role !== "admin") {
@@ -63,17 +88,27 @@ export async function PUT(request: NextRequest) {
     const body = await request.json();
     const { userId, newRole } = body;
 
+    // 数値に変換
+    const userIdNum = typeof userId === "string" ? parseInt(userId) : userId;
+
     // 対象ユーザーを検索
-    const userIndex = users.findIndex((user) => user.id === userId);
-    if (userIndex === -1) {
+    const userResult = await sql`
+      SELECT id, username, role
+      FROM users
+      WHERE id = ${userIdNum}
+    `;
+
+    if (userResult.rows.length === 0) {
       return NextResponse.json(
         { success: false, message: "ユーザーが見つかりません" },
         { status: 404 }
       );
     }
 
+    const targetUser = userResult.rows[0] as DbUser;
+
     // 自分自身の権限は変更できない
-    if (userId === requestingUser.id) {
+    if (targetUser.id === requestingUserId) {
       return NextResponse.json(
         { success: false, message: "自分自身の権限は変更できません" },
         { status: 400 }
@@ -81,8 +116,14 @@ export async function PUT(request: NextRequest) {
     }
 
     // admin権限を外す場合、admin権限のユーザーが他にいるか確認
-    if (users[userIndex].role === "admin" && newRole !== "admin") {
-      const adminCount = users.filter((user) => user.role === "admin").length;
+    if (targetUser.role === "admin" && newRole !== "admin") {
+      const adminCountResult = await sql`
+        SELECT COUNT(*) as count
+        FROM users
+        WHERE role = 'admin'
+      `;
+
+      const adminCount = parseInt(adminCountResult.rows[0].count);
       if (adminCount <= 1) {
         return NextResponse.json(
           { success: false, message: "少なくとも1人の管理者が必要です" },
@@ -92,16 +133,19 @@ export async function PUT(request: NextRequest) {
     }
 
     // 権限を更新
-    users[userIndex].role = newRole;
+    const updateResult = await sql`
+      UPDATE users
+      SET role = ${newRole}
+      WHERE id = ${userIdNum}
+      RETURNING id, username, role
+    `;
+
+    const updatedUser = updateResult.rows[0];
 
     return NextResponse.json({
       success: true,
       message: "ユーザー権限を更新しました",
-      user: {
-        id: users[userIndex].id,
-        username: users[userIndex].username,
-        role: users[userIndex].role,
-      },
+      user: updatedUser,
     });
   } catch (error) {
     console.error("ユーザー権限更新エラー:", error);
@@ -121,6 +165,11 @@ export async function DELETE(request: NextRequest) {
     }
 
     const requestingUser = JSON.parse(userHeader) as User;
+    // idが数値型であることを確認
+    const requestingUserId =
+      typeof requestingUser.id === "string"
+        ? parseInt(requestingUser.id)
+        : requestingUser.id;
 
     // 管理者のみアクセス可能
     if (requestingUser.role !== "admin") {
@@ -141,17 +190,27 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
+    // 数値に変換
+    const userIdNum = parseInt(userId);
+
     // 対象ユーザーを検索
-    const userIndex = users.findIndex((user) => user.id === userId);
-    if (userIndex === -1) {
+    const userResult = await sql`
+      SELECT id, username, role
+      FROM users
+      WHERE id = ${userIdNum}
+    `;
+
+    if (userResult.rows.length === 0) {
       return NextResponse.json(
         { success: false, message: "ユーザーが見つかりません" },
         { status: 404 }
       );
     }
 
+    const targetUser = userResult.rows[0] as DbUser;
+
     // 自分自身は削除できない
-    if (userId === requestingUser.id) {
+    if (userIdNum === requestingUserId) {
       return NextResponse.json(
         { success: false, message: "自分自身を削除することはできません" },
         { status: 400 }
@@ -159,8 +218,14 @@ export async function DELETE(request: NextRequest) {
     }
 
     // admin権限のユーザーを削除する場合、admin権限のユーザーが他にいるか確認
-    if (users[userIndex].role === "admin") {
-      const adminCount = users.filter((user) => user.role === "admin").length;
+    if (targetUser.role === "admin") {
+      const adminCountResult = await sql`
+        SELECT COUNT(*) as count
+        FROM users
+        WHERE role = 'admin'
+      `;
+
+      const adminCount = parseInt(adminCountResult.rows[0].count);
       if (adminCount <= 1) {
         return NextResponse.json(
           { success: false, message: "少なくとも1人の管理者が必要です" },
@@ -169,15 +234,18 @@ export async function DELETE(request: NextRequest) {
       }
     }
 
-    // ユーザーに割り当てられたタスクを検索
-    const userTasks = tasks.filter((task) => task.assigned_to === userId);
+    // データベースからユーザーに割り当てられたタスクを取得
+    const result = await sql`
+      SELECT * FROM tasks WHERE assigned_to = ${userIdNum}
+    `;
+    const userTasks = result.rows as Task[];
 
     // まずタスクの数を確認する
     if (action === "check") {
       // タスクが存在する場合は必ず処理選択モーダルを表示
       if (userTasks.length > 0) {
         const pendingTasks = userTasks.filter(
-          (task: any) => task.status === "pending"
+          (task) => task.status === "pending"
         );
         return NextResponse.json({
           success: false,
@@ -186,7 +254,7 @@ export async function DELETE(request: NextRequest) {
           pendingTasksCount: pendingTasks.length,
           totalTasksCount: userTasks.length,
           userId: userId,
-          username: users[userIndex].username,
+          username: targetUser.username,
         });
       }
     }
@@ -194,49 +262,44 @@ export async function DELETE(request: NextRequest) {
     // 共有タスクに追加
     if (action === "shareAll") {
       const pendingTasks = userTasks.filter(
-        (task: any) => task.status === "pending"
+        (task) => task.status === "pending"
       );
 
       // 未完了タスクを共有タスクに追加
-      for (const task of pendingTasks as any[]) {
-        const newSharedTask = {
-          id: `shared-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-          title: `[元ユーザー: ${users[userIndex].username}] ${task.title}`,
-          description: task.description,
-          due_date: task.due_date,
-          priority: task.priority,
-          created_at: new Date().toISOString(),
-          created_by: requestingUser.id,
-          created_by_username: requestingUser.username,
-          status: "pending", // 必須フィールド
-        };
-
-        sharedTasks.push(newSharedTask);
+      for (const task of pendingTasks) {
+        await sql`
+          INSERT INTO shared_items (
+            title,
+            content,
+            created_by
+          ) VALUES (
+            ${"[元ユーザー: " + targetUser.username + "] " + task.title},
+            ${task.description},
+            ${requestingUserId}
+          )
+        `;
       }
     }
 
-    // ユーザーのすべてのタスクを削除（共有タスクに追加した後でも削除）
-    const taskIndicesToRemove = [];
-    for (let i = 0; i < tasks.length; i++) {
-      if (tasks[i].assigned_to === userId) {
-        taskIndicesToRemove.push(i);
-      }
-    }
-
-    // 降順でインデックスを削除（昇順で削除すると、後続のインデックスがずれる）
-    for (let i = taskIndicesToRemove.length - 1; i >= 0; i--) {
-      tasks.splice(taskIndicesToRemove[i], 1);
-    }
+    // ユーザーのタスクを削除
+    await sql`
+      DELETE FROM tasks WHERE assigned_to = ${userIdNum}
+    `;
 
     // ユーザーを削除
-    const deletedUser = users.splice(userIndex, 1)[0];
+    const deletedUserResult = await sql`
+      DELETE FROM users WHERE id = ${userIdNum}
+      RETURNING username
+    `;
+
+    const deletedUsername = deletedUserResult.rows[0].username;
 
     return NextResponse.json({
       success: true,
       message: "ユーザーを削除しました",
       user: {
-        id: deletedUser.id,
-        username: deletedUser.username,
+        id: userId,
+        username: deletedUsername,
       },
       tasksHandled:
         action === "shareAll"

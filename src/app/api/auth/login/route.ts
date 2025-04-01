@@ -1,60 +1,56 @@
 import { NextRequest, NextResponse } from "next/server";
+import { sql } from "@vercel/postgres";
 
-// ユーザー情報
-export const users = [
-  {
-    id: "user1",
-    username: "admin",
-    password: "admin123",
-    role: "admin",
-  },
-  {
-    id: "user2",
-    username: "user",
-    password: "user123",
-    role: "user",
-  },
-  {
-    id: "user3",
-    username: "dev1",
-    password: "dev123",
-    role: "user",
-  },
-  {
-    id: "user4",
-    username: "dev2",
-    password: "dev123",
-    role: "user",
-  },
-];
+// login_idが英数字のみかをチェックする関数
+function isAlphanumeric(str: string): boolean {
+  return /^[a-zA-Z0-9]+$/.test(str);
+}
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { username, password } = body;
+    const { login_id, password } = body;
 
-    // Find user
-    const user = users.find((u) => u.username === username);
+    // login_idが英数字のみかチェック
+    if (!isAlphanumeric(login_id)) {
+      return NextResponse.json(
+        { success: false, message: "ログインIDは英数字のみ使用できます" },
+        { status: 400 }
+      );
+    }
 
-    // Check if user exists and password matches
-    if (user && user.password === password) {
+    // データベースからユーザーを検索
+    const result = await sql`
+      SELECT id, username, password, role
+      FROM users
+      WHERE login_id = ${login_id}
+    `;
+
+    // ユーザーが見つかってパスワードが一致する場合
+    if (result.rows.length > 0 && result.rows[0].password === password) {
+      const user = result.rows[0];
+
       // Success login
       return NextResponse.json({
         success: true,
         userId: user.id,
+        username: user.username,
         role: user.role,
       });
     } else {
       // Failed login
       return NextResponse.json(
-        { success: false, message: "Invalid credentials" },
+        {
+          success: false,
+          message: "ログインIDまたはパスワードが正しくありません",
+        },
         { status: 401 }
       );
     }
   } catch (error) {
     console.error("Login error:", error);
     return NextResponse.json(
-      { success: false, message: "Server error" },
+      { success: false, message: "サーバーエラーが発生しました" },
       { status: 500 }
     );
   }

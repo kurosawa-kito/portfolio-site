@@ -1,16 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
-import { users } from "../login/route";
+import { sql } from "@vercel/postgres";
+
+// login_idが英数字のみかをチェックする関数
+function isAlphanumeric(str: string): boolean {
+  return /^[a-zA-Z0-9]+$/.test(str);
+}
 
 // 新規ユーザー登録API
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { username, password } = body;
+    const { username, login_id, password } = body;
 
     // サーバー側バリデーション
-    if (!username || !password) {
+    if (!username || !login_id || !password) {
       return NextResponse.json(
-        { success: false, message: "ユーザー名とパスワードは必須です" },
+        {
+          success: false,
+          message: "ユーザー名、ログインID、パスワードは必須です",
+        },
         { status: 400 }
       );
     }
@@ -18,6 +26,21 @@ export async function POST(request: NextRequest) {
     if (username.length < 3) {
       return NextResponse.json(
         { success: false, message: "ユーザー名は3文字以上必要です" },
+        { status: 400 }
+      );
+    }
+
+    if (login_id.length < 3) {
+      return NextResponse.json(
+        { success: false, message: "ログインIDは3文字以上必要です" },
+        { status: 400 }
+      );
+    }
+
+    // ログインIDが英数字のみかチェック
+    if (!isAlphanumeric(login_id)) {
+      return NextResponse.json(
+        { success: false, message: "ログインIDは英数字のみ使用できます" },
         { status: 400 }
       );
     }
@@ -51,30 +74,43 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // ユーザー名の重複チェック
-    const existingUser = users.find((u) => u.username === username);
-    if (existingUser) {
+    // ユーザー名とログインIDの重複チェック
+    const checkUsername = await sql`
+      SELECT username FROM users WHERE username = ${username}
+    `;
+
+    if (checkUsername.rows.length > 0) {
       return NextResponse.json(
         { success: false, message: "このユーザー名は既に使用されています" },
         { status: 400 }
       );
     }
 
-    // 新規ユーザーを作成（デフォルトで一般ユーザー権限）
-    const newUser = {
-      id: `user${Date.now()}`, // 一意のIDを生成
-      username,
-      password,
-      role: "user", // デフォルトは一般ユーザー
-    };
+    const checkLoginId = await sql`
+      SELECT login_id FROM users WHERE login_id = ${login_id}
+    `;
 
-    // ユーザー配列に追加
-    users.push(newUser);
+    if (checkLoginId.rows.length > 0) {
+      return NextResponse.json(
+        { success: false, message: "このログインIDは既に使用されています" },
+        { status: 400 }
+      );
+    }
+
+    // 新規ユーザーをデータベースに追加
+    const result = await sql`
+      INSERT INTO users (username, login_id, password, role)
+      VALUES (${username}, ${login_id}, ${password}, 'member')
+      RETURNING id, username, role
+    `;
+
+    const newUser = result.rows[0];
 
     return NextResponse.json({
       success: true,
       message: "ユーザーが登録されました",
       userId: newUser.id,
+      username: newUser.username,
       role: newUser.role,
     });
   } catch (error) {

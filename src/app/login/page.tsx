@@ -16,14 +16,16 @@ import {
   CardBody,
   useColorModeValue,
   Link as ChakraLink,
+  FormErrorMessage,
 } from "@chakra-ui/react";
 import { useAuth } from "@/contexts/AuthContext";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 export default function Login() {
-  const [username, setUsername] = useState("");
+  const [loginId, setLoginId] = useState("");
   const [password, setPassword] = useState("");
+  const [loginIdError, setLoginIdError] = useState("");
   const { login, isLoggedIn } = useAuth();
   const toast = useToast();
   const router = useRouter();
@@ -37,10 +39,26 @@ export default function Login() {
     }
   }, [isLoggedIn, router]);
 
+  // ログインIDのバリデーション
+  const validateLoginId = (value: string) => {
+    if (!/^[a-zA-Z0-9]+$/.test(value)) {
+      setLoginIdError("ログインIDは英数字のみ使用できます");
+      return false;
+    }
+    setLoginIdError("");
+    return true;
+  };
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // フォーム送信前にバリデーション
+    if (!validateLoginId(loginId)) {
+      return;
+    }
+
     try {
-      await login(username, password);
+      await login(loginId, password);
       toast({
         title: "ログイン成功",
         status: "success",
@@ -51,7 +69,7 @@ export default function Login() {
       console.error("ログインエラー:", error);
       toast({
         title: "ログイン失敗",
-        description: "ユーザー名またはパスワードが正しくありません",
+        description: "ログインIDまたはパスワードが正しくありません",
         status: "error",
         duration: 3000,
         isClosable: true,
@@ -75,15 +93,21 @@ export default function Login() {
 
             <form onSubmit={handleLogin}>
               <VStack spacing={4}>
-                <FormControl isRequired>
-                  <FormLabel>ユーザー名</FormLabel>
+                <FormControl isRequired isInvalid={!!loginIdError}>
+                  <FormLabel>ログインID</FormLabel>
                   <Input
                     type="text"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
+                    value={loginId}
+                    onChange={(e) => {
+                      setLoginId(e.target.value);
+                      validateLoginId(e.target.value);
+                    }}
                     size="lg"
-                    placeholder="ユーザー名を入力"
+                    placeholder="ログインIDを入力（英数字のみ）"
                   />
+                  {loginIdError && (
+                    <FormErrorMessage>{loginIdError}</FormErrorMessage>
+                  )}
                 </FormControl>
 
                 <FormControl isRequired>
