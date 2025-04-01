@@ -21,34 +21,6 @@ interface Task {
   updated_at?: string;
 }
 
-// モック用タスクデータ（本番環境ではDBから取得）
-const mockTasks: Task[] = [
-  {
-    id: 1,
-    title: "デザインレビュー",
-    description: "新UIのデザインレビューを実施",
-    status: "pending",
-    priority: "high",
-    due_date: "2023-06-10",
-    assigned_to: "1",
-    assigned_to_username: "山田太郎",
-    created_by: 1,
-    created_by_username: "管理者",
-  },
-  {
-    id: 2,
-    title: "バグ修正",
-    description: "ログイン画面のバグを修正する",
-    status: "in_progress",
-    priority: "medium",
-    due_date: "2023-06-15",
-    assigned_to: "2",
-    assigned_to_username: "鈴木一郎",
-    created_by: 1,
-    created_by_username: "管理者",
-  },
-];
-
 export async function GET(request: NextRequest) {
   try {
     // ユーザー情報を取得（通常のx-userヘッダーとBase64エンコードされたx-user-base64ヘッダーの両方をサポート）
@@ -108,10 +80,23 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // 指定されたユーザーのタスクをフィルタリング
-    const userTasks = mockTasks.filter(
-      (task) => String(task.assigned_to) === userId
-    );
+    // 数値に変換
+    const userIdNum = parseInt(userId);
+
+    // データベースから指定されたユーザーのタスクを取得
+    const result = await sql`
+      SELECT 
+        t.*,
+        u.username as assigned_to_username,
+        c.username as created_by_username
+      FROM tasks t
+      LEFT JOIN users u ON t.assigned_to = u.id
+      LEFT JOIN users c ON t.created_by = c.id
+      WHERE t.assigned_to = ${userIdNum}
+      ORDER BY t.due_date ASC;
+    `;
+
+    const userTasks = result.rows as Task[];
 
     console.log(
       `ユーザー ${userId} に割り当てられたタスク: ${userTasks.length}件`

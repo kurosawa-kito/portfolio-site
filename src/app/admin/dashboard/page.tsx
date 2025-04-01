@@ -223,7 +223,15 @@ export default function AdminDashboard() {
         {selectedUser && (
           <>
             <Divider />
-            <TaskList tasks={tasks} viewType="table" isLoading={isLoading} />
+            <TaskList
+              tasks={tasks}
+              viewType="table"
+              isLoading={isLoading}
+              onStatusChange={undefined}
+              onEditTask={undefined}
+              onDeleteTask={undefined}
+              showSubtitle={false}
+            />
           </>
         )}
       </VStack>
