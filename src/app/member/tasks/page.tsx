@@ -34,6 +34,22 @@ interface Task {
   is_all_day?: boolean;
 }
 
+// マルチバイト文字をエンコードするための安全なbase64エンコード関数
+const safeBase64Encode = (str: string, user: any) => {
+  try {
+    // UTF-8でエンコードしてからbase64に変換
+    return btoa(
+      encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (_, p1) => {
+        return String.fromCharCode(parseInt(p1, 16));
+      })
+    );
+  } catch (e) {
+    console.error("Base64エンコードエラー:", e);
+    // エラー時は単純な文字列を返す（ロールバック）
+    return btoa(JSON.stringify({ id: user?.id || 0 }));
+  }
+};
+
 export default function TasksPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -66,9 +82,10 @@ export default function TasksPage() {
       // ヘッダーを別変数に定義
       // ユーザー情報をBase64エンコードして非ASCII文字の問題を回避
       const userStr = JSON.stringify(user);
+
       const userBase64 =
         typeof window !== "undefined"
-          ? btoa(userStr)
+          ? safeBase64Encode(userStr, user)
           : Buffer.from(userStr).toString("base64");
 
       const headers = {
@@ -141,9 +158,10 @@ export default function TasksPage() {
     try {
       // ユーザー情報をBase64エンコードして非ASCII文字の問題を回避
       const userStr = JSON.stringify(user);
+
       const userBase64 =
         typeof window !== "undefined"
-          ? btoa(userStr)
+          ? safeBase64Encode(userStr, user)
           : Buffer.from(userStr).toString("base64");
 
       // タスク更新用のヘッダーを定義
@@ -218,9 +236,10 @@ export default function TasksPage() {
 
       // ユーザー情報をBase64エンコードして非ASCII文字の問題を回避
       const userStr = JSON.stringify(user);
+
       const userBase64 =
         typeof window !== "undefined"
-          ? btoa(userStr)
+          ? safeBase64Encode(userStr, user)
           : Buffer.from(userStr).toString("base64");
 
       // ヘッダーを別変数に定義

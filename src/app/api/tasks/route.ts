@@ -33,7 +33,22 @@ export async function GET(request: NextRequest) {
     if (userBase64) {
       try {
         // Base64からデコード (サーバーサイドではBufferを使用)
-        userStr = Buffer.from(userBase64, "base64").toString("utf-8");
+        const decodedStr = Buffer.from(userBase64, "base64").toString("utf-8");
+
+        // UTF-8エンコードされたURLエンコード文字列かどうかをチェックして適切に処理
+        try {
+          if (decodedStr.includes("%")) {
+            // URLエンコード文字列の場合はデコード
+            userStr = decodeURIComponent(decodedStr);
+          } else {
+            // 通常の文字列の場合はそのまま使用
+            userStr = decodedStr;
+          }
+        } catch (decodeErr) {
+          // デコードエラーの場合は元の文字列を使用
+          userStr = decodedStr;
+        }
+
         console.log("Base64エンコードされたユーザー情報を使用");
       } catch (e) {
         console.error("Base64デコードエラー:", e);
@@ -128,7 +143,21 @@ export async function POST(request: NextRequest) {
     if (userBase64) {
       try {
         // Base64からデコード (サーバーサイドではBufferを使用)
-        userStr = Buffer.from(userBase64, "base64").toString("utf-8");
+        const decodedStr = Buffer.from(userBase64, "base64").toString("utf-8");
+
+        // UTF-8エンコードされたURLエンコード文字列かどうかをチェックして適切に処理
+        try {
+          if (decodedStr.includes("%")) {
+            // URLエンコード文字列の場合はデコード
+            userStr = decodeURIComponent(decodedStr);
+          } else {
+            // 通常の文字列の場合はそのまま使用
+            userStr = decodedStr;
+          }
+        } catch (decodeErr) {
+          // デコードエラーの場合は元の文字列を使用
+          userStr = decodedStr;
+        }
       } catch (e) {
         console.error("Base64デコードエラー:", e);
         return NextResponse.json(
@@ -193,7 +222,21 @@ export async function PATCH(request: NextRequest) {
     if (userBase64) {
       try {
         // Base64からデコード (サーバーサイドではBufferを使用)
-        userStr = Buffer.from(userBase64, "base64").toString("utf-8");
+        const decodedStr = Buffer.from(userBase64, "base64").toString("utf-8");
+
+        // UTF-8エンコードされたURLエンコード文字列かどうかをチェックして適切に処理
+        try {
+          if (decodedStr.includes("%")) {
+            // URLエンコード文字列の場合はデコード
+            userStr = decodeURIComponent(decodedStr);
+          } else {
+            // 通常の文字列の場合はそのまま使用
+            userStr = decodedStr;
+          }
+        } catch (decodeErr) {
+          // デコードエラーの場合は元の文字列を使用
+          userStr = decodedStr;
+        }
       } catch (e) {
         console.error("Base64デコードエラー:", e);
         return NextResponse.json(
