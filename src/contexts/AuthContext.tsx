@@ -9,6 +9,22 @@ import {
 } from "react";
 import { useRouter, usePathname } from "next/navigation";
 
+// マルチバイト文字をエンコードするための安全なbase64エンコード関数
+const safeBase64Encode = (str: string, user: any) => {
+  try {
+    // UTF-8でエンコードしてからbase64に変換
+    return btoa(
+      encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (_, p1) => {
+        return String.fromCharCode(parseInt(p1, 16));
+      })
+    );
+  } catch (e) {
+    console.error("Base64エンコードエラー:", e);
+    // エラー時は単純な文字列を返す（ロールバック）
+    return btoa(JSON.stringify({ id: user?.id || 0 }));
+  }
+};
+
 type User = {
   id: number;
   username: string;
@@ -156,9 +172,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (login_id: string, password: string) => {
     try {
+      // ヘッダーを別変数に定義
+      const headers = {
+        "Content-Type": "application/json",
+      };
+
       const res = await fetch("/api/auth/login", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify({ login_id, password }),
       });
 
