@@ -243,12 +243,15 @@ export default function TaskModal({
         method = "PUT";
       }
 
+      // APIリクエスト用のヘッダーを定義
+      const requestHeaders = {
+        "Content-Type": "application/json",
+        "x-user": JSON.stringify(user),
+      };
+
       const response = await fetch(endpoint, {
         method: method,
-        headers: {
-          "Content-Type": "application/json",
-          "x-user": JSON.stringify(user),
-        },
+        headers: requestHeaders,
         body: JSON.stringify({
           title,
           description,
