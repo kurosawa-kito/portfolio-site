@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sql } from "@vercel/postgres";
+import bcrypt from "bcrypt";
 
 // login_idが英数字のみかをチェックする関数
 function isAlphanumeric(str: string): boolean {
@@ -97,10 +98,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // パスワードのハッシュ化
+    const hashedPassword = await bcrypt.hash(password, 10);
+
     // 新規ユーザーをデータベースに追加
     const result = await sql`
       INSERT INTO users (username, login_id, password, role)
-      VALUES (${username}, ${login_id}, ${password}, 'member')
+      VALUES (${username}, ${login_id}, ${hashedPassword}, 'member')
       RETURNING id, username, role
     `;
 
