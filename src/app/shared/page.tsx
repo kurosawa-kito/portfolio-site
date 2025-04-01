@@ -119,7 +119,6 @@ export default function SharedBoard() {
       const tasksResponse = await fetch("/api/shared/tasks", {
         headers: {
           "x-user": JSON.stringify(user),
-          // キャッシュを防止
           "Cache-Control": "no-cache, no-store",
           Pragma: "no-cache",
         },
@@ -169,7 +168,6 @@ export default function SharedBoard() {
         headers: {
           "Content-Type": "application/json",
           "x-user": JSON.stringify(user),
-          // キャッシュを防止
           "Cache-Control": "no-cache, no-store",
           Pragma: "no-cache",
         },
