@@ -66,7 +66,7 @@ export default function TasksPage() {
       const response = await fetch("/api/tasks", {
         headers: {
           "x-user": JSON.stringify(user),
-          "x-refresh": "true", // キャッシュをバイパス
+          "x-refresh": "true",
           "Cache-Control": "no-cache, no-store",
           Pragma: "no-cache",
         },
