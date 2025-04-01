@@ -25,12 +25,43 @@ interface DbUser {
 // ユーザー一覧を取得
 export async function GET(request: NextRequest) {
   try {
-    const userHeader = request.headers.get("x-user");
-    if (!userHeader) {
+    // ユーザー情報を取得（通常のx-userヘッダーとBase64エンコードされたx-user-base64ヘッダーの両方をサポート）
+    let userStr = request.headers.get("x-user");
+    const userBase64 = request.headers.get("x-user-base64");
+
+    // Base64エンコードされたユーザー情報を優先的に使用
+    if (userBase64) {
+      try {
+        // Base64からデコード (サーバーサイドではBufferを使用)
+        const decodedStr = Buffer.from(userBase64, "base64").toString("utf-8");
+
+        // UTF-8エンコードされたURLエンコード文字列かどうかをチェックして適切に処理
+        try {
+          if (decodedStr.includes("%")) {
+            // URLエンコード文字列の場合はデコード
+            userStr = decodeURIComponent(decodedStr);
+          } else {
+            // 通常の文字列の場合はそのまま使用
+            userStr = decodedStr;
+          }
+        } catch (decodeErr) {
+          // デコードエラーの場合は元の文字列を使用
+          userStr = decodedStr;
+        }
+      } catch (e) {
+        console.error("Base64デコードエラー:", e);
+        return NextResponse.json(
+          { error: "ユーザー情報のデコードに失敗しました" },
+          { status: 400 }
+        );
+      }
+    }
+
+    if (!userStr) {
       return NextResponse.json({ error: "認証エラー" }, { status: 401 });
     }
 
-    const requestingUser = JSON.parse(userHeader) as User;
+    const requestingUser = JSON.parse(userStr) as User;
 
     // 管理者のみアクセス可能
     if (requestingUser.role !== "admin") {
@@ -65,12 +96,43 @@ export async function GET(request: NextRequest) {
 // ユーザー権限を変更
 export async function PUT(request: NextRequest) {
   try {
-    const userHeader = request.headers.get("x-user");
-    if (!userHeader) {
+    // ユーザー情報を取得（通常のx-userヘッダーとBase64エンコードされたx-user-base64ヘッダーの両方をサポート）
+    let userStr = request.headers.get("x-user");
+    const userBase64 = request.headers.get("x-user-base64");
+
+    // Base64エンコードされたユーザー情報を優先的に使用
+    if (userBase64) {
+      try {
+        // Base64からデコード (サーバーサイドではBufferを使用)
+        const decodedStr = Buffer.from(userBase64, "base64").toString("utf-8");
+
+        // UTF-8エンコードされたURLエンコード文字列かどうかをチェックして適切に処理
+        try {
+          if (decodedStr.includes("%")) {
+            // URLエンコード文字列の場合はデコード
+            userStr = decodeURIComponent(decodedStr);
+          } else {
+            // 通常の文字列の場合はそのまま使用
+            userStr = decodedStr;
+          }
+        } catch (decodeErr) {
+          // デコードエラーの場合は元の文字列を使用
+          userStr = decodedStr;
+        }
+      } catch (e) {
+        console.error("Base64デコードエラー:", e);
+        return NextResponse.json(
+          { error: "ユーザー情報のデコードに失敗しました" },
+          { status: 400 }
+        );
+      }
+    }
+
+    if (!userStr) {
       return NextResponse.json({ error: "認証エラー" }, { status: 401 });
     }
 
-    const requestingUser = JSON.parse(userHeader) as User;
+    const requestingUser = JSON.parse(userStr) as User;
     // idが数値型であることを確認
     const requestingUserId =
       typeof requestingUser.id === "string"
@@ -159,12 +221,43 @@ export async function PUT(request: NextRequest) {
 // ユーザーを削除
 export async function DELETE(request: NextRequest) {
   try {
-    const userHeader = request.headers.get("x-user");
-    if (!userHeader) {
+    // ユーザー情報を取得（通常のx-userヘッダーとBase64エンコードされたx-user-base64ヘッダーの両方をサポート）
+    let userStr = request.headers.get("x-user");
+    const userBase64 = request.headers.get("x-user-base64");
+
+    // Base64エンコードされたユーザー情報を優先的に使用
+    if (userBase64) {
+      try {
+        // Base64からデコード (サーバーサイドではBufferを使用)
+        const decodedStr = Buffer.from(userBase64, "base64").toString("utf-8");
+
+        // UTF-8エンコードされたURLエンコード文字列かどうかをチェックして適切に処理
+        try {
+          if (decodedStr.includes("%")) {
+            // URLエンコード文字列の場合はデコード
+            userStr = decodeURIComponent(decodedStr);
+          } else {
+            // 通常の文字列の場合はそのまま使用
+            userStr = decodedStr;
+          }
+        } catch (decodeErr) {
+          // デコードエラーの場合は元の文字列を使用
+          userStr = decodedStr;
+        }
+      } catch (e) {
+        console.error("Base64デコードエラー:", e);
+        return NextResponse.json(
+          { error: "ユーザー情報のデコードに失敗しました" },
+          { status: 400 }
+        );
+      }
+    }
+
+    if (!userStr) {
       return NextResponse.json({ error: "認証エラー" }, { status: 401 });
     }
 
-    const requestingUser = JSON.parse(userHeader) as User;
+    const requestingUser = JSON.parse(userStr) as User;
     // idが数値型であることを確認
     const requestingUserId =
       typeof requestingUser.id === "string"
