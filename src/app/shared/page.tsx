@@ -364,7 +364,6 @@ export default function SharedBoard() {
         headers: {
           "Content-Type": "application/json",
           "x-user": JSON.stringify(userInfo),
-          // キャッシュを防止
           "Cache-Control": "no-cache, no-store",
           Pragma: "no-cache",
         },

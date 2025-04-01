@@ -62,7 +62,6 @@ export default function TasksPage() {
   const fetchTasks = useCallback(async () => {
     setIsLoading(true);
     try {
-      // リクエストヘッダーにリフレッシュフラグを追加
       const response = await fetch("/api/tasks", {
         headers: {
           "x-user": JSON.stringify(user),
@@ -70,7 +69,6 @@ export default function TasksPage() {
           "Cache-Control": "no-cache, no-store",
           Pragma: "no-cache",
         },
-        // キャッシュを完全に無効化
         cache: "no-store",
       });
 
