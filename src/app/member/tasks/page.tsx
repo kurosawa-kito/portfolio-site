@@ -62,6 +62,7 @@ export default function TasksPage() {
   const fetchTasks = useCallback(async () => {
     setIsLoading(true);
     try {
+      // リクエストとキャッシュの設定
       const response = await fetch("/api/tasks", {
         headers: {
           "x-user": JSON.stringify(user),
