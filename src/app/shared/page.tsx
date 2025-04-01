@@ -242,12 +242,15 @@ export default function SharedBoard() {
 
     setIsAddingNote(true);
     try {
+      // ノート追加用のヘッダーを定義
+      const noteHeaders = {
+        "Content-Type": "application/json",
+        "x-user": JSON.stringify(user),
+      };
+
       const response = await fetch("/api/shared/notes", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-user": JSON.stringify(user),
-        },
+        headers: noteHeaders,
         body: JSON.stringify({
           content: newNoteContent,
         }),
@@ -282,11 +285,14 @@ export default function SharedBoard() {
   // ノートを削除
   const deleteNote = async (noteId: string) => {
     try {
+      // ノート削除用のヘッダーを定義
+      const deleteHeaders = {
+        "x-user": JSON.stringify(user),
+      };
+
       const response = await fetch(`/api/shared/notes?id=${noteId}`, {
         method: "DELETE",
-        headers: {
-          "x-user": JSON.stringify(user),
-        },
+        headers: deleteHeaders,
       });
 
       if (response.ok) {
@@ -432,12 +438,16 @@ export default function SharedBoard() {
       // 旧APIとの互換性のために、共有タスクリストにも追加する
       try {
         console.log("共有タスクリストに追加記録...");
+
+        // 共有タスクリスト追加用のヘッダーを定義
+        const recordHeaders = {
+          "Content-Type": "application/json",
+          "x-user": JSON.stringify(userInfo),
+        };
+
         const recordResponse = await fetch("/api/shared/tasks", {
           method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-            "x-user": JSON.stringify(userInfo),
-          },
+          headers: recordHeaders,
           body: JSON.stringify({
             action: "addTaskToUser",
             taskId: taskIdStr,
@@ -555,12 +565,15 @@ export default function SharedBoard() {
         endpoint: `/api/shared/tasks/${taskId}`,
       });
 
+      // 共有タスク削除用のヘッダーを定義
+      const deleteTaskHeaders = {
+        "Content-Type": "application/json",
+        "x-user": JSON.stringify(user),
+      };
+
       const response = await fetch(`/api/shared/tasks/${taskId}`, {
         method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-          "x-user": JSON.stringify(user),
-        },
+        headers: deleteTaskHeaders,
       });
 
       const responseText = await response.text();

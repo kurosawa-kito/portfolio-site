@@ -122,12 +122,15 @@ export default function TasksPage() {
   // タスクステータスを更新
   const handleStatusChange = async (taskId: string, newStatus: string) => {
     try {
+      // タスク更新用のヘッダーを定義
+      const statusHeaders = {
+        "Content-Type": "application/json",
+        "x-user": JSON.stringify(user),
+      };
+
       const response = await fetch("/api/tasks", {
         method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          "x-user": JSON.stringify(user),
-        },
+        headers: statusHeaders,
         body: JSON.stringify({
           id: taskId,
           status: newStatus,
