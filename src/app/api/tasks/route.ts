@@ -27,35 +27,68 @@ export async function GET(request: NextRequest) {
 
     // ユーザー情報を取得
     const userStr = request.headers.get("x-user");
+    console.log(
+      "ユーザーヘッダー:",
+      userStr ? `取得済み (${userStr.length}文字)` : "なし"
+    );
+
     if (!userStr) {
+      console.error("認証エラー: x-userヘッダーがありません");
       return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
     }
 
-    const user = JSON.parse(userStr) as User;
-    console.log("ユーザー情報:", {
-      userId: user.id,
-      username: user.username,
-    });
+    let user: User;
+    try {
+      user = JSON.parse(userStr) as User;
+
+      // ユーザーデータの検証
+      if (!user || typeof user.id !== "number" || !user.username) {
+        console.error("不正なユーザーデータ:", user);
+        return NextResponse.json(
+          { error: "不正なユーザーデータ" },
+          { status: 401 }
+        );
+      }
+
+      console.log("ユーザー情報:", {
+        userId: user.id,
+        username: user.username,
+      });
+    } catch (e) {
+      console.error("ユーザーヘッダーの解析エラー:", e);
+      return NextResponse.json(
+        { error: "不正なユーザーデータ形式" },
+        { status: 400 }
+      );
+    }
 
     // データベースからユーザーに割り当てられたタスクを取得
-    const result = await sql`
-      SELECT 
-        t.*,
-        u.username as assigned_to_username,
-        c.username as created_by_username
-      FROM tasks t
-      LEFT JOIN users u ON t.assigned_to = u.id
-      LEFT JOIN users c ON t.created_by = c.id
-      WHERE t.assigned_to = ${user.id}
-      ORDER BY t.due_date ASC;
-    `;
+    try {
+      const result = await sql`
+        SELECT 
+          t.*,
+          u.username as assigned_to_username,
+          c.username as created_by_username
+        FROM tasks t
+        LEFT JOIN users u ON t.assigned_to = u.id
+        LEFT JOIN users c ON t.created_by = c.id
+        WHERE t.assigned_to = ${user.id}
+        ORDER BY t.due_date ASC;
+      `;
 
-    const tasks = result.rows as Task[];
-    console.log(
-      `ユーザー ${user.id} に割り当てられたタスク: ${tasks.length}件`
-    );
+      const tasks = result.rows as Task[];
+      console.log(
+        `ユーザー ${user.id} に割り当てられたタスク: ${tasks.length}件`
+      );
 
-    return NextResponse.json(tasks);
+      return NextResponse.json(tasks);
+    } catch (dbError) {
+      console.error("データベースエラー:", dbError);
+      return NextResponse.json(
+        { error: "データベースからのタスク取得に失敗しました" },
+        { status: 500 }
+      );
+    }
   } catch (error) {
     console.error("タスク取得エラー:", error);
     return NextResponse.json(

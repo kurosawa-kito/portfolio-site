@@ -71,6 +71,8 @@ export default function TasksPage() {
         Pragma: "no-cache",
       };
 
+      console.log("タスク取得リクエスト送信中...", { user });
+
       const response = await fetch("/api/tasks", {
         headers,
         cache: "no-store",
@@ -103,7 +105,15 @@ export default function TasksPage() {
 
         setTasks(data);
       } else {
-        throw new Error("タスクの取得に失敗しました");
+        const errorText = await response.text();
+        console.error("タスク取得APIエラー:", {
+          status: response.status,
+          statusText: response.statusText,
+          body: errorText,
+        });
+        throw new Error(
+          `タスクの取得に失敗しました: ${response.status} ${response.statusText}`
+        );
       }
     } catch (error) {
       console.error("タスク取得エラー:", error);
@@ -245,6 +255,13 @@ export default function TasksPage() {
 
   // ページロード時にタスク一覧を取得
   useEffect(() => {
+    console.log("タスク一覧ページのuseEffect実行", {
+      isUserAvailable: !!user,
+      userDetails: user
+        ? { id: user.id, username: user.username, role: user.role }
+        : "ユーザー情報なし",
+    });
+
     if (user) {
       console.log("タスク一覧ページ読み込み - タスク取得開始");
       fetchTasks();
@@ -263,6 +280,8 @@ export default function TasksPage() {
           }, 1000);
         }
       }
+    } else {
+      console.warn("ユーザー情報が取得できないためタスクを取得できません");
     }
   }, [user, fetchTasks]);
 

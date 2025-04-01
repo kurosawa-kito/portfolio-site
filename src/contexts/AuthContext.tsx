@@ -86,14 +86,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     // 初期ロード時にセッションストレージからユーザー情報を取得
-    const userStr = sessionStorage.getItem("user");
-    if (userStr) {
-      const userData = JSON.parse(userStr);
-      // ユーザーIDを数値に変換
-      userData.id = parseInt(userData.id);
-      setUser(userData);
-      // ユーザーが存在する場合はヘッダーを表示
-      setShowTaskHeader(true);
+    try {
+      const userStr = sessionStorage.getItem("user");
+      console.log("セッションストレージからユーザー情報を取得", {
+        hasUserData: !!userStr,
+        userDataLength: userStr ? userStr.length : 0,
+      });
+
+      if (userStr) {
+        try {
+          const userData = JSON.parse(userStr);
+          console.log("パース済みユーザーデータ", userData);
+
+          // ユーザーIDを数値に変換
+          userData.id = parseInt(userData.id);
+
+          // 必須フィールドの存在を確認
+          if (!userData.id || !userData.username || !userData.role) {
+            console.error(
+              "ユーザーデータの必須フィールドが欠けています",
+              userData
+            );
+            // 不完全なデータは使用しない
+            sessionStorage.removeItem("user");
+            return;
+          }
+
+          setUser(userData);
+          // ユーザーが存在する場合はヘッダーを表示
+          setShowTaskHeader(true);
+        } catch (e) {
+          console.error("ユーザーデータのパースに失敗しました", e);
+          // 不正なデータを削除
+          sessionStorage.removeItem("user");
+        }
+      }
+    } catch (e) {
+      console.error("セッションストレージアクセスエラー", e);
     }
   }, []);
 
