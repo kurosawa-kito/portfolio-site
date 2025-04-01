@@ -108,7 +108,7 @@ export default function TasksPage() {
 
         // 共有タスク含む詳細ログ
         const sharedTasksCount = data.filter((t: any) =>
-          t.id.startsWith("shared-")
+          String(t.id).startsWith("shared-")
         ).length;
         if (sharedTasksCount > 0) {
           console.log(
@@ -119,7 +119,7 @@ export default function TasksPage() {
           console.log(
             "共有タスク一覧:",
             data
-              .filter((t: any) => t.id.startsWith("shared-"))
+              .filter((t: any) => String(t.id).startsWith("shared-"))
               .map((t: any) => ({
                 id: t.id,
                 title: t.title,
