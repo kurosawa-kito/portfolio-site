@@ -7,13 +7,16 @@ interface Task {
   id: number;
   title: string;
   description: string | null;
-  status: string;
+  status: "pending" | "in_progress" | "completed";
+  priority: "low" | "medium" | "high";
   due_date: string | null;
-  priority: string;
   assigned_to: number;
   assigned_to_username: string;
+  project_id: number | null;
   created_by: number;
   created_by_username: string;
+  is_shared: boolean;
+  shared_at: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -64,7 +67,8 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const { title, description, due_date, priority } = await request.json();
+    const { title, description, due_date, priority, project_id } =
+      await request.json();
     const userStr = request.headers.get("x-user");
     if (!userStr) {
       return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
@@ -81,7 +85,9 @@ export async function POST(request: NextRequest) {
         due_date,
         priority,
         assigned_to,
-        created_by
+        project_id,
+        created_by,
+        is_shared
       ) VALUES (
         ${title},
         ${description},
@@ -89,7 +95,9 @@ export async function POST(request: NextRequest) {
         ${due_date},
         ${priority},
         ${user.id},
-        ${user.id}
+        ${project_id},
+        ${user.id},
+        false
       )
       RETURNING *;
     `;
