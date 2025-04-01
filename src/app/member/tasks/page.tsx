@@ -64,8 +64,15 @@ export default function TasksPage() {
     try {
       // リクエストとキャッシュの設定
       // ヘッダーを別変数に定義
+      // ユーザー情報をBase64エンコードして非ASCII文字の問題を回避
+      const userStr = JSON.stringify(user);
+      const userBase64 =
+        typeof window !== "undefined"
+          ? btoa(userStr)
+          : Buffer.from(userStr).toString("base64");
+
       const headers = {
-        "x-user": JSON.stringify(user),
+        "x-user-base64": userBase64, // Base64エンコードされたユーザー情報
         "x-refresh": "true",
         "Cache-Control": "no-cache, no-store",
         Pragma: "no-cache",
@@ -132,10 +139,17 @@ export default function TasksPage() {
   // タスクステータスを更新
   const handleStatusChange = async (taskId: string, newStatus: string) => {
     try {
+      // ユーザー情報をBase64エンコードして非ASCII文字の問題を回避
+      const userStr = JSON.stringify(user);
+      const userBase64 =
+        typeof window !== "undefined"
+          ? btoa(userStr)
+          : Buffer.from(userStr).toString("base64");
+
       // タスク更新用のヘッダーを定義
       const statusHeaders = {
         "Content-Type": "application/json",
-        "x-user": JSON.stringify(user),
+        "x-user-base64": userBase64,
       };
 
       const response = await fetch("/api/tasks", {
@@ -202,10 +216,17 @@ export default function TasksPage() {
         `タスク削除: ${isSharedTask ? "共有タスク" : "通常タスク"} ID=${taskId}`
       );
 
+      // ユーザー情報をBase64エンコードして非ASCII文字の問題を回避
+      const userStr = JSON.stringify(user);
+      const userBase64 =
+        typeof window !== "undefined"
+          ? btoa(userStr)
+          : Buffer.from(userStr).toString("base64");
+
       // ヘッダーを別変数に定義
       const deleteHeaders = {
         "Content-Type": "application/json",
-        "x-user": JSON.stringify(user),
+        "x-user-base64": userBase64,
       };
 
       const response = await fetch(endpoint, {

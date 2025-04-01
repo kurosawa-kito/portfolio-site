@@ -25,15 +25,32 @@ export async function GET(request: NextRequest) {
   try {
     console.log("タスク一覧取得API呼び出し");
 
-    // ユーザー情報を取得
-    const userStr = request.headers.get("x-user");
+    // ユーザー情報を取得（通常のx-userヘッダーとBase64エンコードされたx-user-base64ヘッダーの両方をサポート）
+    let userStr = request.headers.get("x-user");
+    const userBase64 = request.headers.get("x-user-base64");
+
+    // Base64エンコードされたユーザー情報を優先的に使用
+    if (userBase64) {
+      try {
+        // Base64からデコード (サーバーサイドではBufferを使用)
+        userStr = Buffer.from(userBase64, "base64").toString("utf-8");
+        console.log("Base64エンコードされたユーザー情報を使用");
+      } catch (e) {
+        console.error("Base64デコードエラー:", e);
+        return NextResponse.json(
+          { error: "ユーザー情報のデコードに失敗しました" },
+          { status: 400 }
+        );
+      }
+    }
+
     console.log(
       "ユーザーヘッダー:",
       userStr ? `取得済み (${userStr.length}文字)` : "なし"
     );
 
     if (!userStr) {
-      console.error("認証エラー: x-userヘッダーがありません");
+      console.error("認証エラー: ユーザーヘッダーがありません");
       return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
     }
 
@@ -102,7 +119,25 @@ export async function POST(request: NextRequest) {
   try {
     const { title, description, due_date, priority, project_id } =
       await request.json();
-    const userStr = request.headers.get("x-user");
+
+    // ユーザー情報を取得（通常のx-userヘッダーとBase64エンコードされたx-user-base64ヘッダーの両方をサポート）
+    let userStr = request.headers.get("x-user");
+    const userBase64 = request.headers.get("x-user-base64");
+
+    // Base64エンコードされたユーザー情報を優先的に使用
+    if (userBase64) {
+      try {
+        // Base64からデコード (サーバーサイドではBufferを使用)
+        userStr = Buffer.from(userBase64, "base64").toString("utf-8");
+      } catch (e) {
+        console.error("Base64デコードエラー:", e);
+        return NextResponse.json(
+          { error: "ユーザー情報のデコードに失敗しました" },
+          { status: 400 }
+        );
+      }
+    }
+
     if (!userStr) {
       return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
     }
@@ -149,7 +184,25 @@ export async function POST(request: NextRequest) {
 export async function PATCH(request: NextRequest) {
   try {
     const { id, status } = await request.json();
-    const userStr = request.headers.get("x-user");
+
+    // ユーザー情報を取得（通常のx-userヘッダーとBase64エンコードされたx-user-base64ヘッダーの両方をサポート）
+    let userStr = request.headers.get("x-user");
+    const userBase64 = request.headers.get("x-user-base64");
+
+    // Base64エンコードされたユーザー情報を優先的に使用
+    if (userBase64) {
+      try {
+        // Base64からデコード (サーバーサイドではBufferを使用)
+        userStr = Buffer.from(userBase64, "base64").toString("utf-8");
+      } catch (e) {
+        console.error("Base64デコードエラー:", e);
+        return NextResponse.json(
+          { error: "ユーザー情報のデコードに失敗しました" },
+          { status: 400 }
+        );
+      }
+    }
+
     if (!userStr) {
       return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
     }
