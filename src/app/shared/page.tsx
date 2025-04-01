@@ -25,6 +25,22 @@ import PageTitle from "@/components/PageTitle";
 import TaskModal from "@/components/TaskModal";
 import { useRouter } from "next/navigation";
 
+// マルチバイト文字をエンコードするための安全なbase64エンコード関数
+const safeBase64Encode = (str: string, user: any) => {
+  try {
+    // UTF-8でエンコードしてからbase64に変換
+    return btoa(
+      encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (_, p1) => {
+        return String.fromCharCode(parseInt(p1, 16));
+      })
+    );
+  } catch (e) {
+    console.error("Base64エンコードエラー:", e);
+    // エラー時は単純な文字列を返す（ロールバック）
+    return btoa(JSON.stringify({ id: user?.id || 0 }));
+  }
+};
+
 // 共有ノートの型定義
 interface SharedNote {
   id: string;
@@ -84,9 +100,16 @@ export default function SharedBoard() {
 
     setIsLoadingNotes(true);
     try {
+      // ユーザー情報をBase64エンコードして非ASCII文字の問題を回避
+      const userStr = JSON.stringify(user);
+      const userBase64 =
+        typeof window !== "undefined"
+          ? safeBase64Encode(userStr, user)
+          : Buffer.from(userStr).toString("base64");
+
       const response = await fetch("/api/shared/notes", {
         headers: {
-          "x-user": JSON.stringify(user),
+          "x-user-base64": userBase64,
         },
       });
 
@@ -117,9 +140,16 @@ export default function SharedBoard() {
       // 共有タスク一覧を取得
       console.log("共有タスク一覧取得開始...");
 
+      // ユーザー情報をBase64エンコードして非ASCII文字の問題を回避
+      const userStr = JSON.stringify(user);
+      const userBase64 =
+        typeof window !== "undefined"
+          ? safeBase64Encode(userStr, user)
+          : Buffer.from(userStr).toString("base64");
+
       // ヘッダーを別変数に定義
       const headers = {
-        "x-user": JSON.stringify(user),
+        "x-user-base64": userBase64,
         "Cache-Control": "no-cache, no-store",
         Pragma: "no-cache",
       };
@@ -168,10 +198,16 @@ export default function SharedBoard() {
 
       // APIからも追加済みタスクIDを取得して統合
 
+      // ユーザー情報をBase64エンコードして非ASCII文字の問題を回避
+      const apiUserBase64 =
+        typeof window !== "undefined"
+          ? safeBase64Encode(userStr, user)
+          : Buffer.from(userStr).toString("base64");
+
       // ヘッダーを別変数に定義
       const apiHeaders = {
         "Content-Type": "application/json",
-        "x-user": JSON.stringify(user),
+        "x-user-base64": apiUserBase64,
         "Cache-Control": "no-cache, no-store",
         Pragma: "no-cache",
       };
@@ -242,10 +278,17 @@ export default function SharedBoard() {
 
     setIsAddingNote(true);
     try {
+      // ユーザー情報をBase64エンコードして非ASCII文字の問題を回避
+      const userStr = JSON.stringify(user);
+      const userBase64 =
+        typeof window !== "undefined"
+          ? safeBase64Encode(userStr, user)
+          : Buffer.from(userStr).toString("base64");
+
       // ノート追加用のヘッダーを定義
       const noteHeaders = {
         "Content-Type": "application/json",
-        "x-user": JSON.stringify(user),
+        "x-user-base64": userBase64,
       };
 
       const response = await fetch("/api/shared/notes", {

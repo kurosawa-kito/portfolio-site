@@ -26,9 +26,48 @@ const sharedNotes: {
 ];
 
 // 共有ノート一覧を取得するAPI
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    return NextResponse.json(sharedNotes, { status: 200 });
+    // ユーザー情報を取得（通常のx-userヘッダーとBase64エンコードされたx-user-base64ヘッダーの両方をサポート）
+    let userStr = request.headers.get("x-user");
+    const userBase64 = request.headers.get("x-user-base64");
+
+    // Base64エンコードされたユーザー情報を優先的に使用
+    if (userBase64) {
+      try {
+        // Base64からデコード (サーバーサイドではBufferを使用)
+        const decodedStr = Buffer.from(userBase64, "base64").toString("utf-8");
+
+        // UTF-8エンコードされたURLエンコード文字列かどうかをチェックして適切に処理
+        try {
+          if (decodedStr.includes("%")) {
+            // URLエンコード文字列の場合はデコード
+            userStr = decodeURIComponent(decodedStr);
+          } else {
+            // 通常の文字列の場合はそのまま使用
+            userStr = decodedStr;
+          }
+        } catch (decodeErr) {
+          // デコードエラーの場合は元の文字列を使用
+          userStr = decodedStr;
+        }
+      } catch (e) {
+        console.error("Base64デコードエラー:", e);
+        return NextResponse.json(
+          { error: "ユーザー情報のデコードに失敗しました" },
+          { status: 400 }
+        );
+      }
+    }
+
+    if (!userStr) {
+      return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
+    }
+
+    const user = JSON.parse(userStr) as User;
+
+    // 共有ノート一覧を取得して返す
+    return NextResponse.json(sharedNotes);
   } catch (error) {
     console.error("共有ノート取得エラー:", error);
     return NextResponse.json(
@@ -41,34 +80,63 @@ export async function GET() {
 // 共有ノートを作成するAPI
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { content } = body;
+    const { content } = await request.json();
 
-    // ユーザー情報を取得
-    const userHeader = request.headers.get("x-user");
-    if (!userHeader) {
-      return NextResponse.json({ error: "認証エラー" }, { status: 401 });
+    // ユーザー情報を取得（通常のx-userヘッダーとBase64エンコードされたx-user-base64ヘッダーの両方をサポート）
+    let userStr = request.headers.get("x-user");
+    const userBase64 = request.headers.get("x-user-base64");
+
+    // Base64エンコードされたユーザー情報を優先的に使用
+    if (userBase64) {
+      try {
+        // Base64からデコード (サーバーサイドではBufferを使用)
+        const decodedStr = Buffer.from(userBase64, "base64").toString("utf-8");
+
+        // UTF-8エンコードされたURLエンコード文字列かどうかをチェックして適切に処理
+        try {
+          if (decodedStr.includes("%")) {
+            // URLエンコード文字列の場合はデコード
+            userStr = decodeURIComponent(decodedStr);
+          } else {
+            // 通常の文字列の場合はそのまま使用
+            userStr = decodedStr;
+          }
+        } catch (decodeErr) {
+          // デコードエラーの場合は元の文字列を使用
+          userStr = decodedStr;
+        }
+      } catch (e) {
+        console.error("Base64デコードエラー:", e);
+        return NextResponse.json(
+          { error: "ユーザー情報のデコードに失敗しました" },
+          { status: 400 }
+        );
+      }
     }
 
-    const user = JSON.parse(userHeader) as User;
+    if (!userStr) {
+      return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
+    }
+
+    const user = JSON.parse(userStr) as User;
 
     // 新しいノートを作成
-    const newNote = {
-      id: `note${Date.now()}`,
+    const newNote: SharedNote = {
+      id: `note-${Date.now()}`,
       content,
-      created_at: new Date().toISOString(),
       created_by: user.id,
       created_by_username: user.username,
+      created_at: new Date().toISOString(),
     };
 
-    // ノート一覧に追加
+    // ノート配列の先頭に追加（最新のノートが最初に表示されるように）
     sharedNotes.unshift(newNote);
 
     return NextResponse.json(newNote, { status: 201 });
   } catch (error) {
-    console.error("共有ノート作成エラー:", error);
+    console.error("共有ノート追加エラー:", error);
     return NextResponse.json(
-      { error: "共有ノートの作成に失敗しました" },
+      { error: "共有ノートの追加に失敗しました" },
       { status: 500 }
     );
   }

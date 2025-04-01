@@ -96,6 +96,38 @@ export async function GET(request: NextRequest) {
     const pathSegments = url.pathname.split("/");
     const taskId = pathSegments[pathSegments.length - 1];
 
+    // ユーザー情報を取得（通常のx-userヘッダーとBase64エンコードされたx-user-base64ヘッダーの両方をサポート）
+    let userStr = request.headers.get("x-user");
+    const userBase64 = request.headers.get("x-user-base64");
+
+    // Base64エンコードされたユーザー情報を優先的に使用
+    if (userBase64) {
+      try {
+        // Base64からデコード (サーバーサイドではBufferを使用)
+        const decodedStr = Buffer.from(userBase64, "base64").toString("utf-8");
+
+        // UTF-8エンコードされたURLエンコード文字列かどうかをチェックして適切に処理
+        try {
+          if (decodedStr.includes("%")) {
+            // URLエンコード文字列の場合はデコード
+            userStr = decodeURIComponent(decodedStr);
+          } else {
+            // 通常の文字列の場合はそのまま使用
+            userStr = decodedStr;
+          }
+        } catch (decodeErr) {
+          // デコードエラーの場合は元の文字列を使用
+          userStr = decodedStr;
+        }
+      } catch (e) {
+        console.error("Base64デコードエラー:", e);
+        return NextResponse.json(
+          { error: "ユーザー情報のデコードに失敗しました" },
+          { status: 400 }
+        );
+      }
+    }
+
     // '/api/shared/tasks/[taskId]' の形式の場合、特定のタスクを返す
     if (taskId && taskId !== "tasks") {
       console.log(`特定の共有タスクを取得するリクエスト: ID=${taskId}`);
@@ -326,18 +358,43 @@ export async function PATCH(request: NextRequest) {
     const body = await request.json();
     const { action } = body;
 
-    // ユーザー情報を取得
-    const userHeader = request.headers.get("x-user");
-    if (!userHeader) {
-      return NextResponse.json({ error: "認証エラー" }, { status: 401 });
+    // ユーザー情報を取得（通常のx-userヘッダーとBase64エンコードされたx-user-base64ヘッダーの両方をサポート）
+    let userStr = request.headers.get("x-user");
+    const userBase64 = request.headers.get("x-user-base64");
+
+    // Base64エンコードされたユーザー情報を優先的に使用
+    if (userBase64) {
+      try {
+        // Base64からデコード (サーバーサイドではBufferを使用)
+        const decodedStr = Buffer.from(userBase64, "base64").toString("utf-8");
+
+        // UTF-8エンコードされたURLエンコード文字列かどうかをチェックして適切に処理
+        try {
+          if (decodedStr.includes("%")) {
+            // URLエンコード文字列の場合はデコード
+            userStr = decodeURIComponent(decodedStr);
+          } else {
+            // 通常の文字列の場合はそのまま使用
+            userStr = decodedStr;
+          }
+        } catch (decodeErr) {
+          // デコードエラーの場合は元の文字列を使用
+          userStr = decodedStr;
+        }
+      } catch (e) {
+        console.error("Base64デコードエラー:", e);
+        return NextResponse.json(
+          { error: "ユーザー情報のデコードに失敗しました" },
+          { status: 400 }
+        );
+      }
     }
 
-    const user = JSON.parse(userHeader) as User;
-    console.log("ユーザー情報:", {
-      id: user.id,
-      username: user.username,
-      role: user.role,
-    });
+    if (!userStr) {
+      return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
+    }
+
+    const user = JSON.parse(userStr) as User;
 
     // ユーザーの追加済みタスクIDを取得
     if (action === "getUserAddedTasks") {
