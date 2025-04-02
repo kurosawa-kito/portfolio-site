@@ -60,6 +60,7 @@ const formatDateTime = (dateString: string, isAllDay?: boolean): string => {
   if (!dateString) return "";
 
   try {
+    // UTCからローカル時間に変換
     const date = new Date(dateString);
     if (isNaN(date.getTime())) return dateString; // 無効な日付の場合はそのまま返す
 
@@ -69,6 +70,7 @@ const formatDateTime = (dateString: string, isAllDay?: boolean): string => {
         year: "numeric",
         month: "2-digit",
         day: "2-digit",
+        timeZone: "Asia/Tokyo",
       });
     }
 
@@ -78,6 +80,7 @@ const formatDateTime = (dateString: string, isAllDay?: boolean): string => {
       day: "2-digit",
       hour: "2-digit",
       minute: "2-digit",
+      timeZone: "Asia/Tokyo",
     });
   } catch (error) {
     return dateString;

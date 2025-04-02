@@ -194,21 +194,34 @@ export default function TaskModal({
       setDueDateObj(date);
 
       if (date && !isNaN(date.getTime())) {
-        // ISO形式の文字列に変換
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, "0");
-        const day = String(date.getDate()).padStart(2, "0");
-
         let formattedDate: string;
 
         if (isAllDay) {
-          // 終日の場合は時間を00:00に設定
-          formattedDate = `${year}-${month}-${day}T00:00`;
+          // 終日の場合は時間を00:00に設定し、UTCに変換
+          const utcDate = new Date(
+            Date.UTC(
+              date.getFullYear(),
+              date.getMonth(),
+              date.getDate(),
+              0,
+              0,
+              0
+            )
+          );
+          formattedDate = utcDate.toISOString().slice(0, 16);
         } else {
-          // 通常は選択された時間を使用
-          const hours = String(date.getHours()).padStart(2, "0");
-          const minutes = String(date.getMinutes()).padStart(2, "0");
-          formattedDate = `${year}-${month}-${day}T${hours}:${minutes}`;
+          // 通常は選択された時間をUTCに変換
+          const utcDate = new Date(
+            Date.UTC(
+              date.getFullYear(),
+              date.getMonth(),
+              date.getDate(),
+              date.getHours(),
+              date.getMinutes(),
+              0
+            )
+          );
+          formattedDate = utcDate.toISOString().slice(0, 16);
         }
 
         setDueDate(formattedDate);
