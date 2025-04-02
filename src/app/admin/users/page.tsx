@@ -162,6 +162,8 @@ export default function UserManagement() {
     setIsProcessing(true);
 
     try {
+      console.log(`ユーザー削除前チェック処理開始: ユーザーID=${userData.id}`);
+
       // ユーザー情報をBase64エンコードして非ASCII文字の問題を回避
       const userStr = JSON.stringify(user);
       const userBase64 =
@@ -180,28 +182,50 @@ export default function UserManagement() {
       );
 
       const data = await response.json();
+      console.log("削除前チェックの応答:", data);
+
+      // 直接削除確認モーダルを表示条件
+      const showDeleteConfirm = () => {
+        console.log("直接削除確認モーダルを表示");
+        setDeleteAction("deleteAll");
+        setTimeout(() => {
+          onDeleteConfirmOpen();
+        }, 100);
+      };
+
+      // タスク処理選択モーダルを表示条件
+      const showTaskActionModal = () => {
+        if (data.pendingTasksCount && data.totalTasksCount) {
+          console.log("タスク処理選択モーダルを表示");
+          setPendingTasksInfo({
+            pendingTasksCount: data.pendingTasksCount,
+            totalTasksCount: data.totalTasksCount,
+            userId: data.userId || userData.id,
+            username: data.username || userData.username,
+          });
+          setTimeout(() => {
+            onPendingTasksOpen();
+          }, 100);
+          return true;
+        }
+        return false;
+      };
 
       if (data.success) {
         // タスクがない場合は直接削除確認モーダルを表示
-        setDeleteAction("deleteAll");
-        onDeleteConfirmOpen();
-      } else if (data.needsAction) {
+        showDeleteConfirm();
+      } else if (data.needsAction === true) {
         // 未完了タスクがある場合は未完了タスク確認モーダルを表示
-        setPendingTasksInfo({
-          pendingTasksCount: data.pendingTasksCount,
-          totalTasksCount: data.totalTasksCount,
-          userId: data.userId,
-          username: data.username,
-        });
-        onPendingTasksOpen();
+        showTaskActionModal();
+      } else if (data.pendingTasksCount > 0 || data.totalTasksCount > 0) {
+        // needsActionフラグがなくても、タスク数情報があればモーダルを表示
+        showTaskActionModal();
       } else {
-        toast({
-          title: "エラー",
-          description: data.message || "ユーザーの削除チェックに失敗しました",
-          status: "error",
-          duration: 3000,
-          isClosable: true,
-        });
+        // 上記条件に一致しない場合は、まずタスク処理モーダルを試みる
+        if (!showTaskActionModal()) {
+          // タスク処理モーダルの表示条件を満たさなければ削除確認モーダルを表示
+          showDeleteConfirm();
+        }
       }
     } catch (error) {
       console.error("ユーザー削除チェックエラー:", error);

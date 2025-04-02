@@ -337,20 +337,41 @@ export async function DELETE(request: NextRequest) {
 
     // まずタスクの数を確認する
     if (action === "check") {
-      // タスクが存在する場合は必ず処理選択モーダルを表示
+      console.log(
+        `ユーザーID ${userIdNum} のタスク確認: ${userTasks.length}件のタスクを検出`
+      );
+
+      // タスクがあるかどうかをチェック
       if (userTasks.length > 0) {
+        // pending または in_progress のタスクをカウント
         const pendingTasks = userTasks.filter(
           (task) => task.status === "pending" || task.status === "in_progress"
         );
         console.log(`未完了のタスク数: ${pendingTasks.length}`);
+
+        // タスクが存在する場合は必ず処理選択モーダルの表示が必要
         return NextResponse.json({
           success: false,
           needsAction: true,
-          message: "ユーザーに未完了のタスクがあります",
           pendingTasksCount: pendingTasks.length,
           totalTasksCount: userTasks.length,
-          userId: userId,
+          userId: userIdNum,
           username: targetUser.username,
+          message: `${targetUser.username}には${pendingTasks.length}件の未完了タスクがあります`,
+        });
+      } else {
+        // タスクがない場合は削除を続行できる
+        console.log(
+          `ユーザーID ${userIdNum} にはタスクがありません。削除を続行します。`
+        );
+        return NextResponse.json({
+          success: true,
+          needsAction: false,
+          pendingTasksCount: 0,
+          totalTasksCount: 0,
+          userId: userIdNum,
+          username: targetUser.username,
+          message: `${targetUser.username}にはタスクがありません。削除を続行できます。`,
         });
       }
     }
