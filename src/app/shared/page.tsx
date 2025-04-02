@@ -62,6 +62,7 @@ interface SharedTask {
   created_by_username: string;
   status: string; // 必須にする
   is_all_day?: boolean;
+  shared_at?: string;
 }
 
 export default function SharedBoard() {
@@ -159,68 +160,19 @@ export default function SharedBoard() {
       if (tasksResponse.ok) {
         const tasksData = await tasksResponse.json();
         setTasks(tasksData);
+
+        // 追加済みタスクのIDを抽出
+        const addedIds = tasksData
+          .filter((task: SharedTask) => task.shared_at !== null)
+          .map((task: SharedTask) => task.id);
+
+        setAddedTaskIds(addedIds);
       } else {
         console.error(
           "共有タスク一覧取得エラー:",
           tasksResponse.status,
           tasksResponse.statusText
         );
-      }
-
-      // ユーザーが追加済みのタスクIDを取得
-      const localTaskIds = localStorage.getItem(`addedTaskIds_${user.id}`);
-      let savedTaskIds: string[] = [];
-
-      if (localTaskIds) {
-        try {
-          savedTaskIds = JSON.parse(localTaskIds);
-        } catch (e) {
-          console.error("ローカルストレージのデータ解析エラー:", e);
-        }
-      }
-
-      // APIからも追加済みタスクIDを取得して統合
-      const apiUserBase64 =
-        typeof window !== "undefined"
-          ? safeBase64Encode(userStr, user)
-          : Buffer.from(userStr).toString("base64");
-
-      // ヘッダーを別変数に定義
-      const apiHeaders = {
-        "Content-Type": "application/json",
-        "x-user-base64": apiUserBase64,
-        "Cache-Control": "no-cache, no-store",
-        Pragma: "no-cache",
-      };
-
-      const addedTasksResponse = await fetch("/api/shared/tasks", {
-        method: "PATCH",
-        headers: apiHeaders,
-        body: JSON.stringify({
-          action: "getUserAddedTasks",
-        }),
-        cache: "no-store",
-      });
-
-      if (addedTasksResponse.ok) {
-        const { taskIds } = await addedTasksResponse.json();
-        const combinedTaskIds = [...new Set([...savedTaskIds, ...taskIds])];
-        localStorage.setItem(
-          `addedTaskIds_${user.id}`,
-          JSON.stringify(combinedTaskIds)
-        );
-        setAddedTaskIds(combinedTaskIds);
-      } else {
-        console.error(
-          "追加済みタスクID取得エラー:",
-          addedTasksResponse.status,
-          addedTasksResponse.statusText
-        );
-
-        // APIから取得できない場合はローカルストレージのデータだけを使用
-        if (savedTaskIds.length > 0) {
-          setAddedTaskIds(savedTaskIds);
-        }
       }
     } catch (error) {
       console.error("共有タスク取得エラー:", error);
@@ -357,152 +309,100 @@ export default function SharedBoard() {
     }
   };
 
-  // タスクをユーザーのタスク一覧に追加
-  const addTaskToUser = async (taskId: string | number) => {
+  // ユーザーのタスクリストに追加
+  const addTaskToUser = async (taskId: string) => {
+    if (!user) return;
+
+    // 既に追加済みのタスクはスキップ
+    if (addedTaskIds.includes(taskId)) {
+      toast({
+        title: "通知",
+        description: "このタスクは既に追加済みです",
+        status: "info",
+        duration: 3000,
+        isClosable: true,
+      });
+      return;
+    }
+
+    // ローディング状態を設定
     setIsAddingTask((prev) => ({ ...prev, [taskId]: true }));
 
     try {
-      // 選択したタスクを取得
-      const selectedTask = tasks.find((task) => task.id === taskId);
-
-      if (!selectedTask) {
-        throw new Error(`ID ${taskId} のタスクが見つかりません`);
-      }
-
-      if (!user || !user.id) {
-        throw new Error("ユーザー情報が見つかりません");
-      }
-
-      // 通常のタスク作成と同じAPIを使用する
-      const apiUrl = "/api/tasks";
-
-      // 新しいタスクとして作成するリクエストボディ
-      const requestBody = {
-        title: `[共有] ${selectedTask.title}`,
-        description: selectedTask.description,
-        due_date: selectedTask.due_date,
-        priority: selectedTask.priority,
-      };
-
-      // ユーザー情報をBase64エンコードして非ASCII文字の問題を回避
-      const userInfo = {
-        id: user.id,
-        username: user.username,
-        role: user.role,
-      };
-      const userStr = JSON.stringify(userInfo);
+      // ユーザー情報をBase64エンコード
+      const userStr = JSON.stringify(user);
       const userBase64 =
         typeof window !== "undefined"
           ? safeBase64Encode(userStr, user)
           : Buffer.from(userStr).toString("base64");
 
-      // リクエストヘッダーを定義
-      const requestHeaders = {
+      // ヘッダーを別変数に定義
+      const headers = {
         "Content-Type": "application/json",
         "x-user-base64": userBase64,
         "Cache-Control": "no-cache, no-store",
         Pragma: "no-cache",
       };
 
-      // リクエストの送信（POSTメソッドでタスクを作成）
-      const response = await fetch(apiUrl, {
-        method: "POST",
-        headers: requestHeaders,
-        body: JSON.stringify(requestBody),
+      const response = await fetch("/api/shared/tasks", {
+        method: "PATCH",
+        headers,
+        body: JSON.stringify({
+          action: "addTaskToUser",
+          taskId,
+        }),
         cache: "no-store",
       });
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || "タスクの追加に失敗しました");
-      }
+      if (response.ok) {
+        const result = await response.json();
 
-      // 成功時にUIを更新
-      // 追加済みタスクIDsを更新して追加ボタンの状態を変える
-      const taskIdStr = String(taskId);
-      setAddedTaskIds((prev) => {
-        const updatedIds = [...prev, taskIdStr];
-        // ローカルストレージにも保存
-        localStorage.setItem(
-          `addedTaskIds_${user.id}`,
-          JSON.stringify(updatedIds)
-        );
-        return updatedIds;
-      });
+        if (result.success) {
+          // 追加成功時の処理
+          // tasks内の該当タスクにshared_atを設定
+          setTasks((prevTasks) =>
+            prevTasks.map((task) =>
+              task.id === taskId
+                ? { ...task, shared_at: new Date().toISOString() }
+                : task
+            )
+          );
 
-      // 旧APIとの互換性のために、共有タスクリストにも追加する
-      try {
-        console.log("共有タスクリストに追加記録...");
+          // 追加済みタスクIDリストを更新
+          setAddedTaskIds((prev) => [...prev, taskId]);
 
-        // ユーザー情報をBase64エンコードして非ASCII文字の問題を回避
-        const recordUserStr = JSON.stringify(userInfo);
-        const recordUserBase64 =
-          typeof window !== "undefined"
-            ? safeBase64Encode(recordUserStr, user)
-            : Buffer.from(recordUserStr).toString("base64");
-
-        // 共有タスクリスト追加用のヘッダーを定義
-        const recordHeaders = {
-          "Content-Type": "application/json",
-          "x-user-base64": recordUserBase64,
-        };
-
-        const recordResponse = await fetch("/api/shared/tasks", {
-          method: "PATCH",
-          headers: recordHeaders,
-          body: JSON.stringify({
-            action: "addTaskToUser",
-            taskId: taskIdStr,
-          }),
-        });
-
-        if (recordResponse.ok) {
-          const recordData = await recordResponse.json();
-          console.log("共有タスクリスト追加記録成功:", recordData);
+          toast({
+            title: "成功",
+            description: "タスクを追加しました",
+            status: "success",
+            duration: 3000,
+            isClosable: true,
+          });
         } else {
-          console.warn("共有タスクリスト追加記録失敗:", recordResponse.status);
+          toast({
+            title: "エラー",
+            description: result.error || "タスク追加に失敗しました",
+            status: "error",
+            duration: 3000,
+            isClosable: true,
+          });
         }
-      } catch (recordError) {
-        console.warn("共有タスクリスト追加記録エラー:", recordError);
+      } else {
+        toast({
+          title: "エラー",
+          description: "タスク追加に失敗しました",
+          status: "error",
+          duration: 3000,
+          isClosable: true,
+        });
       }
-
-      // タスク管理ページに追加されたことをトースト通知（統合版）
-      toast({
-        title: "タスクが正常に追加されました",
-        status: "success",
-        duration: 3000,
-        isClosable: true,
-        render: () => (
-          <Box p={3} color="white" bg="green.500" borderRadius="md">
-            <VStack align="stretch" spacing={3}>
-              <Text fontWeight="bold">タスクが正常に追加されました</Text>
-              <Text fontSize="sm">
-                タスクがあなたのタスク一覧に追加されました。タスク管理ページで確認できます。
-              </Text>
-              <Button
-                colorScheme="whiteAlpha"
-                onClick={() => {
-                  toast.closeAll(); // すべてのトーストを閉じる
-                  router.push("/member/tasks");
-                }}
-              >
-                タスク管理へ移動
-              </Button>
-            </VStack>
-          </Box>
-        ),
-      });
-
-      // タスクリストを更新（追加済みタスクの状態更新のため）
-      await fetchTasks();
     } catch (error) {
-      console.error("タスク追加失敗:", error);
+      console.error("タスク追加エラー:", error);
       toast({
-        title: "タスクの追加に失敗しました",
-        description:
-          error instanceof Error ? error.message : "不明なエラーが発生しました",
+        title: "エラー",
+        description: "タスク追加に失敗しました",
         status: "error",
-        duration: 5000,
+        duration: 3000,
         isClosable: true,
       });
     } finally {
@@ -893,7 +793,7 @@ export default function SharedBoard() {
                         </Text>
                       </HStack>
 
-                      {addedTaskIds.includes(task.id) ? (
+                      {addedTaskIds.includes(task.id) || task.shared_at ? (
                         <Badge colorScheme="green">追加済み</Badge>
                       ) : (
                         <Button

@@ -33,7 +33,6 @@ export async function GET(request: NextRequest) {
           userStr = decodedStr;
         }
       } catch (e) {
-        console.error("Base64デコードエラー:", e);
         return NextResponse.json(
           { error: "ユーザー情報のデコードに失敗しました" },
           { status: 400 }
@@ -49,8 +48,6 @@ export async function GET(request: NextRequest) {
 
     // '/api/shared/tasks/[taskId]' の形式の場合、特定のタスクを返す
     if (taskId && taskId !== "tasks") {
-      console.log(`特定の共有タスクを取得するリクエスト: ID=${taskId}`);
-
       const result = await sql`
         SELECT 
           t.*,
@@ -61,13 +58,8 @@ export async function GET(request: NextRequest) {
       `;
 
       if (result.rows.length > 0) {
-        console.log(
-          `タスクID ${taskId} が見つかりました:`,
-          result.rows[0].title
-        );
         return NextResponse.json(result.rows[0], { status: 200 });
       } else {
-        console.log(`タスクID ${taskId} が見つかりませんでした`);
         return NextResponse.json(
           { error: "指定されたタスクが見つかりません" },
           { status: 404 }
@@ -76,8 +68,6 @@ export async function GET(request: NextRequest) {
     }
 
     // 共有タスク一覧を取得
-    console.log("共有タスク一覧を取得するリクエスト");
-
     const result = await sql`
       SELECT 
         t.*,
@@ -98,7 +88,6 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("共有タスク取得エラー:", error);
     return NextResponse.json(
       { error: "共有タスクの取得に失敗しました" },
       { status: 500 }
@@ -136,7 +125,6 @@ export async function POST(request: NextRequest) {
           userStr = decodedStr;
         }
       } catch (e) {
-        console.error("Base64デコードエラー:", e);
         return NextResponse.json(
           { error: "ユーザー情報のデコードに失敗しました" },
           { status: 400 }
@@ -189,7 +177,6 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(newTask, { status: 201 });
   } catch (error) {
-    console.error("共有タスク作成エラー:", error);
     return NextResponse.json(
       { error: "共有タスクの作成に失敗しました" },
       { status: 500 }
@@ -231,7 +218,6 @@ export async function PUT(request: NextRequest) {
           userStr = decodedStr;
         }
       } catch (e) {
-        console.error("Base64デコードエラー:", e);
         return NextResponse.json(
           { error: "ユーザー情報のデコードに失敗しました" },
           { status: 400 }
@@ -284,7 +270,6 @@ export async function PUT(request: NextRequest) {
 
     return NextResponse.json(updateResult.rows[0], { status: 200 });
   } catch (error) {
-    console.error("共有タスク更新エラー:", error);
     return NextResponse.json(
       { error: "共有タスクの更新に失敗しました" },
       { status: 500 }
@@ -303,13 +288,6 @@ export async function DELETE(request: NextRequest) {
 
     // いずれかの方法でIDを取得
     const taskId = queryId || pathId;
-
-    console.log("共有タスク削除リクエスト:", {
-      pathId,
-      queryId,
-      usedTaskId: taskId,
-      url: request.url,
-    });
 
     // ユーザー情報を取得（通常のx-userヘッダーとBase64エンコードされたx-user-base64ヘッダーの両方をサポート）
     let userStr = request.headers.get("x-user");
@@ -335,7 +313,6 @@ export async function DELETE(request: NextRequest) {
           userStr = decodedStr;
         }
       } catch (e) {
-        console.error("Base64デコードエラー:", e);
         return NextResponse.json(
           { error: "ユーザー情報のデコードに失敗しました" },
           { status: 400 }
@@ -387,7 +364,6 @@ export async function DELETE(request: NextRequest) {
       { status: 200 }
     );
   } catch (error) {
-    console.error("共有タスク削除エラー:", error);
     return NextResponse.json(
       { error: "共有タスクの削除に失敗しました" },
       { status: 500 }
@@ -425,7 +401,6 @@ export async function PATCH(request: NextRequest) {
           userStr = decodedStr;
         }
       } catch (e) {
-        console.error("Base64デコードエラー:", e);
         return NextResponse.json(
           { error: "ユーザー情報のデコードに失敗しました" },
           { status: 400 }
@@ -440,47 +415,22 @@ export async function PATCH(request: NextRequest) {
     const user = JSON.parse(userStr) as User;
     const userId = typeof user.id === "string" ? parseInt(user.id) : user.id;
 
-    // ユーザーの追加済みタスクIDを取得
+    // ユーザーが追加したタスクのIDリストを取得
     if (action === "getUserAddedTasks") {
-      // データベースからユーザーが追加した共有タスクを取得
-      const result = await sql`
-        SELECT t.id
-        FROM tasks t
-        WHERE t.created_by = ${userId} AND t.is_shared = true
-      `;
-
-      const taskIds = result.rows.map((row) => String(row.id));
-
-      console.log("追加済みタスク取得:", {
-        userId,
-        taskCount: taskIds.length,
-        taskIds,
-      });
-
-      return NextResponse.json(
-        {
-          taskIds: taskIds,
+      const result = await getUserAddedTasks(user, sql);
+      return NextResponse.json(result, {
+        status: 200,
+        headers: {
+          "Cache-Control": "no-cache, no-store, must-revalidate",
+          Pragma: "no-cache",
+          Expires: "0",
         },
-        {
-          status: 200,
-          headers: {
-            "Cache-Control": "no-cache, no-store, must-revalidate",
-            Pragma: "no-cache",
-            Expires: "0",
-          },
-        }
-      );
+      });
     }
 
-    // ユーザーのタスク追加処理
+    // ユーザーのタスクに追加
     if (action === "addTaskToUser") {
       const { taskId } = body;
-      console.log("タスク追加リクエスト:", {
-        userId,
-        taskId,
-        requestBody: body,
-        userRole: user.role,
-      });
 
       // タスクIDのチェック
       if (!taskId) {
@@ -490,57 +440,91 @@ export async function PATCH(request: NextRequest) {
         );
       }
 
-      // 追加対象の共有タスクを確認
-      const taskResult = await sql`
-        SELECT * FROM tasks WHERE id = ${taskId} AND is_shared = true
-      `;
-
-      if (taskResult.rows.length === 0) {
-        return NextResponse.json(
-          { error: "指定された共有タスクが見つかりません" },
-          { status: 404 }
-        );
-      }
-
-      const task = taskResult.rows[0];
-
-      // ユーザーのタスクとして追加
-      const insertResult = await sql`
-        INSERT INTO tasks (
-          title,
-          description,
-          status,
-          priority,
-          due_date,
-          assigned_to,
-          created_by,
-          is_shared
-        ) VALUES (
-          ${"[共有] " + task.title},
-          ${task.description},
-          'pending',
-          ${task.priority},
-          ${task.due_date},
-          ${userId},
-          ${userId},
-          false
-        )
-        RETURNING id, title
-      `;
-
-      return NextResponse.json({
-        success: true,
-        message: "タスクが追加されました",
-        task: insertResult.rows[0],
+      const result = await addTaskToUser(taskId, user, sql);
+      return NextResponse.json(result, {
+        status: 200,
+        headers: {
+          "Cache-Control": "no-cache, no-store, must-revalidate",
+          Pragma: "no-cache",
+          Expires: "0",
+        },
       });
     }
 
     return NextResponse.json({ error: "無効なアクション" }, { status: 400 });
   } catch (error) {
-    console.error("共有タスク操作エラー:", error);
     return NextResponse.json(
       { error: "共有タスクの操作に失敗しました" },
       { status: 500 }
     );
+  }
+}
+
+// ユーザーが追加したタスクのIDリストを取得
+async function getUserAddedTasks(user: User, pool: any) {
+  try {
+    const query = `
+      SELECT id FROM tasks
+      WHERE is_shared = true 
+      AND shared_at IS NOT NULL
+      AND user_id = $1
+    `;
+    const { rows } = await pool.query(query, [user.id]);
+    const taskIds = rows.map((row: any) => row.id);
+    return { success: true, taskIds };
+  } catch (error) {
+    console.error("ユーザー追加済みタスク取得エラー:", error);
+    return { success: false, error: "Database error" };
+  }
+}
+
+// ユーザーのタスクに追加
+async function addTaskToUser(taskId: string, user: User, pool: any) {
+  try {
+    // タスクの存在とis_sharedフラグの確認
+    const checkQuery = `
+      SELECT * FROM tasks WHERE id = $1 AND is_shared = true
+    `;
+    const { rows: existingTasks } = await pool.query(checkQuery, [taskId]);
+
+    if (existingTasks.length === 0) {
+      return {
+        success: false,
+        error: "Shared task not found",
+      };
+    }
+
+    const existingTask = existingTasks[0];
+
+    // タスクをユーザーのタスクリストに追加（コピー）
+    const insertQuery = `
+      INSERT INTO tasks (
+        title, description, status, priority, 
+        due_date, is_all_day, is_shared,
+        shared_at, user_id, created_at
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW())
+      RETURNING id
+    `;
+
+    const now = new Date().toISOString();
+
+    const values = [
+      existingTask.title,
+      existingTask.description,
+      "pending", // 新しいタスクはpendingで始める
+      existingTask.priority,
+      existingTask.due_date,
+      existingTask.is_all_day,
+      true, // is_shared
+      now, // shared_at（現在のタイムスタンプ）
+      user.id,
+    ];
+
+    const { rows } = await pool.query(insertQuery, values);
+    return { success: true, addedTaskId: rows[0].id };
+  } catch (error) {
+    console.error("タスク追加エラー:", error);
+    return { success: false, error: "Database error" };
   }
 }
