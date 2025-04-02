@@ -328,22 +328,25 @@ export async function DELETE(request: NextRequest) {
     }
 
     // データベースからユーザーに割り当てられたタスクを取得
+    console.log(`ユーザーID ${userIdNum} のタスクを確認中...`);
     const result = await sql`
       SELECT * FROM tasks WHERE assigned_to = ${userIdNum}
     `;
     const userTasks = result.rows as Task[];
+    console.log(`ユーザーID ${userIdNum} のタスク数: ${userTasks.length}`);
 
     // まずタスクの数を確認する
     if (action === "check") {
       // タスクが存在する場合は必ず処理選択モーダルを表示
       if (userTasks.length > 0) {
         const pendingTasks = userTasks.filter(
-          (task) => task.status === "pending"
+          (task) => task.status === "pending" || task.status === "in_progress"
         );
+        console.log(`未完了のタスク数: ${pendingTasks.length}`);
         return NextResponse.json({
           success: false,
           needsAction: true,
-          message: "ユーザーのタスクがあります",
+          message: "ユーザーに未完了のタスクがあります",
           pendingTasksCount: pendingTasks.length,
           totalTasksCount: userTasks.length,
           userId: userId,
@@ -352,85 +355,161 @@ export async function DELETE(request: NextRequest) {
       }
     }
 
-    // 共有タスクに追加
-    if (action === "shareAll") {
-      const pendingTasks = userTasks.filter(
-        (task) => task.status === "pending"
-      );
+    console.log(`アクション: ${action}, 削除前の処理を開始`);
 
+    try {
+      // データベーストランザクションを開始
+      await sql`BEGIN`;
+
+      // 外部キー制約を持つテーブルからの関連データ削除
+
+      // 1. daily_logsテーブルのデータを削除
       try {
-        // 未完了タスクを共有タスクとしてマーク
+        console.log("daily_logsテーブルからユーザーデータを削除...");
+        await sql`DELETE FROM daily_logs WHERE user_id = ${userIdNum}`;
+      } catch (e) {
+        console.error("daily_logs削除エラー:", e);
+        // エラーが発生してもトランザクション内で続行
+      }
+
+      // 2. tasksテーブルの作成者を管理者に更新
+      try {
+        console.log("タスクテーブルの作成者を更新...");
+        await sql`
+          UPDATE tasks 
+          SET created_by = ${requestingUserId} 
+          WHERE created_by = ${userIdNum} AND assigned_to <> ${userIdNum}
+        `;
+      } catch (e) {
+        console.error("tasks作成者更新エラー:", e);
+        // エラーが発生してもトランザクション内で続行
+      }
+
+      // 3. shared_itemsテーブルのユーザーデータを削除
+      try {
+        console.log("shared_itemsテーブルからユーザーデータを削除...");
+        await sql`DELETE FROM shared_items WHERE created_by = ${userIdNum}`;
+      } catch (e) {
+        console.error("shared_items削除エラー:", e);
+        // エラーが発生してもトランザクション内で続行
+      }
+
+      // 共有タスクへの変換または削除を実行
+      if (action === "shareAll") {
+        // 未完了のタスクを特定
+        const pendingTasks = userTasks.filter(
+          (task) => task.status === "pending" || task.status === "in_progress"
+        );
+
+        console.log(`${pendingTasks.length}件のタスクを共有タスクに変換中...`);
+
+        // 各タスクを処理
         for (const task of pendingTasks) {
           try {
-            // まず単純に割り当て先を変更（これは必ず成功するはず）
+            // タスクの担当者を管理者に変更し、共有タスクとしてマーク
             await sql`
               UPDATE tasks
-              SET assigned_to = ${requestingUserId}
+              SET 
+                assigned_to = ${requestingUserId},
+                is_shared = true,
+                shared_at = CURRENT_TIMESTAMP
               WHERE id = ${task.id}
             `;
-
-            // 新しいカラムが存在する場合は更新を試みる
-            try {
-              await sql`
-                UPDATE tasks
-                SET 
-                  is_shared = true, 
-                  shared_at = CURRENT_TIMESTAMP
-                WHERE id = ${task.id}
-              `;
-            } catch (columnError) {
-              // is_sharedカラムがない場合はエラーが発生するが無視
-              console.error(
-                "is_shared/shared_atカラム更新エラー（無視します）:",
-                columnError
-              );
-            }
-          } catch (taskError) {
-            console.error(`タスクID ${task.id} の更新エラー:`, taskError);
+          } catch (taskUpdateError) {
+            console.error(`タスクID ${task.id} の更新エラー:`, taskUpdateError);
+            throw taskUpdateError; // トランザクションを失敗させる
           }
         }
-      } catch (shareError) {
-        console.error("共有タスク処理エラー:", shareError);
-      }
-    }
 
-    // action=shareAllの場合は、既に上記で割り当て先を変更したので削除しない
-    if (action !== "shareAll") {
-      // ユーザーのタスクを削除
+        // 完了済みのタスクは削除
+        const completedTasks = userTasks.filter(
+          (task) => task.status === "completed"
+        );
+
+        if (completedTasks.length > 0) {
+          console.log(`${completedTasks.length}件の完了済みタスクを削除中...`);
+
+          try {
+            // 各タスクを個別に削除
+            for (const task of completedTasks) {
+              await sql`DELETE FROM tasks WHERE id = ${task.id}`;
+            }
+          } catch (deleteError) {
+            console.error("完了済みタスク削除エラー:", deleteError);
+            // 続行（タスク削除のエラーは無視）
+          }
+        }
+      } else {
+        // すべてのタスクを削除
+        console.log(`ユーザーID ${userIdNum} のすべてのタスクを削除中...`);
+        try {
+          await sql`DELETE FROM tasks WHERE assigned_to = ${userIdNum}`;
+        } catch (deleteError) {
+          console.error("タスク削除エラー:", deleteError);
+          throw deleteError; // トランザクションを失敗させる
+        }
+      }
+
+      // ユーザーを削除
+      console.log(`ユーザーID ${userIdNum} を削除中...`);
+      const deletedUserResult = await sql`
+        DELETE FROM users WHERE id = ${userIdNum}
+        RETURNING username
+      `;
+
+      if (deletedUserResult.rows.length === 0) {
+        throw new Error("ユーザー削除に失敗しました");
+      }
+
+      const deletedUsername = deletedUserResult.rows[0].username;
+
+      // トランザクションをコミット
+      await sql`COMMIT`;
+
+      console.log(`ユーザー ${deletedUsername} (ID: ${userIdNum}) を削除完了`);
+
+      return NextResponse.json({
+        success: true,
+        message: "ユーザーを削除しました",
+        user: {
+          id: userId,
+          username: deletedUsername,
+        },
+        tasksHandled:
+          action === "shareAll"
+            ? "共有タスクに追加しました"
+            : "タスクを削除しました",
+      });
+    } catch (transactionError) {
+      // エラーが発生した場合はロールバック
+      console.error("トランザクションエラー:", transactionError);
       try {
-        await sql`
-          DELETE FROM tasks WHERE assigned_to = ${userIdNum}
-        `;
-      } catch (deleteError) {
-        console.error("タスク削除エラー:", deleteError);
-        // タスク削除エラーでもユーザー削除は続行
+        await sql`ROLLBACK`;
+        console.log("トランザクションをロールバックしました");
+      } catch (rollbackError) {
+        console.error("ロールバックエラー:", rollbackError);
       }
+
+      return NextResponse.json(
+        {
+          success: false,
+          message: "ユーザーの削除に失敗しました",
+          error:
+            transactionError instanceof Error
+              ? transactionError.message
+              : "不明なエラー",
+        },
+        { status: 500 }
+      );
     }
-
-    // ユーザーを削除
-    const deletedUserResult = await sql`
-      DELETE FROM users WHERE id = ${userIdNum}
-      RETURNING username
-    `;
-
-    const deletedUsername = deletedUserResult.rows[0].username;
-
-    return NextResponse.json({
-      success: true,
-      message: "ユーザーを削除しました",
-      user: {
-        id: userId,
-        username: deletedUsername,
-      },
-      tasksHandled:
-        action === "shareAll"
-          ? "共有タスクに追加しました"
-          : "タスクを削除しました",
-    });
   } catch (error) {
-    console.error("ユーザー削除エラー:", error);
+    console.error("ユーザー削除処理エラー:", error);
     return NextResponse.json(
-      { success: false, message: "ユーザーの削除に失敗しました" },
+      {
+        success: false,
+        message: "ユーザーの削除に失敗しました",
+        error: error instanceof Error ? error.message : "不明なエラー",
+      },
       { status: 500 }
     );
   }

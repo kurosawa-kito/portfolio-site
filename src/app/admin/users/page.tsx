@@ -233,6 +233,10 @@ export default function UserManagement() {
           ? safeBase64Encode(userStr, user)
           : Buffer.from(userStr).toString("base64");
 
+      console.log(
+        `ユーザー削除APIを呼び出し中: ID=${selectedUser.id}, アクション=${action}`
+      );
+
       const response = await fetch(
         `/api/admin/users?id=${selectedUser.id}&action=${action}`,
         {
@@ -244,6 +248,7 @@ export default function UserManagement() {
       );
 
       const data = await response.json();
+      console.log("ユーザー削除API応答:", data);
 
       if (data.success) {
         // ユーザーリストを更新
@@ -263,23 +268,19 @@ export default function UserManagement() {
         });
 
         onPendingTasksClose();
-      } else if (data.needsAction) {
-        // 未完了タスクがある場合
-        setPendingTasksInfo({
-          pendingTasksCount: data.pendingTasksCount,
-          totalTasksCount: data.totalTasksCount,
-          userId: data.userId,
-          username: data.username,
-        });
-        onPendingTasksOpen();
       } else {
+        // エラー詳細を含む場合は表示
+        const errorDetail = data.error ? `(${data.error})` : "";
         toast({
           title: "ユーザー削除失敗",
-          description: data.message || "ユーザーの削除に失敗しました",
+          description: `${
+            data.message || "ユーザーの削除に失敗しました"
+          } ${errorDetail}`,
           status: "error",
-          duration: 3000,
+          duration: 5000,
           isClosable: true,
         });
+        console.error("ユーザー削除API エラー詳細:", data);
       }
     } catch (error) {
       console.error("ユーザー削除エラー:", error);
