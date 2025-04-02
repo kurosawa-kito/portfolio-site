@@ -99,7 +99,8 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { title, description, due_date, priority, project_id } = body;
+    const { title, description, due_date, priority, project_id, is_all_day } =
+      body;
 
     // ユーザー情報を取得（通常のx-userヘッダーとBase64エンコードされたx-user-base64ヘッダーの両方をサポート）
     let userStr = request.headers.get("x-user");
@@ -159,7 +160,8 @@ export async function POST(request: NextRequest) {
         created_by,
         is_shared,
         project_id,
-        shared_at
+        shared_at,
+        is_all_day
       ) VALUES (
         ${title},
         ${description},
@@ -170,7 +172,8 @@ export async function POST(request: NextRequest) {
         ${userId},
         true,
         ${project_id},
-        CURRENT_TIMESTAMP
+        CURRENT_TIMESTAMP,
+        ${is_all_day || false}
       )
       RETURNING *
     `;
@@ -265,6 +268,7 @@ export async function PUT(request: NextRequest) {
         description = ${description},
         due_date = ${due_date},
         priority = ${priority},
+        is_all_day = ${is_all_day || false},
         updated_at = CURRENT_TIMESTAMP
       WHERE id = ${taskId} AND is_shared = true
       RETURNING *

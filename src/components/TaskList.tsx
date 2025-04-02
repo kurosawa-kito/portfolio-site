@@ -60,28 +60,24 @@ const formatDateTime = (dateString: string, isAllDay?: boolean): string => {
   if (!dateString) return "";
 
   try {
-    // UTCからローカル時間に変換
+    // データベースのタイムスタンプ文字列を直接解析（タイムゾーン指定なし）
     const date = new Date(dateString);
     if (isNaN(date.getTime())) return dateString; // 無効な日付の場合はそのまま返す
 
+    // UTCとして扱い、タイムゾーン変換を避ける
+    const year = date.getUTCFullYear();
+    const month = String(date.getUTCMonth() + 1).padStart(2, "0");
+    const day = String(date.getUTCDate()).padStart(2, "0");
+
     // 終日タスクの場合は時間を表示しない
     if (isAllDay) {
-      return date.toLocaleDateString("ja-JP", {
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
-        timeZone: "Asia/Tokyo",
-      });
+      return `${year}/${month}/${day}`;
     }
 
-    return date.toLocaleString("ja-JP", {
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-      timeZone: "Asia/Tokyo",
-    });
+    // 時間情報も表示（UTCの値をそのまま使用）
+    const hours = String(date.getUTCHours()).padStart(2, "0");
+    const minutes = String(date.getUTCMinutes()).padStart(2, "0");
+    return `${year}/${month}/${day} ${hours}:${minutes}`;
   } catch (error) {
     return dateString;
   }
