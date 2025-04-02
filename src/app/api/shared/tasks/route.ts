@@ -157,8 +157,7 @@ export async function POST(request: NextRequest) {
         due_date,
         assigned_to,
         created_by,
-        is_shared,
-        shared_at
+        is_shared
       ) VALUES (
         ${title},
         ${description},
@@ -167,8 +166,7 @@ export async function POST(request: NextRequest) {
         ${due_date},
         ${userId},
         ${userId},
-        true,
-        CURRENT_TIMESTAMP
+        true
       )
       RETURNING *
     `;
