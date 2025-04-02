@@ -306,10 +306,7 @@ export default function SharedBoard() {
 
   // メモ削除
   const deleteNote = async (noteId: string) => {
-    if (
-      !user ||
-      !window.confirm("本当にこのタスクをリストから削除しますか？")
-    ) {
+    if (!user || !window.confirm("本当にこのメッセージを削除しますか？")) {
       return;
     }
 
@@ -326,33 +323,33 @@ export default function SharedBoard() {
         "x-user-base64": userBase64,
       };
 
-      const response = await fetch(`/api/shared/tasks-delete/${noteId}`, {
+      const response = await fetch(`/api/shared/notes?id=${noteId}`, {
         method: "DELETE",
         headers: deleteHeaders,
       });
 
-      const data = await response.json();
-
       if (!response.ok) {
-        throw new Error(data.error || "タスクの削除に失敗しました");
+        const errorData = await response.json();
+        throw new Error(errorData.error || "メッセージの削除に失敗しました");
       }
 
       // 削除成功したらUIを更新
+      setNotes((prevNotes) => prevNotes.filter((note) => note.id !== noteId));
+
       toast({
         title: "成功",
-        description: "タスクをリストから削除しました",
+        description: "メッセージを削除しました",
         status: "success",
         duration: 3000,
         isClosable: true,
       });
-
-      // 追加済みリストから削除
-      setAddedTaskIds((prev) => prev.filter((id) => id !== noteId));
     } catch (error) {
       toast({
         title: "エラー",
         description:
-          error instanceof Error ? error.message : "タスクの削除に失敗しました",
+          error instanceof Error
+            ? error.message
+            : "メッセージの削除に失敗しました",
         status: "error",
         duration: 3000,
         isClosable: true,
