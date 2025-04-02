@@ -364,11 +364,15 @@ export async function DELETE(request: NextRequest) {
           INSERT INTO shared_items (
             title,
             content,
-            created_by
+            created_by,
+            priority,
+            due_date
           ) VALUES (
-            ${"[元ユーザー: " + targetUser.username + "] " + task.title},
-            ${task.description},
-            ${requestingUserId}
+            ${task.title},
+            ${task.description || ""},
+            ${requestingUserId},
+            ${task.priority},
+            ${task.due_date}
           )
         `;
       }
