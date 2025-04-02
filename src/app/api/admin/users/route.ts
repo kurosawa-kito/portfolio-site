@@ -379,7 +379,7 @@ export async function DELETE(request: NextRequest) {
               'pending',
               ${task.priority},
               ${task.due_date},
-              ${requestingUserId},
+              ${null},
               ${requestingUserId},
               true,
               CURRENT_TIMESTAMP

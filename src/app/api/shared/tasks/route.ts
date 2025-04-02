@@ -495,6 +495,23 @@ async function addTaskToUser(taskId: string, user: User, pool: any) {
       };
     }
 
+    // タスクがすでに他のユーザーに割り当てられているか確認
+    const task = existingTasks[0];
+    if (task.assigned_to !== null) {
+      // すでに割り当てられている場合、それが自分自身かチェック
+      if (task.assigned_to == user.id) {
+        return {
+          success: false,
+          error: "Task already added",
+        };
+      } else {
+        return {
+          success: false,
+          error: "Task is already assigned to another user",
+        };
+      }
+    }
+
     // 既に追加済みか確認
     const alreadyAddedQuery = `
       SELECT id FROM tasks
@@ -512,10 +529,10 @@ async function addTaskToUser(taskId: string, user: User, pool: any) {
       };
     }
 
-    // タスクをユーザーに割り当てる（常にnullで割り当てる）
+    // タスクをユーザーに割り当てる
     const updateQuery = `
       UPDATE tasks
-      SET assigned_to = NULL
+      SET assigned_to = $1
       WHERE id = $2 AND is_shared = true
       RETURNING id
     `;
