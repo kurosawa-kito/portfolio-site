@@ -506,6 +506,7 @@ export default function UserManagement() {
                     colorScheme="blue"
                     mr={3}
                     onClick={() => {
+                      // 共有タスクへ追加の選択後、削除確認モーダルを表示
                       onPendingTasksClose();
                       setDeleteAction("shareAll");
                       onDeleteConfirmOpen();
@@ -517,6 +518,7 @@ export default function UserManagement() {
                   <Button
                     colorScheme="red"
                     onClick={() => {
+                      // すべて削除の選択後、削除確認モーダルを表示
                       onPendingTasksClose();
                       setDeleteAction("deleteAll");
                       onDeleteConfirmOpen();
@@ -537,10 +539,22 @@ export default function UserManagement() {
                 <ModalCloseButton />
                 <ModalBody>
                   {selectedUser && (
-                    <Text mb={4}>
-                      <strong>{selectedUser.username}</strong> を削除しますか？
-                      この操作は取り消せません。
-                    </Text>
+                    <>
+                      <Text mb={4}>
+                        <strong>{selectedUser.username}</strong>{" "}
+                        を削除しますか？ この操作は取り消せません。
+                      </Text>
+                      {deleteAction === "shareAll" && (
+                        <Text mb={4} color="blue.500">
+                          未完了のタスクは共有タスクに追加されます。
+                        </Text>
+                      )}
+                      {deleteAction === "deleteAll" && (
+                        <Text mb={4} color="red.500">
+                          すべてのタスクが完全に削除されます。
+                        </Text>
+                      )}
+                    </>
                   )}
                 </ModalBody>
                 <ModalFooter>
