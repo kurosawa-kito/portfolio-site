@@ -99,7 +99,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { title, description, due_date, priority } = body;
+    const { title, description, due_date, priority, project_id } = body;
 
     // ユーザー情報を取得（通常のx-userヘッダーとBase64エンコードされたx-user-base64ヘッダーの両方をサポート）
     let userStr = request.headers.get("x-user");
@@ -157,16 +157,20 @@ export async function POST(request: NextRequest) {
         due_date,
         assigned_to,
         created_by,
-        is_shared
+        is_shared,
+        project_id,
+        shared_at
       ) VALUES (
         ${title},
         ${description},
         'pending',
         ${priority},
         ${due_date},
+        NULL,
         ${userId},
-        ${userId},
-        true
+        true,
+        ${project_id},
+        CURRENT_TIMESTAMP
       )
       RETURNING *
     `;
@@ -464,8 +468,7 @@ async function getUserAddedTasks(user: User, pool: any) {
     const query = `
       SELECT id FROM tasks
       WHERE is_shared = true 
-      AND shared_at IS NOT NULL
-      AND user_id = $1
+      AND assigned_to = $1
     `;
     const { rows } = await pool.query(query, [user.id]);
     const taskIds = rows.map((row: any) => row.id);
@@ -492,34 +495,34 @@ async function addTaskToUser(taskId: string, user: User, pool: any) {
       };
     }
 
-    const existingTask = existingTasks[0];
+    // 既に追加済みか確認
+    const alreadyAddedQuery = `
+      SELECT id FROM tasks
+      WHERE id = $1 AND assigned_to = $2
+    `;
+    const { rows: alreadyAdded } = await pool.query(alreadyAddedQuery, [
+      taskId,
+      user.id,
+    ]);
 
-    // タスクをユーザーのタスクリストに追加（コピー）
-    const insertQuery = `
-      INSERT INTO tasks (
-        title, description, status, priority, 
-        due_date, is_all_day, is_shared,
-        shared_at, user_id, created_at
-      )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW())
+    if (alreadyAdded.length > 0) {
+      return {
+        success: false,
+        error: "Task already added",
+      };
+    }
+
+    // タスクをユーザーに割り当てる
+    const updateQuery = `
+      UPDATE tasks
+      SET assigned_to = $1
+      WHERE id = $2 AND is_shared = true
       RETURNING id
     `;
 
-    const now = new Date().toISOString();
+    const values = [user.id, taskId];
 
-    const values = [
-      existingTask.title,
-      existingTask.description,
-      "pending", // 新しいタスクはpendingで始める
-      existingTask.priority,
-      existingTask.due_date,
-      existingTask.is_all_day,
-      true, // is_shared
-      now, // shared_at（現在のタイムスタンプ）
-      user.id,
-    ];
-
-    const { rows } = await pool.query(insertQuery, values);
+    const { rows } = await pool.query(updateQuery, values);
     return { success: true, addedTaskId: rows[0].id };
   } catch (error) {
     console.error("タスク追加エラー:", error);
