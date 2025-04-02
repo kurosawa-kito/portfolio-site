@@ -315,11 +315,10 @@ export default function SharedBoard() {
     if (!user) return;
 
     // 既に追加済みのタスクはスキップ
-    const taskToAdd = tasks.find((task) => task.id === taskId);
-    if (taskToAdd?.assigned_to) {
+    if (addedTaskIds.includes(taskId)) {
       toast({
         title: "通知",
-        description: "このタスクは既に割り当てられています",
+        description: "このタスクは既に追加されています",
         status: "info",
         duration: 3000,
         isClosable: true,
@@ -364,9 +363,7 @@ export default function SharedBoard() {
           // tasks内の該当タスクにassigned_toを設定
           setTasks((prevTasks) =>
             prevTasks.map((task) =>
-              task.id === taskId
-                ? { ...task, assigned_to: user.id.toString() }
-                : task
+              task.id === taskId ? { ...task, assigned_to: null } : task
             )
           );
 
@@ -795,7 +792,7 @@ export default function SharedBoard() {
                         </Text>
                       </HStack>
 
-                      {task.assigned_to ? (
+                      {addedTaskIds.includes(task.id) ? (
                         <Badge colorScheme="green">追加済み</Badge>
                       ) : (
                         <Button

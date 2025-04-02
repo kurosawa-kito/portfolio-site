@@ -512,10 +512,10 @@ async function addTaskToUser(taskId: string, user: User, pool: any) {
       };
     }
 
-    // タスクをユーザーに割り当てる
+    // タスクをユーザーに割り当てる（常にnullで割り当てる）
     const updateQuery = `
       UPDATE tasks
-      SET assigned_to = $1
+      SET assigned_to = NULL
       WHERE id = $2 AND is_shared = true
       RETURNING id
     `;
