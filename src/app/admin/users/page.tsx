@@ -246,6 +246,10 @@ export default function UserManagement() {
       const data = await response.json();
 
       if (data.success) {
+        // ユーザーリストを更新
+        await fetchUsers();
+
+        // 成功メッセージを表示
         toast({
           title: "ユーザー削除成功",
           description: `${selectedUser.username}を削除しました${
@@ -258,8 +262,6 @@ export default function UserManagement() {
           isClosable: true,
         });
 
-        // ユーザーリストを更新
-        fetchUsers();
         onPendingTasksClose();
       } else if (data.needsAction) {
         // 未完了タスクがある場合
