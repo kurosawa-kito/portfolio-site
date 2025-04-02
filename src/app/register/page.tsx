@@ -186,14 +186,20 @@ export default function Register() {
           duration: 3000,
           isClosable: true,
         });
+        if (data.details) {
+          console.error("登録エラーの詳細:", data.details);
+        }
       }
     } catch (error) {
       console.error("登録エラー:", error);
       toast({
         title: "エラー",
-        description: "サーバーエラーが発生しました",
+        description:
+          error instanceof Error
+            ? error.message
+            : "サーバーエラーが発生しました",
         status: "error",
-        duration: 3000,
+        duration: 5000,
         isClosable: true,
       });
     } finally {

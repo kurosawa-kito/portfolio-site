@@ -119,8 +119,38 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error("ユーザー登録エラー:", error);
+
+    // エラーの種類に応じて適切なメッセージを返す
+    if (error instanceof Error) {
+      if (error.message.includes("duplicate key value")) {
+        return NextResponse.json(
+          {
+            success: false,
+            message: "このユーザー名またはログインIDは既に使用されています",
+            details: error.message,
+          },
+          { status: 400 }
+        );
+      }
+
+      if (error.message.includes("connection")) {
+        return NextResponse.json(
+          {
+            success: false,
+            message: "データベースへの接続に失敗しました",
+            details: error.message,
+          },
+          { status: 500 }
+        );
+      }
+    }
+
     return NextResponse.json(
-      { success: false, message: "サーバーエラー" },
+      {
+        success: false,
+        message: "ユーザー登録に失敗しました",
+        details: error instanceof Error ? error.message : "不明なエラー",
+      },
       { status: 500 }
     );
   }
