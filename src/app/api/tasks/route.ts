@@ -132,7 +132,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const { title, description, due_date, priority, project_id } =
+    const { title, description, due_date, priority, project_id, is_all_day } =
       await request.json();
 
     // ユーザー情報を取得（通常のx-userヘッダーとBase64エンコードされたx-user-base64ヘッダーの両方をサポート）
@@ -184,7 +184,8 @@ export async function POST(request: NextRequest) {
         assigned_to,
         project_id,
         created_by,
-        is_shared
+        is_shared,
+        is_all_day
       ) VALUES (
         ${title},
         ${description},
@@ -194,7 +195,8 @@ export async function POST(request: NextRequest) {
         ${user.id},
         ${project_id},
         ${user.id},
-        false
+        false,
+        ${is_all_day || false}
       )
       RETURNING *;
     `;
