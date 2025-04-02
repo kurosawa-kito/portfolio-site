@@ -358,23 +358,54 @@ export async function DELETE(request: NextRequest) {
         (task) => task.status === "pending"
       );
 
-      // 未完了タスクを共有タスクとしてマーク
-      for (const task of pendingTasks) {
-        await sql`
-          UPDATE tasks
-          SET 
-            is_shared = true,
-            shared_at = CURRENT_TIMESTAMP,
-            assigned_to = ${requestingUserId}
-          WHERE id = ${task.id}
-        `;
+      try {
+        // 未完了タスクを共有タスクとしてマーク
+        for (const task of pendingTasks) {
+          try {
+            // まず単純に割り当て先を変更（これは必ず成功するはず）
+            await sql`
+              UPDATE tasks
+              SET assigned_to = ${requestingUserId}
+              WHERE id = ${task.id}
+            `;
+
+            // 新しいカラムが存在する場合は更新を試みる
+            try {
+              await sql`
+                UPDATE tasks
+                SET 
+                  is_shared = true, 
+                  shared_at = CURRENT_TIMESTAMP
+                WHERE id = ${task.id}
+              `;
+            } catch (columnError) {
+              // is_sharedカラムがない場合はエラーが発生するが無視
+              console.error(
+                "is_shared/shared_atカラム更新エラー（無視します）:",
+                columnError
+              );
+            }
+          } catch (taskError) {
+            console.error(`タスクID ${task.id} の更新エラー:`, taskError);
+          }
+        }
+      } catch (shareError) {
+        console.error("共有タスク処理エラー:", shareError);
       }
     }
 
-    // ユーザーのタスクを削除
-    await sql`
-      DELETE FROM tasks WHERE assigned_to = ${userIdNum}
-    `;
+    // action=shareAllの場合は、既に上記で割り当て先を変更したので削除しない
+    if (action !== "shareAll") {
+      // ユーザーのタスクを削除
+      try {
+        await sql`
+          DELETE FROM tasks WHERE assigned_to = ${userIdNum}
+        `;
+      } catch (deleteError) {
+        console.error("タスク削除エラー:", deleteError);
+        // タスク削除エラーでもユーザー削除は続行
+      }
+    }
 
     // ユーザーを削除
     const deletedUserResult = await sql`
