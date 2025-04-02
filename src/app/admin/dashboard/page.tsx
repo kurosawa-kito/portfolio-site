@@ -55,6 +55,34 @@ const safeBase64Encode = (str: string, user: any) => {
   }
 };
 
+// 日付をフォーマットする関数（UTCからの直接変換）
+const formatDateTime = (dateString: string, isAllDay?: boolean): string => {
+  if (!dateString) return "";
+
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return dateString; // 無効な日付の場合はそのまま返す
+
+    // UTCとして扱い、タイムゾーン変換を避ける
+    const year = date.getUTCFullYear();
+    const month = String(date.getUTCMonth() + 1).padStart(2, "0");
+    const day = String(date.getUTCDate()).padStart(2, "0");
+
+    // 終日タスクの場合は時間を表示しない
+    if (isAllDay) {
+      return `${year}/${month}/${day}`;
+    }
+
+    // 時間情報も表示（UTCの値をそのまま使用）
+    const hours = String(date.getUTCHours()).padStart(2, "0");
+    const minutes = String(date.getUTCMinutes()).padStart(2, "0");
+    return `${year}/${month}/${day} ${hours}:${minutes}`;
+  } catch (error) {
+    console.error("日付フォーマットエラー:", error);
+    return dateString;
+  }
+};
+
 export default function AdminDashboard() {
   const [users, setUsers] = useState<User[]>([]);
   const [selectedUser, setSelectedUser] = useState<string>("");
