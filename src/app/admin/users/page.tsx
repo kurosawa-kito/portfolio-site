@@ -226,6 +226,11 @@ export default function UserManagement() {
     try {
       setIsProcessing(true);
 
+      // アクション値をログに出力して確認
+      console.log(
+        `削除実行: ユーザーID=${selectedUser.id}, アクション=${action}`
+      );
+
       // ユーザー情報をBase64エンコードして非ASCII文字の問題を回避
       const userStr = JSON.stringify(user);
       const userBase64 =
@@ -233,19 +238,18 @@ export default function UserManagement() {
           ? safeBase64Encode(userStr, user)
           : Buffer.from(userStr).toString("base64");
 
-      console.log(
-        `ユーザー削除APIを呼び出し中: ID=${selectedUser.id}, アクション=${action}`
-      );
+      // URLに確実にアクションパラメータを含める
+      const url = `/api/admin/users?id=${
+        selectedUser.id
+      }&action=${encodeURIComponent(action)}`;
+      console.log(`削除APIを呼び出し: URL=${url}`);
 
-      const response = await fetch(
-        `/api/admin/users?id=${selectedUser.id}&action=${action}`,
-        {
-          method: "DELETE",
-          headers: {
-            "x-user-base64": userBase64,
-          },
-        }
-      );
+      const response = await fetch(url, {
+        method: "DELETE",
+        headers: {
+          "x-user-base64": userBase64,
+        },
+      });
 
       const data = await response.json();
       console.log("ユーザー削除API応答:", data);
@@ -509,7 +513,9 @@ export default function UserManagement() {
                     onClick={() => {
                       onPendingTasksClose();
                       setDeleteAction("shareAll");
-                      onDeleteConfirmOpen();
+                      setTimeout(() => {
+                        onDeleteConfirmOpen();
+                      }, 100);
                     }}
                     isLoading={isProcessing}
                   >
@@ -520,7 +526,9 @@ export default function UserManagement() {
                     onClick={() => {
                       onPendingTasksClose();
                       setDeleteAction("deleteAll");
-                      onDeleteConfirmOpen();
+                      setTimeout(() => {
+                        onDeleteConfirmOpen();
+                      }, 100);
                     }}
                     isLoading={isProcessing}
                   >
