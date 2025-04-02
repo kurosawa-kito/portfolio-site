@@ -63,6 +63,7 @@ interface SharedTask {
   status: string; // 必須にする
   is_all_day?: boolean;
   shared_at?: string;
+  assigned_to?: string | null;
 }
 
 export default function SharedBoard() {
@@ -163,7 +164,7 @@ export default function SharedBoard() {
 
         // 追加済みタスクのIDを抽出
         const addedIds = tasksData
-          .filter((task: SharedTask) => task.shared_at !== null)
+          .filter((task: SharedTask) => task.assigned_to === user.id.toString())
           .map((task: SharedTask) => task.id);
 
         setAddedTaskIds(addedIds);
@@ -359,11 +360,11 @@ export default function SharedBoard() {
 
         if (result.success) {
           // 追加成功時の処理
-          // tasks内の該当タスクにshared_atを設定
+          // tasks内の該当タスクにassigned_toを設定
           setTasks((prevTasks) =>
             prevTasks.map((task) =>
               task.id === taskId
-                ? { ...task, shared_at: new Date().toISOString() }
+                ? { ...task, assigned_to: user.id.toString() }
                 : task
             )
           );
@@ -793,7 +794,8 @@ export default function SharedBoard() {
                         </Text>
                       </HStack>
 
-                      {addedTaskIds.includes(task.id) || task.shared_at ? (
+                      {addedTaskIds.includes(task.id) ||
+                      task.assigned_to === user.id.toString() ? (
                         <Badge colorScheme="green">追加済み</Badge>
                       ) : (
                         <Button
