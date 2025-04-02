@@ -796,13 +796,7 @@ export default function SharedBoard() {
                       </HStack>
 
                       {task.assigned_to ? (
-                        task.assigned_to === user.id.toString() ? (
-                          <Badge colorScheme="green">追加済み</Badge>
-                        ) : (
-                          <Badge colorScheme="blue">
-                            他のユーザーに割り当て済み
-                          </Badge>
-                        )
+                        <Badge colorScheme="green">追加済み</Badge>
                       ) : (
                         <Button
                           size="sm"
