@@ -25,13 +25,7 @@ async function checkSchema() {
         ORDER BY ordinal_position;
       `;
 
-      console.log(`\n【${table.table_name}】テーブルの構造:`);
-      columns.rows.forEach((column: QueryResultRow) => {
-        console.log(`- ${column.column_name}`);
-        console.log(`  型: ${column.data_type}`);
-        console.log(`  NULL許可: ${column.is_nullable}`);
-        console.log(`  デフォルト値: ${column.column_default || "なし"}`);
-      });
+      columns.rows.forEach((column: QueryResultRow) => {});
     }
   } catch (error) {
     console.error("スキーマの取得中にエラーが発生しました:", error);

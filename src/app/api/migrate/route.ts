@@ -107,32 +107,6 @@ export async function POST() {
       );
     `;
 
-    // tasksテーブルにis_sharedカラムを追加（存在しない場合のみ）
-    await sql`
-      DO $$
-      BEGIN
-        IF NOT EXISTS (
-          SELECT 1 FROM information_schema.columns 
-          WHERE table_name = 'tasks' AND column_name = 'is_shared'
-        ) THEN
-          ALTER TABLE tasks ADD COLUMN is_shared BOOLEAN DEFAULT false;
-        END IF;
-      END $$;
-    `;
-
-    // tasksテーブルにshared_atカラムを追加（存在しない場合のみ）
-    await sql`
-      DO $$
-      BEGIN
-        IF NOT EXISTS (
-          SELECT 1 FROM information_schema.columns 
-          WHERE table_name = 'tasks' AND column_name = 'shared_at'
-        ) THEN
-          ALTER TABLE tasks ADD COLUMN shared_at TIMESTAMP DEFAULT NULL;
-        END IF;
-      END $$;
-    `;
-
     return Response.json({
       success: true,
       message: "データベースのマイグレーション処理が完了しました",
