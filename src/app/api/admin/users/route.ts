@@ -361,38 +361,28 @@ export async function DELETE(request: NextRequest) {
       // 未完了タスクを共有タスクに追加
       for (const task of pendingTasks) {
         try {
-          // 共有アイテムテーブルにタスクを追加
+          // tasksテーブルに共有タスクとして追加
           await sql`
-            INSERT INTO shared_items (
-              title,
-              content,
-              created_by
-            ) VALUES (
-              ${"[元ユーザー: " + targetUser.username + "] " + task.title},
-              ${task.description},
-              ${requestingUserId}
-            )
-          `;
-
-          // 共有タスクテーブルにも追加（本格的な共有タスク）
-          // タスクの重要な情報を保持
-          await sql`
-            INSERT INTO shared_tasks (
+            INSERT INTO tasks (
               title,
               description,
-              due_date,
+              status,
               priority,
+              due_date,
+              assigned_to,
               created_by,
-              created_by_username,
-              status
+              is_shared,
+              shared_at
             ) VALUES (
               ${"[元ユーザー: " + targetUser.username + "] " + task.title},
               ${task.description},
-              ${task.due_date},
+              'pending',
               ${task.priority},
+              ${task.due_date},
               ${requestingUserId},
-              ${requestingUser.username},
-              'pending'
+              ${requestingUserId},
+              true,
+              CURRENT_TIMESTAMP
             )
           `;
         } catch (insertError) {

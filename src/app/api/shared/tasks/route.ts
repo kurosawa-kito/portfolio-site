@@ -1,93 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { User } from "@/types/user";
-
-// 共有タスクのモックデータをエクスポート
-export const sharedTasks: {
-  id: string;
-  title: string;
-  description: string;
-  due_date: string;
-  priority: string;
-  created_at: string;
-  created_by: string;
-  created_by_username: string;
-  status: string;
-  is_all_day?: boolean;
-}[] = [
-  {
-    id: "shared-task1",
-    title: "プロジェクトドキュメントの更新",
-    description: "最新の要件を反映したドキュメントに更新してください。",
-    due_date: "2023-05-15",
-    priority: "high",
-    created_at: "2023-05-01T10:00:00Z",
-    created_by: "user1",
-    created_by_username: "管理者",
-    status: "pending",
-  },
-  {
-    id: "shared-task2",
-    title: "週次レポートの提出",
-    description: "先週の進捗を報告する週次レポートを提出してください。",
-    due_date: "2023-05-08",
-    priority: "medium",
-    created_at: "2023-05-02T14:30:00Z",
-    created_by: "user1",
-    created_by_username: "管理者",
-    status: "pending",
-  },
-];
-
-// デバッグ用：起動時にsharedTasksの内容を出力
-console.log(
-  "共有タスクのモックデータを初期化:",
-  sharedTasks.map((t) => ({ id: t.id, title: t.title }))
-);
-
-// ユーザーが追加した共有タスクを記録するデータ構造
-// export const userAddedTasks: {
-//   userId: string;
-//   taskIds: string[];
-// }[] = [];
-
-// より永続的な保存のために、ローカルストレージをシミュレート
-let persistedUserAddedTasks: string | null = null;
-
-// userAddedTasksのゲッターとセッター
-export const getUserAddedTasks = (): {
-  userId: string;
-  taskIds: string[];
-}[] => {
-  if (persistedUserAddedTasks === null) {
-    // 初回アクセス時またはサーバーリスタート時に初期データをロード
-    persistedUserAddedTasks = JSON.stringify([
-      {
-        userId: "user1",
-        taskIds: ["shared-task2"],
-      },
-      {
-        userId: "user2",
-        taskIds: ["shared-task1"],
-      },
-    ]);
-  }
-
-  try {
-    return JSON.parse(persistedUserAddedTasks);
-  } catch (e) {
-    console.error("ユーザータスクデータのパースエラー:", e);
-    return [];
-  }
-};
-
-// userAddedTasksの更新関数
-export const updateUserAddedTasks = (
-  newTasks: { userId: string; taskIds: string[] }[]
-): void => {
-  persistedUserAddedTasks = JSON.stringify(newTasks);
-  // デバッグ用：更新された値を出力
-  console.log("更新されたuserAddedTasks:", persistedUserAddedTasks);
-};
+import { sql } from "@vercel/postgres";
 
 // 共有タスク一覧を取得するAPI
 export async function GET(request: NextRequest) {
@@ -128,15 +41,31 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    if (!userStr) {
+      return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
+    }
+
+    const user = JSON.parse(userStr) as User;
+
     // '/api/shared/tasks/[taskId]' の形式の場合、特定のタスクを返す
     if (taskId && taskId !== "tasks") {
       console.log(`特定の共有タスクを取得するリクエスト: ID=${taskId}`);
 
-      const task = sharedTasks.find((t) => t.id === taskId);
+      const result = await sql`
+        SELECT 
+          t.*,
+          u.username as created_by_username
+        FROM tasks t
+        LEFT JOIN users u ON t.created_by = u.id
+        WHERE t.id = ${taskId} AND t.is_shared = true
+      `;
 
-      if (task) {
-        console.log(`タスクID ${taskId} が見つかりました:`, task.title);
-        return NextResponse.json(task, { status: 200 });
+      if (result.rows.length > 0) {
+        console.log(
+          `タスクID ${taskId} が見つかりました:`,
+          result.rows[0].title
+        );
+        return NextResponse.json(result.rows[0], { status: 200 });
       } else {
         console.log(`タスクID ${taskId} が見つかりませんでした`);
         return NextResponse.json(
@@ -146,10 +75,21 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // 通常の一覧取得
+    // 共有タスク一覧を取得
     console.log("共有タスク一覧を取得するリクエスト");
+
+    const result = await sql`
+      SELECT 
+        t.*,
+        u.username as created_by_username
+      FROM tasks t
+      LEFT JOIN users u ON t.created_by = u.id
+      WHERE t.is_shared = true
+      ORDER BY t.created_at DESC
+    `;
+
     // キャッシュを防止するためのヘッダーを追加
-    return NextResponse.json(sharedTasks, {
+    return NextResponse.json(result.rows, {
       status: 200,
       headers: {
         "Cache-Control": "no-cache, no-store, must-revalidate",
@@ -172,13 +112,44 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { title, description, due_date, priority } = body;
 
-    // ユーザー情報を取得
-    const userHeader = request.headers.get("x-user");
-    if (!userHeader) {
+    // ユーザー情報を取得（通常のx-userヘッダーとBase64エンコードされたx-user-base64ヘッダーの両方をサポート）
+    let userStr = request.headers.get("x-user");
+    const userBase64 = request.headers.get("x-user-base64");
+
+    // Base64エンコードされたユーザー情報を優先的に使用
+    if (userBase64) {
+      try {
+        // Base64からデコード (サーバーサイドではBufferを使用)
+        const decodedStr = Buffer.from(userBase64, "base64").toString("utf-8");
+
+        // UTF-8エンコードされたURLエンコード文字列かどうかをチェックして適切に処理
+        try {
+          if (decodedStr.includes("%")) {
+            // URLエンコード文字列の場合はデコード
+            userStr = decodeURIComponent(decodedStr);
+          } else {
+            // 通常の文字列の場合はそのまま使用
+            userStr = decodedStr;
+          }
+        } catch (decodeErr) {
+          // デコードエラーの場合は元の文字列を使用
+          userStr = decodedStr;
+        }
+      } catch (e) {
+        console.error("Base64デコードエラー:", e);
+        return NextResponse.json(
+          { error: "ユーザー情報のデコードに失敗しました" },
+          { status: 400 }
+        );
+      }
+    }
+
+    if (!userStr) {
       return NextResponse.json({ error: "認証エラー" }, { status: 401 });
     }
 
-    const user = JSON.parse(userHeader) as User;
+    const user = JSON.parse(userStr) as User;
+    const userId = typeof user.id === "string" ? parseInt(user.id) : user.id;
 
     // 管理者のみタスク作成可能
     if (user.role !== "admin") {
@@ -188,21 +159,33 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 新しいタスクを作成
-    const newTask = {
-      id: `shared-task${Date.now()}`,
-      title,
-      description,
-      due_date,
-      priority,
-      created_at: new Date().toISOString(),
-      created_by: String(user.id),
-      created_by_username: user.username,
-      status: "pending",
-    };
+    // 新しいタスクをデータベースに追加
+    const result = await sql`
+      INSERT INTO tasks (
+        title,
+        description,
+        status,
+        priority,
+        due_date,
+        assigned_to,
+        created_by,
+        is_shared,
+        shared_at
+      ) VALUES (
+        ${title},
+        ${description},
+        'pending',
+        ${priority},
+        ${due_date},
+        ${userId},
+        ${userId},
+        true,
+        CURRENT_TIMESTAMP
+      )
+      RETURNING *
+    `;
 
-    // タスク一覧に追加
-    sharedTasks.unshift(newTask);
+    const newTask = result.rows[0];
 
     return NextResponse.json(newTask, { status: 201 });
   } catch (error) {
@@ -218,32 +201,68 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const url = new URL(request.url);
-    const taskId = url.pathname.split("/").pop();
+    const pathSegments = url.pathname.split("/");
+    const taskId = pathSegments[pathSegments.length - 1];
+
     const body = await request.json();
     const { title, description, due_date, priority, is_all_day } = body;
 
-    // ユーザー情報を取得
-    const userHeader = request.headers.get("x-user");
-    if (!userHeader) {
+    // ユーザー情報を取得（通常のx-userヘッダーとBase64エンコードされたx-user-base64ヘッダーの両方をサポート）
+    let userStr = request.headers.get("x-user");
+    const userBase64 = request.headers.get("x-user-base64");
+
+    // Base64エンコードされたユーザー情報を優先的に使用
+    if (userBase64) {
+      try {
+        // Base64からデコード (サーバーサイドではBufferを使用)
+        const decodedStr = Buffer.from(userBase64, "base64").toString("utf-8");
+
+        // UTF-8エンコードされたURLエンコード文字列かどうかをチェックして適切に処理
+        try {
+          if (decodedStr.includes("%")) {
+            // URLエンコード文字列の場合はデコード
+            userStr = decodeURIComponent(decodedStr);
+          } else {
+            // 通常の文字列の場合はそのまま使用
+            userStr = decodedStr;
+          }
+        } catch (decodeErr) {
+          // デコードエラーの場合は元の文字列を使用
+          userStr = decodedStr;
+        }
+      } catch (e) {
+        console.error("Base64デコードエラー:", e);
+        return NextResponse.json(
+          { error: "ユーザー情報のデコードに失敗しました" },
+          { status: 400 }
+        );
+      }
+    }
+
+    if (!userStr) {
       return NextResponse.json({ error: "認証エラー" }, { status: 401 });
     }
 
-    const user = JSON.parse(userHeader) as User;
+    const user = JSON.parse(userStr) as User;
+    const userId = typeof user.id === "string" ? parseInt(user.id) : user.id;
 
     // タスクの存在確認
-    const taskIndex = sharedTasks.findIndex((task) => task.id === taskId);
-    if (taskIndex === -1) {
+    const taskResult = await sql`
+      SELECT * FROM tasks 
+      WHERE id = ${taskId} AND is_shared = true
+    `;
+
+    if (taskResult.rows.length === 0) {
       return NextResponse.json(
         { error: "指定されたタスクが見つかりません" },
         { status: 404 }
       );
     }
 
+    const task = taskResult.rows[0];
+
     // 管理者または作成者のみタスク更新可能
-    if (
-      user.role !== "admin" &&
-      sharedTasks[taskIndex].created_by !== String(user.id)
-    ) {
+    if (user.role !== "admin" && task.created_by !== userId) {
       return NextResponse.json(
         { error: "このタスクを更新する権限がありません" },
         { status: 403 }
@@ -251,16 +270,19 @@ export async function PUT(request: NextRequest) {
     }
 
     // タスクを更新
-    sharedTasks[taskIndex] = {
-      ...sharedTasks[taskIndex],
-      title,
-      description,
-      due_date,
-      priority,
-      is_all_day,
-    };
+    const updateResult = await sql`
+      UPDATE tasks
+      SET 
+        title = ${title},
+        description = ${description},
+        due_date = ${due_date},
+        priority = ${priority},
+        updated_at = CURRENT_TIMESTAMP
+      WHERE id = ${taskId} AND is_shared = true
+      RETURNING *
+    `;
 
-    return NextResponse.json(sharedTasks[taskIndex], { status: 200 });
+    return NextResponse.json(updateResult.rows[0], { status: 200 });
   } catch (error) {
     console.error("共有タスク更新エラー:", error);
     return NextResponse.json(
@@ -287,39 +309,64 @@ export async function DELETE(request: NextRequest) {
       queryId,
       usedTaskId: taskId,
       url: request.url,
-      pathname: url.pathname,
-      searchParams: Object.fromEntries(url.searchParams.entries()),
     });
 
-    // ユーザー情報を取得
-    const userHeader = request.headers.get("x-user");
-    if (!userHeader) {
+    // ユーザー情報を取得（通常のx-userヘッダーとBase64エンコードされたx-user-base64ヘッダーの両方をサポート）
+    let userStr = request.headers.get("x-user");
+    const userBase64 = request.headers.get("x-user-base64");
+
+    // Base64エンコードされたユーザー情報を優先的に使用
+    if (userBase64) {
+      try {
+        // Base64からデコード (サーバーサイドではBufferを使用)
+        const decodedStr = Buffer.from(userBase64, "base64").toString("utf-8");
+
+        // UTF-8エンコードされたURLエンコード文字列かどうかをチェックして適切に処理
+        try {
+          if (decodedStr.includes("%")) {
+            // URLエンコード文字列の場合はデコード
+            userStr = decodeURIComponent(decodedStr);
+          } else {
+            // 通常の文字列の場合はそのまま使用
+            userStr = decodedStr;
+          }
+        } catch (decodeErr) {
+          // デコードエラーの場合は元の文字列を使用
+          userStr = decodedStr;
+        }
+      } catch (e) {
+        console.error("Base64デコードエラー:", e);
+        return NextResponse.json(
+          { error: "ユーザー情報のデコードに失敗しました" },
+          { status: 400 }
+        );
+      }
+    }
+
+    if (!userStr) {
       return NextResponse.json({ error: "認証エラー" }, { status: 401 });
     }
 
-    const user = JSON.parse(userHeader) as User;
+    const user = JSON.parse(userStr) as User;
+    const userId = typeof user.id === "string" ? parseInt(user.id) : user.id;
 
     // タスクの存在確認
-    const taskIndex = sharedTasks.findIndex((task) => task.id === taskId);
+    const taskResult = await sql`
+      SELECT * FROM tasks 
+      WHERE id = ${taskId} AND is_shared = true
+    `;
 
-    console.log("タスク検索結果:", {
-      taskId,
-      allTaskIds: sharedTasks.map((t) => t.id),
-      foundIndex: taskIndex,
-    });
-
-    if (taskIndex === -1) {
+    if (taskResult.rows.length === 0) {
       return NextResponse.json(
         { error: "指定されたタスクが見つかりません" },
         { status: 404 }
       );
     }
 
+    const task = taskResult.rows[0];
+
     // 管理者または作成者のみタスク削除可能
-    if (
-      user.role !== "admin" &&
-      sharedTasks[taskIndex].created_by !== String(user.id)
-    ) {
+    if (user.role !== "admin" && task.created_by !== userId) {
       return NextResponse.json(
         { error: "このタスクを削除する権限がありません" },
         { status: 403 }
@@ -327,17 +374,13 @@ export async function DELETE(request: NextRequest) {
     }
 
     // タスクを削除
-    const deletedTask = sharedTasks.splice(taskIndex, 1)[0];
+    const deleteResult = await sql`
+      DELETE FROM tasks
+      WHERE id = ${taskId} AND is_shared = true
+      RETURNING *
+    `;
 
-    // ユーザーの追加済みタスク一覧からも削除
-    const userAddedTasks = getUserAddedTasks();
-    const updatedUserAddedTasks = userAddedTasks.map((item) => {
-      return {
-        ...item,
-        taskIds: item.taskIds.filter((id) => id !== taskId),
-      };
-    });
-    updateUserAddedTasks(updatedUserAddedTasks);
+    const deletedTask = deleteResult.rows[0];
 
     return NextResponse.json(
       { message: "タスクを削除しました", deletedTask },
@@ -395,25 +438,28 @@ export async function PATCH(request: NextRequest) {
     }
 
     const user = JSON.parse(userStr) as User;
+    const userId = typeof user.id === "string" ? parseInt(user.id) : user.id;
 
     // ユーザーの追加済みタスクIDを取得
     if (action === "getUserAddedTasks") {
-      // 現在の永続化されたデータを取得
-      const userAddedTasks = getUserAddedTasks();
+      // データベースからユーザーが追加した共有タスクを取得
+      const result = await sql`
+        SELECT t.id
+        FROM tasks t
+        WHERE t.created_by = ${userId} AND t.is_shared = true
+      `;
 
-      const userAddedTask = userAddedTasks.find(
-        (item) => item.userId === String(user.id)
-      );
+      const taskIds = result.rows.map((row) => String(row.id));
 
       console.log("追加済みタスク取得:", {
-        userId: user.id,
-        foundTaskInfo: !!userAddedTask,
-        taskIds: userAddedTask?.taskIds || [],
+        userId,
+        taskCount: taskIds.length,
+        taskIds,
       });
 
       return NextResponse.json(
         {
-          taskIds: userAddedTask?.taskIds || [],
+          taskIds: taskIds,
         },
         {
           status: 200,
@@ -430,11 +476,10 @@ export async function PATCH(request: NextRequest) {
     if (action === "addTaskToUser") {
       const { taskId } = body;
       console.log("タスク追加リクエスト:", {
-        userId: user.id,
+        userId,
         taskId,
         requestBody: body,
         userRole: user.role,
-        userIdType: typeof user.id,
       });
 
       // タスクIDのチェック
@@ -445,173 +490,52 @@ export async function PATCH(request: NextRequest) {
         );
       }
 
-      // タスクの存在確認
-      const taskIdStr = String(taskId); // 必ず文字列に変換
-      console.log(`タスク検索: ID "${taskIdStr}" を検索中...`);
-      console.log(
-        `利用可能な共有タスク: ${JSON.stringify(
-          sharedTasks.map((t) => ({
-            id: t.id,
-            title: t.title.substring(0, 10),
-          }))
-        )}`
-      );
+      // 追加対象の共有タスクを確認
+      const taskResult = await sql`
+        SELECT * FROM tasks WHERE id = ${taskId} AND is_shared = true
+      `;
 
-      // IDの前後の空白を削除して検索
-      const trimmedTaskId = taskIdStr.trim();
-      const task = sharedTasks.find((task) => {
-        const trimmedId = task.id.trim();
-        const match = trimmedId === trimmedTaskId;
-        console.log(`比較: "${trimmedId}" === "${trimmedTaskId}" = ${match}`);
-        return match;
-      });
-
-      console.log("タスク存在確認:", {
-        taskIdStr,
-        trimmedTaskId,
-        taskFound: !!task,
-        taskTitle: task?.title || "見つかりません",
-        tasksCount: sharedTasks.length,
-        allTaskIds: sharedTasks.map((t) => t.id),
-      });
-
-      // タスクが見つからない場合はエラーメッセージを強化して返す
-      if (!task) {
-        // 類似IDのタスクがないか確認（デバッグ用）
-        const similarTasks = sharedTasks.filter(
-          (t) => t.id.includes(taskIdStr) || taskIdStr.includes(t.id)
-        );
-        console.log(
-          "類似IDのタスク:",
-          similarTasks.map((t) => t.id)
-        );
-
-        // タスクが見つからない場合でも、タスクIDをユーザーに追加する（暫定対応）
-        console.log("タスクは見つかりませんが、IDを保存します（暫定対応）");
-
-        // 現在の追加済みタスク一覧を取得
-        const userAddedTasks = getUserAddedTasks();
-        console.log(
-          "現在のuserAddedTasks（タスク検索失敗時）:",
-          JSON.stringify(userAddedTasks)
-        );
-
-        // ユーザーのタスク追加状況を確認
-        let userAddedTask = userAddedTasks.find(
-          (item) => item.userId === String(user.id)
-        );
-
-        // ユーザーが初めてタスクを追加する場合
-        if (!userAddedTask) {
-          const newUserTask = {
-            userId: String(user.id),
-            taskIds: [taskIdStr],
-          };
-          userAddedTasks.push(newUserTask);
-          userAddedTask = newUserTask;
-          console.log("新規ユーザーとしてタスクIDを追加（タスク検索失敗時）:", {
-            userId: user.id,
-            taskId: taskIdStr,
-          });
-        }
-        // 既に追加済みの場合はスキップ
-        else if (userAddedTask.taskIds.includes(taskIdStr)) {
-          return NextResponse.json(
-            {
-              message: "このタスクは既に追加されています",
-              taskIds: userAddedTask.taskIds,
-            },
-            { status: 200 }
-          );
-        }
-        // 新しいタスクを追加
-        else {
-          userAddedTask.taskIds.push(taskIdStr);
-          console.log("既存ユーザーにタスクIDを追加（タスク検索失敗時）:", {
-            userId: user.id,
-            taskId: taskIdStr,
-            allTaskIds: userAddedTask.taskIds,
-          });
-        }
-
-        // 変更を永続化
-        updateUserAddedTasks(userAddedTasks);
-
-        // 成功レスポンスを返す（暫定対応として成功とする）
+      if (taskResult.rows.length === 0) {
         return NextResponse.json(
-          {
-            message: "タスクIDを保存しました（暫定対応）",
-            taskIds: userAddedTask.taskIds,
-            warning: "指定されたタスクはデータベースに見つかりませんでした",
-          },
-          { status: 200 }
+          { error: "指定された共有タスクが見つかりません" },
+          { status: 404 }
         );
       }
 
-      // 現在の追加済みタスク一覧を取得
-      const userAddedTasks = getUserAddedTasks();
-      console.log("現在のuserAddedTasks:", JSON.stringify(userAddedTasks));
+      const task = taskResult.rows[0];
 
-      // ユーザーのタスク追加状況を確認
-      let userAddedTask = userAddedTasks.find(
-        (item) => item.userId === String(user.id)
-      );
+      // ユーザーのタスクとして追加
+      const insertResult = await sql`
+        INSERT INTO tasks (
+          title,
+          description,
+          status,
+          priority,
+          due_date,
+          assigned_to,
+          created_by,
+          is_shared
+        ) VALUES (
+          ${"[共有] " + task.title},
+          ${task.description},
+          'pending',
+          ${task.priority},
+          ${task.due_date},
+          ${userId},
+          ${userId},
+          false
+        )
+        RETURNING id, title
+      `;
 
-      // ユーザーが初めてタスクを追加する場合
-      if (!userAddedTask) {
-        const newUserTask = {
-          userId: String(user.id),
-          taskIds: [taskIdStr],
-        };
-        userAddedTasks.push(newUserTask);
-        userAddedTask = newUserTask;
-        console.log("初めてのタスク追加:", {
-          userId: user.id,
-          taskId: taskIdStr,
-        });
-      }
-      // 既に追加済みの場合はスキップ
-      else if (userAddedTask.taskIds.includes(taskIdStr)) {
-        console.log("タスクは既に追加済み:", {
-          userId: user.id,
-          taskId: taskIdStr,
-        });
-        return NextResponse.json(
-          {
-            message: "このタスクは既に追加されています",
-            taskIds: userAddedTask.taskIds,
-          },
-          { status: 200 }
-        );
-      }
-      // 新しいタスクを追加
-      else {
-        userAddedTask.taskIds.push(taskIdStr);
-        console.log("既存ユーザーにタスク追加:", {
-          userId: user.id,
-          taskId: taskIdStr,
-          allTaskIds: userAddedTask.taskIds,
-        });
-      }
-
-      // 変更を永続化
-      updateUserAddedTasks(userAddedTasks);
-      console.log("更新後のuserAddedTasks:", JSON.stringify(userAddedTasks));
-
-      // 成功レスポンス
-      return NextResponse.json(
-        {
-          message: "タスクが正常に追加されました",
-          taskIds: userAddedTask.taskIds,
-        },
-        { status: 200 }
-      );
+      return NextResponse.json({
+        success: true,
+        message: "タスクが追加されました",
+        task: insertResult.rows[0],
+      });
     }
 
-    return NextResponse.json(
-      { error: "無効なアクションです" },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: "無効なアクション" }, { status: 400 });
   } catch (error) {
     console.error("共有タスク操作エラー:", error);
     return NextResponse.json(
