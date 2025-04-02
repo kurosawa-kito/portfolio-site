@@ -294,7 +294,7 @@ export default function UserManagement() {
   };
 
   const handleUpdateRole = async () => {
-    if (!selectedUser) return;
+    if (!selectedUser || !newRole) return;
 
     try {
       setIsProcessing(true);
@@ -323,15 +323,13 @@ export default function UserManagement() {
       if (data.success) {
         toast({
           title: "権限更新成功",
-          description: `${selectedUser.username}の権限を更新しました`,
+          description: "ユーザー権限を更新しました",
           status: "success",
           duration: 3000,
           isClosable: true,
         });
-
-        // ユーザーリストを更新
-        fetchUsers();
         onEditClose();
+        fetchUsers(); // ユーザー一覧を更新
       } else {
         toast({
           title: "権限更新失敗",
