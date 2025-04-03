@@ -355,7 +355,7 @@ export default function TasksPage() {
           </Button>
         </Flex>
 
-        <Grid templateColumns="repeat(2, 1fr)" gap={6}>
+        <Grid templateColumns="repeat(2, 1fr)" gap={2}>
           {/* 左側：完了済みタスク */}
           <GridItem>
             <Box
