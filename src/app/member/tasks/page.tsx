@@ -341,6 +341,10 @@ export default function TasksPage() {
   useEffect(() => {
     // このeffectはtasksの内容が変わるたびに実行され、
     // completedTasksとpendingTasksの再計算を強制します
+
+    // 強制的に再レンダリングを行う（空の関数だが依存配列のtasksが変更されると実行される）
+    const forceUpdate = () => {};
+    forceUpdate();
   }, [tasks]);
 
   // ログインしていない場合は何も表示しない

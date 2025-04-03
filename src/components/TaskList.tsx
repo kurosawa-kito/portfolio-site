@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   Box,
   Text,
@@ -104,6 +104,14 @@ export default function TaskList({
   const hoverBg = useColorModeValue("gray.50", "gray.700");
   const toast = useToast();
 
+  // 内部状態としてタスクリストのコピーを持つ
+  const [localTasks, setLocalTasks] = useState<Task[]>(tasks);
+
+  // propsのタスクが変更されたら内部状態も更新
+  useEffect(() => {
+    setLocalTasks(tasks);
+  }, [tasks]);
+
   // タスク削除処理
   const handleDelete = async (id: string | number) => {
     if (onDeleteTask) {
@@ -120,6 +128,16 @@ export default function TaskList({
 
   // チェックボックス操作時のタスクステータス変更
   const handleCheckboxChange = (id: string | number, checked: boolean) => {
+    // 即座にローカルの状態を更新してUIを反映
+    setLocalTasks((prevTasks) =>
+      prevTasks.map((task) =>
+        task.id === id
+          ? { ...task, status: checked ? "completed" : "pending" }
+          : task
+      )
+    );
+
+    // 親コンポーネントに変更を通知
     if (onStatusChange) {
       onStatusChange(id, checked ? "completed" : "pending");
     }
@@ -135,7 +153,7 @@ export default function TaskList({
   }
 
   // タスクが空の場合
-  if (tasks.length === 0) {
+  if (localTasks.length === 0) {
     return (
       <Card bg={bgColor} borderWidth="1px" borderColor={borderColor}>
         <CardBody>
@@ -184,12 +202,12 @@ export default function TaskList({
             <Center py={4}>
               <Spinner size="lg" color="blue.500" />
             </Center>
-          ) : tasks.length === 0 ? (
+          ) : localTasks.length === 0 ? (
             <Center py={4}>
               <Text color="gray.500">タスクはありません</Text>
             </Center>
           ) : (
-            tasks.map((task) => (
+            localTasks.map((task) => (
               <Card
                 key={task.id}
                 bg={bgColor}
@@ -362,14 +380,14 @@ export default function TaskList({
               </Tr>
             </Thead>
             <Tbody>
-              {tasks.length === 0 ? (
+              {localTasks.length === 0 ? (
                 <Tr>
                   <Td colSpan={6} textAlign="center">
                     タスクはありません
                   </Td>
                 </Tr>
               ) : (
-                tasks.map((task) => (
+                localTasks.map((task) => (
                   <Tr key={task.id}>
                     <Td>{task.title}</Td>
                     <Td>{task.description}</Td>
