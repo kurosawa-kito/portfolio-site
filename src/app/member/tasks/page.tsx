@@ -389,15 +389,19 @@ export default function TasksPage() {
                 flexGrow={1}
                 css={{
                   "&::-webkit-scrollbar": {
-                    width: "6px",
+                    width: "8px",
                   },
                   "&::-webkit-scrollbar-track": {
-                    background: useColorModeValue("gray.50", "gray.700"),
-                    borderRadius: "3px",
+                    background: useColorModeValue("gray.100", "gray.700"),
+                    borderRadius: "4px",
                   },
                   "&::-webkit-scrollbar-thumb": {
-                    background: useColorModeValue("gray.300", "gray.600"),
-                    borderRadius: "3px",
+                    background: useColorModeValue("blue.300", "blue.600"),
+                    borderRadius: "4px",
+                    cursor: "pointer",
+                  },
+                  "&::-webkit-scrollbar-thumb:hover": {
+                    background: useColorModeValue("blue.400", "blue.500"),
                   },
                 }}
               >
@@ -448,15 +452,19 @@ export default function TasksPage() {
                 flexGrow={1}
                 css={{
                   "&::-webkit-scrollbar": {
-                    width: "6px",
+                    width: "8px",
                   },
                   "&::-webkit-scrollbar-track": {
-                    background: useColorModeValue("gray.50", "gray.700"),
-                    borderRadius: "3px",
+                    background: useColorModeValue("gray.100", "gray.700"),
+                    borderRadius: "4px",
                   },
                   "&::-webkit-scrollbar-thumb": {
-                    background: useColorModeValue("gray.300", "gray.600"),
-                    borderRadius: "3px",
+                    background: useColorModeValue("blue.300", "blue.600"),
+                    borderRadius: "4px",
+                    cursor: "pointer",
+                  },
+                  "&::-webkit-scrollbar-thumb:hover": {
+                    background: useColorModeValue("blue.400", "blue.500"),
                   },
                 }}
               >

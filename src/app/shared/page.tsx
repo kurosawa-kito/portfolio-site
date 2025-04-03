@@ -533,7 +533,7 @@ export default function SharedBoard() {
 
   return (
     <Container maxW="6xl" py={4}>
-      <VStack spacing={4} align="stretch">
+      <VStack spacing={2} align="stretch">
         <PageTitle>共有ボード</PageTitle>
 
         {/* 共有ノート投稿セクション */}
@@ -629,42 +629,66 @@ export default function SharedBoard() {
                   共有メッセージはまだありません
                 </Text>
               ) : (
-                notes.map((note) => (
-                  <Box
-                    key={note.id}
-                    p={4}
-                    borderWidth="1px"
-                    borderRadius="md"
-                    bg={noteBgColor}
-                    position="relative"
-                  >
-                    <HStack justifyContent="space-between" mb={2}>
-                      <Text fontWeight="bold" fontSize="sm">
-                        {note.created_by_username}
-                      </Text>
-                      <Text fontSize="xs" color="gray.500" mr={8}>
-                        {formatDate(note.created_at)}
-                      </Text>
-                    </HStack>
+                <Box
+                  maxHeight="300px"
+                  overflowY="auto"
+                  css={{
+                    "&::-webkit-scrollbar": {
+                      width: "8px",
+                    },
+                    "&::-webkit-scrollbar-track": {
+                      background: useColorModeValue("gray.100", "gray.700"),
+                      borderRadius: "4px",
+                    },
+                    "&::-webkit-scrollbar-thumb": {
+                      background: useColorModeValue("blue.300", "blue.600"),
+                      borderRadius: "4px",
+                      cursor: "pointer",
+                    },
+                    "&::-webkit-scrollbar-thumb:hover": {
+                      background: useColorModeValue("blue.400", "blue.500"),
+                    },
+                  }}
+                >
+                  <VStack spacing={3} align="stretch">
+                    {notes.map((note) => (
+                      <Box
+                        key={note.id}
+                        p={4}
+                        borderWidth="1px"
+                        borderRadius="md"
+                        bg={noteBgColor}
+                        position="relative"
+                      >
+                        <HStack justifyContent="space-between" mb={2}>
+                          <Text fontWeight="bold" fontSize="sm">
+                            {note.created_by_username}
+                          </Text>
+                          <Text fontSize="xs" color="gray.500" mr={8}>
+                            {formatDate(note.created_at)}
+                          </Text>
+                        </HStack>
 
-                    <Text whiteSpace="pre-wrap">{note.content}</Text>
+                        <Text whiteSpace="pre-wrap">{note.content}</Text>
 
-                    {(note.created_by === user.id.toString() ||
-                      user.role === "admin") && (
-                      <IconButton
-                        aria-label="Delete note"
-                        icon={<DeleteIcon />}
-                        size="sm"
-                        colorScheme="red"
-                        variant="ghost"
-                        position="absolute"
-                        top={2}
-                        right={2}
-                        onClick={() => deleteNote(note.id)}
-                      />
-                    )}
-                  </Box>
-                ))
+                        {(note.created_by === user.id.toString() ||
+                          user.role === "admin") && (
+                          <IconButton
+                            aria-label="Delete note"
+                            icon={<DeleteIcon />}
+                            size="sm"
+                            colorScheme="red"
+                            variant="ghost"
+                            position="absolute"
+                            top={2}
+                            right={2}
+                            onClick={() => deleteNote(note.id)}
+                          />
+                        )}
+                      </Box>
+                    ))}
+                  </VStack>
+                </Box>
               )}
             </VStack>
           </CardBody>
@@ -724,95 +748,121 @@ export default function SharedBoard() {
                   共有タスクはまだありません
                 </Text>
               ) : (
-                tasks.map((task) => (
-                  <Box
-                    key={task.id}
-                    p={4}
-                    borderWidth="1px"
-                    borderRadius="md"
-                    bg={
-                      task.priority === "high"
-                        ? "red.50"
-                        : task.priority === "medium"
-                        ? "orange.50"
-                        : "green.50"
-                    }
-                    _dark={{
-                      bg:
-                        task.priority === "high"
-                          ? "red.900"
-                          : task.priority === "medium"
-                          ? "orange.900"
-                          : "green.900",
-                      opacity: 0.7,
-                    }}
-                    position="relative"
-                  >
-                    <HStack justifyContent="space-between" mb={2}>
-                      <Heading size="sm">{task.title}</Heading>
-                      <HStack>
-                        <Badge colorScheme={getPriorityColor(task.priority)}>
-                          {task.priority === "high"
-                            ? "高"
+                <Box
+                  maxHeight="400px"
+                  overflowY="auto"
+                  css={{
+                    "&::-webkit-scrollbar": {
+                      width: "8px",
+                    },
+                    "&::-webkit-scrollbar-track": {
+                      background: useColorModeValue("gray.100", "gray.700"),
+                      borderRadius: "4px",
+                    },
+                    "&::-webkit-scrollbar-thumb": {
+                      background: useColorModeValue("green.300", "green.600"),
+                      borderRadius: "4px",
+                      cursor: "pointer",
+                    },
+                    "&::-webkit-scrollbar-thumb:hover": {
+                      background: useColorModeValue("green.400", "green.500"),
+                    },
+                  }}
+                >
+                  <VStack spacing={3} align="stretch">
+                    {tasks.map((task) => (
+                      <Box
+                        key={task.id}
+                        p={4}
+                        borderWidth="1px"
+                        borderRadius="md"
+                        bg={
+                          task.priority === "high"
+                            ? "red.50"
                             : task.priority === "medium"
-                            ? "中"
-                            : "低"}
-                        </Badge>
-                        {(task.created_by === user?.id.toString() ||
-                          user?.role === "admin") && (
-                          <>
-                            <IconButton
-                              aria-label="編集"
-                              icon={<EditIcon />}
-                              size="sm"
-                              variant="ghost"
-                              colorScheme="blue"
-                              onClick={() => handleEditTask(task)}
-                            />
-                            <IconButton
-                              aria-label="削除"
-                              icon={<DeleteIcon />}
-                              size="sm"
-                              variant="ghost"
-                              colorScheme="red"
-                              onClick={() => deleteSharedTask(task.id)}
-                            />
-                          </>
-                        )}
-                      </HStack>
-                    </HStack>
+                            ? "orange.50"
+                            : "green.50"
+                        }
+                        _dark={{
+                          bg:
+                            task.priority === "high"
+                              ? "red.900"
+                              : task.priority === "medium"
+                              ? "orange.900"
+                              : "green.900",
+                          opacity: 0.7,
+                        }}
+                        position="relative"
+                      >
+                        <HStack justifyContent="space-between" mb={2}>
+                          <Heading size="sm">{task.title}</Heading>
+                          <HStack>
+                            <Badge
+                              colorScheme={getPriorityColor(task.priority)}
+                            >
+                              {task.priority === "high"
+                                ? "高"
+                                : task.priority === "medium"
+                                ? "中"
+                                : "低"}
+                            </Badge>
+                            {(task.created_by === user?.id.toString() ||
+                              user?.role === "admin") && (
+                              <>
+                                <IconButton
+                                  aria-label="編集"
+                                  icon={<EditIcon />}
+                                  size="sm"
+                                  variant="ghost"
+                                  colorScheme="blue"
+                                  onClick={() => handleEditTask(task)}
+                                />
+                                <IconButton
+                                  aria-label="削除"
+                                  icon={<DeleteIcon />}
+                                  size="sm"
+                                  variant="ghost"
+                                  colorScheme="red"
+                                  onClick={() => deleteSharedTask(task.id)}
+                                />
+                              </>
+                            )}
+                          </HStack>
+                        </HStack>
 
-                    <Text mb={2} fontSize="sm" noOfLines={2}>
-                      {task.description}
-                    </Text>
-
-                    <HStack justifyContent="space-between" mt={3}>
-                      <HStack>
-                        <Text fontSize="xs" color="gray.500">
-                          期限: {formatDate(task.due_date)}
+                        <Text mb={2} fontSize="sm" noOfLines={2}>
+                          {task.description}
                         </Text>
-                        <Text fontSize="xs" color="gray.500">
-                          作成者: {task.created_by_username}
-                        </Text>
-                      </HStack>
 
-                      {task.assigned_to ? (
-                        <Badge colorScheme="green">追加済み</Badge>
-                      ) : (
-                        <Button
-                          size="sm"
-                          colorScheme="green"
-                          leftIcon={<AddIcon />}
-                          onClick={() => addTaskToUser(task.id)}
-                          isLoading={isAddingTask[task.id]}
-                          isDisabled={isAddingTask[task.id]}
-                        >
-                          自分のタスクに追加
-                        </Button>
-                      )}
-                    </HStack>
-                  </Box>
-                ))
+                        <HStack justifyContent="space-between" mt={3}>
+                          <HStack>
+                            <Text fontSize="xs" color="gray.500">
+                              期限: {formatDate(task.due_date)}
+                            </Text>
+                            <Text fontSize="xs" color="gray.500">
+                              作成者: {task.created_by_username}
+                            </Text>
+                          </HStack>
+
+                          {task.assigned_to ? (
+                            <Badge colorScheme="green">追加済み</Badge>
+                          ) : (
+                            <Button
+                              size="sm"
+                              colorScheme="green"
+                              leftIcon={<AddIcon />}
+                              onClick={() => addTaskToUser(task.id)}
+                              isLoading={isAddingTask[task.id]}
+                              isDisabled={isAddingTask[task.id]}
+                            >
+                              自分のタスクに追加
+                            </Button>
+                          )}
+                        </HStack>
+                      </Box>
+                    ))}
+                  </VStack>
+                </Box>
               )}
             </VStack>
           </CardBody>
