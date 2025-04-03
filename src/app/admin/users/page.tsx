@@ -172,7 +172,7 @@ export default function UserManagement() {
       const response = await fetch(
         `/api/admin/users?id=${userData.id}&action=check`,
         {
-          method: "DELETE",
+          method: "GET",
           headers: {
             "x-user-base64": userBase64,
           },
@@ -220,12 +220,10 @@ export default function UserManagement() {
   const handleDeleteUser = async (action: string = "check") => {
     if (!selectedUser) return;
 
-    // 削除確認モーダルを閉じる
-    onDeleteConfirmClose();
+    // 削除確認モーダルを閉じる前に処理フラグを設定
+    setIsProcessing(true);
 
     try {
-      setIsProcessing(true);
-
       // ユーザー情報をBase64エンコードして非ASCII文字の問題を回避
       const userStr = JSON.stringify(user);
       const userBase64 =
@@ -244,6 +242,9 @@ export default function UserManagement() {
       );
 
       const data = await response.json();
+
+      // 削除確認モーダルを閉じる
+      onDeleteConfirmClose();
 
       if (data.success) {
         toast({
@@ -288,6 +289,8 @@ export default function UserManagement() {
         duration: 3000,
         isClosable: true,
       });
+      // エラー時も確認モーダルを閉じる
+      onDeleteConfirmClose();
     } finally {
       setIsProcessing(false);
     }
