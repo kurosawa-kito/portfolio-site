@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import {
   Container,
   VStack,
@@ -10,6 +10,9 @@ import {
   Button,
   useColorModeValue,
   Flex,
+  Grid,
+  GridItem,
+  Heading,
 } from "@chakra-ui/react";
 import { AddIcon } from "@chakra-ui/icons";
 import { useAuth } from "@/contexts/AuthContext";
@@ -44,7 +47,6 @@ const safeBase64Encode = (str: string, user: any) => {
       })
     );
   } catch (e) {
-    console.error("Base64エンコードエラー:", e);
     // エラー時は単純な文字列を返す（ロールバック）
     return btoa(JSON.stringify({ id: user?.id || 0 }));
   }
@@ -55,7 +57,6 @@ export default function TasksPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
-  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [deletingTaskId, setDeletingTaskId] = useState<string | number | null>(
     null
   );
@@ -63,6 +64,49 @@ export default function TasksPage() {
   const toast = useToast();
   const router = useRouter();
   const subtitleBg = useColorModeValue("blue.50", "blue.900");
+
+  // タスクを完了と未完了に分ける
+  const { completedTasks, pendingTasks } = useMemo(() => {
+    // 完了タスク（新しい完了タスクが上に来るようにソート）
+    const completed = tasks
+      .filter((task) => task.status === "completed")
+      .sort((a, b) => {
+        // 更新日時で降順ソート（新しいものが上）
+        return (
+          new Date(b.updated_at || "").getTime() -
+          new Date(a.updated_at || "").getTime()
+        );
+      });
+
+    // 未完了タスク（優先度 → 期限 → タイトルでソート）
+    const pending = tasks
+      .filter((task) => task.status !== "completed")
+      .sort((a, b) => {
+        // 1. 優先度（high > medium > low）
+        const priorityOrder = { high: 0, medium: 1, low: 2 };
+        const priorityDiff =
+          priorityOrder[a.priority as keyof typeof priorityOrder] -
+          priorityOrder[b.priority as keyof typeof priorityOrder];
+
+        if (priorityDiff !== 0) return priorityDiff;
+
+        // 2. 期限（近い順）
+        if (a.due_date && b.due_date) {
+          const dateDiff =
+            new Date(a.due_date).getTime() - new Date(b.due_date).getTime();
+          if (dateDiff !== 0) return dateDiff;
+        } else if (a.due_date) {
+          return -1; // aに期限があればaを先に
+        } else if (b.due_date) {
+          return 1; // bに期限があればbを先に
+        }
+
+        // 3. タイトル（アルファベット順）
+        return a.title.localeCompare(b.title);
+      });
+
+    return { completedTasks: completed, pendingTasks: pending };
+  }, [tasks]);
 
   // ログインチェック
   useEffect(() => {
@@ -80,8 +124,6 @@ export default function TasksPage() {
 
     setIsLoading(true);
     try {
-      // リクエストとキャッシュの設定
-      // ヘッダーを別変数に定義
       // ユーザー情報をBase64エンコードして非ASCII文字の問題を回避
       const userStr = JSON.stringify(user);
 
@@ -295,38 +337,11 @@ export default function TasksPage() {
   }
 
   return (
-    <Container maxW="4xl" py={4}>
+    <Container maxW="6xl" py={4}>
       <VStack spacing={6} align="stretch">
         <PageTitle>タスク管理</PageTitle>
 
-        <Flex justify="space-between" align="center">
-          <Box
-            position="relative"
-            py={2}
-            px={3}
-            width="auto"
-            borderLeftWidth="4px"
-            borderLeftColor="blue.500"
-            bg={subtitleBg}
-            borderRadius="md"
-            boxShadow="sm"
-            mb={4}
-          >
-            <Text
-              fontSize="lg"
-              fontWeight="bold"
-              bgGradient="linear(to-r, blue.500, purple.500)"
-              bgClip="text"
-              display="flex"
-              alignItems="center"
-            >
-              <Box as="span" mr={2}>
-                📋
-              </Box>
-              あなたのタスク
-            </Text>
-          </Box>
-
+        <Flex justify="flex-end" align="center" mb={4}>
           <Button
             leftIcon={<AddIcon />}
             colorScheme="blue"
@@ -335,22 +350,130 @@ export default function TasksPage() {
               setIsModalOpen(true);
             }}
             size="sm"
-            mb={4}
           >
             新しいタスクを作成
           </Button>
         </Flex>
 
-        <TaskList
-          tasks={tasks}
-          isLoading={isLoading}
-          onStatusChange={(id, status) =>
-            handleStatusChange(String(id), status)
-          }
-          showSubtitle={false}
-          onEditTask={handleEditTask}
-          onDeleteTask={handleDeleteTask}
-        />
+        <Grid templateColumns="repeat(2, 1fr)" gap={6}>
+          {/* 左側：完了済みタスク */}
+          <GridItem>
+            <Box
+              borderWidth="1px"
+              borderRadius="lg"
+              p={0}
+              bg={useColorModeValue("white", "gray.800")}
+              boxShadow="md"
+              height="calc(100vh - 220px)"
+              overflow="hidden"
+              display="flex"
+              flexDirection="column"
+            >
+              <Flex
+                bg={useColorModeValue("green.50", "green.900")}
+                p={3}
+                borderBottomWidth="1px"
+                borderBottomColor={useColorModeValue("green.100", "green.700")}
+                align="center"
+              >
+                <Box as="span" mr={2} fontSize="lg" color="green.500">
+                  ✓
+                </Box>
+                <Heading size="md" color="green.500">
+                  完了済みタスク
+                </Heading>
+              </Flex>
+              <Box
+                p={4}
+                overflowY="auto"
+                flexGrow={1}
+                css={{
+                  "&::-webkit-scrollbar": {
+                    width: "8px",
+                  },
+                  "&::-webkit-scrollbar-track": {
+                    background: useColorModeValue("gray.50", "gray.700"),
+                    borderRadius: "4px",
+                  },
+                  "&::-webkit-scrollbar-thumb": {
+                    background: useColorModeValue("gray.300", "gray.600"),
+                    borderRadius: "4px",
+                  },
+                }}
+              >
+                <TaskList
+                  tasks={completedTasks}
+                  isLoading={isLoading}
+                  onStatusChange={(id, status) =>
+                    handleStatusChange(String(id), status)
+                  }
+                  showSubtitle={false}
+                  onEditTask={handleEditTask}
+                  onDeleteTask={handleDeleteTask}
+                />
+              </Box>
+            </Box>
+          </GridItem>
+
+          {/* 右側：未完了タスク */}
+          <GridItem>
+            <Box
+              borderWidth="1px"
+              borderRadius="lg"
+              p={0}
+              bg={useColorModeValue("white", "gray.800")}
+              boxShadow="md"
+              height="calc(100vh - 220px)"
+              overflow="hidden"
+              display="flex"
+              flexDirection="column"
+            >
+              <Flex
+                bg={useColorModeValue("blue.50", "blue.900")}
+                p={3}
+                borderBottomWidth="1px"
+                borderBottomColor={useColorModeValue("blue.100", "blue.700")}
+                align="center"
+              >
+                <Box as="span" mr={2} fontSize="lg" color="blue.500">
+                  🔔
+                </Box>
+                <Heading size="md" color="blue.500">
+                  未完了タスク
+                </Heading>
+              </Flex>
+              <Box
+                p={4}
+                overflowY="auto"
+                flexGrow={1}
+                css={{
+                  "&::-webkit-scrollbar": {
+                    width: "8px",
+                  },
+                  "&::-webkit-scrollbar-track": {
+                    background: useColorModeValue("gray.50", "gray.700"),
+                    borderRadius: "4px",
+                  },
+                  "&::-webkit-scrollbar-thumb": {
+                    background: useColorModeValue("gray.300", "gray.600"),
+                    borderRadius: "4px",
+                  },
+                }}
+              >
+                <TaskList
+                  tasks={pendingTasks}
+                  isLoading={isLoading}
+                  onStatusChange={(id, status) =>
+                    handleStatusChange(String(id), status)
+                  }
+                  showSubtitle={false}
+                  onEditTask={handleEditTask}
+                  onDeleteTask={handleDeleteTask}
+                />
+              </Box>
+            </Box>
+          </GridItem>
+        </Grid>
       </VStack>
 
       {/* タスク作成/編集モーダル */}

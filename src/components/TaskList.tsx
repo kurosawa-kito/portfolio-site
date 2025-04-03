@@ -18,8 +18,11 @@ import {
   Td,
   Spinner,
   useToast,
+  Flex,
+  Spacer,
+  Tooltip,
 } from "@chakra-ui/react";
-import { DeleteIcon, EditIcon } from "@chakra-ui/icons";
+import { DeleteIcon, EditIcon, TimeIcon, InfoIcon } from "@chakra-ui/icons";
 
 interface Task {
   id: string | number;
@@ -31,6 +34,7 @@ interface Task {
   assigned_to_username?: string;
   created_by_username?: string;
   is_all_day?: boolean;
+  updated_at?: string;
 }
 
 interface TaskListProps {
@@ -95,6 +99,7 @@ export default function TaskList({
   const bgColor = useColorModeValue("white", "gray.800");
   const borderColor = useColorModeValue("gray.200", "gray.700");
   const subtitleBg = useColorModeValue("blue.50", "blue.900");
+  const hoverBg = useColorModeValue("gray.50", "gray.700");
   const toast = useToast();
 
   // タスク削除処理
@@ -117,6 +122,19 @@ export default function TaskList({
       <Box textAlign="center" py={8}>
         <Spinner size="xl" />
       </Box>
+    );
+  }
+
+  // タスクが空の場合
+  if (tasks.length === 0) {
+    return (
+      <Card bg={bgColor} borderWidth="1px" borderColor={borderColor}>
+        <CardBody>
+          <Text textAlign="center" color="gray.500">
+            タスクはありません
+          </Text>
+        </CardBody>
+      </Card>
     );
   }
 
@@ -152,65 +170,117 @@ export default function TaskList({
       )}
 
       {viewType === "card" ? (
-        <VStack spacing={4} align="stretch" mt={showSubtitle ? -2 : 0}>
-          {tasks.length === 0 ? (
-            <Card bg={bgColor} borderWidth="1px" borderColor={borderColor}>
-              <CardBody>
-                <Text textAlign="center" color="gray.500">
-                  タスクはありません
-                </Text>
-              </CardBody>
-            </Card>
-          ) : (
-            tasks.map((task) => (
-              <Card
-                key={task.id}
-                bg={bgColor}
-                borderWidth="1px"
-                borderColor={borderColor}
-                _hover={{ transform: "translateY(-2px)", boxShadow: "lg" }}
-                transition="all 0.2s"
-              >
-                <CardBody>
-                  <VStack align="stretch" spacing={2}>
-                    <HStack justify="space-between">
-                      <Checkbox
-                        isChecked={task.status === "completed"}
-                        onChange={(e) =>
-                          onStatusChange &&
-                          onStatusChange(
-                            task.id,
-                            e.target.checked ? "completed" : "pending"
-                          )
-                        }
-                        size="lg"
-                      >
-                        <Text
-                          fontSize="lg"
-                          fontWeight="bold"
-                          textDecoration={
-                            task.status === "completed"
-                              ? "line-through"
-                              : "none"
-                          }
-                        >
-                          {task.title}
-                        </Text>
-                      </Checkbox>
-                      <HStack>
-                        <Badge
-                          colorScheme={
-                            priorityColors[
-                              task.priority as keyof typeof priorityColors
-                            ]
-                          }
-                        >
-                          {
-                            priorityLabels[
-                              task.priority as keyof typeof priorityLabels
-                            ]
-                          }
-                        </Badge>
+        <VStack spacing={3} align="stretch" mt={showSubtitle ? -2 : 0}>
+          {tasks.map((task) => (
+            <Card
+              key={task.id}
+              bg={bgColor}
+              borderWidth="1px"
+              borderColor={borderColor}
+              boxShadow="sm"
+              _hover={{ boxShadow: "md", background: hoverBg }}
+              transition="all 0.2s"
+              position="relative"
+              overflow="hidden"
+              borderLeft="4px solid"
+              borderLeftColor={
+                task.status === "completed"
+                  ? "green.400"
+                  : priorityColors[
+                      task.priority as keyof typeof priorityColors
+                    ] + ".400"
+              }
+            >
+              <CardBody py={3} px={4}>
+                <Flex direction="column" gap={2}>
+                  {/* タイトル行 */}
+                  <Flex align="center" gap={2}>
+                    <Checkbox
+                      isChecked={task.status === "completed"}
+                      onChange={(e) =>
+                        onStatusChange &&
+                        onStatusChange(
+                          task.id,
+                          e.target.checked ? "completed" : "pending"
+                        )
+                      }
+                      size="lg"
+                      colorScheme={
+                        task.status === "completed" ? "green" : "blue"
+                      }
+                      isDisabled={!onStatusChange}
+                    />
+                    <Text
+                      fontSize="md"
+                      fontWeight="bold"
+                      textDecoration={
+                        task.status === "completed" ? "line-through" : "none"
+                      }
+                      color={
+                        task.status === "completed" ? "gray.500" : "inherit"
+                      }
+                      noOfLines={1}
+                    >
+                      {task.title}
+                    </Text>
+                    <Spacer />
+                    <Badge
+                      colorScheme={
+                        priorityColors[
+                          task.priority as keyof typeof priorityColors
+                        ]
+                      }
+                      variant="subtle"
+                      px={2}
+                      py={1}
+                      borderRadius="full"
+                    >
+                      {
+                        priorityLabels[
+                          task.priority as keyof typeof priorityLabels
+                        ]
+                      }
+                    </Badge>
+                  </Flex>
+
+                  {/* 説明文（あれば表示） */}
+                  {task.description && (
+                    <Box
+                      ml={10}
+                      color={
+                        task.status === "completed" ? "gray.500" : "gray.700"
+                      }
+                    >
+                      <Text fontSize="sm" noOfLines={2}>
+                        {task.description}
+                      </Text>
+                    </Box>
+                  )}
+
+                  {/* 日付と操作ボタン */}
+                  <Flex align="center" justify="space-between" ml={10} mt={1}>
+                    <Flex align="center" gap={2}>
+                      <Tooltip label="期限" placement="top">
+                        <Flex align="center" color="gray.500" fontSize="xs">
+                          <TimeIcon mr={1} />
+                          <Text>
+                            {formatDateTime(task.due_date, task.is_all_day)}
+                          </Text>
+                        </Flex>
+                      </Tooltip>
+
+                      {task.created_by_username && (
+                        <Tooltip label="作成者" placement="top">
+                          <Flex align="center" color="gray.500" fontSize="xs">
+                            <InfoIcon mr={1} />
+                            <Text>{task.created_by_username}</Text>
+                          </Flex>
+                        </Tooltip>
+                      )}
+                    </Flex>
+
+                    <Flex>
+                      {onEditTask && (
                         <IconButton
                           aria-label="編集"
                           icon={<EditIcon />}
@@ -219,6 +289,8 @@ export default function TaskList({
                           colorScheme="blue"
                           onClick={() => handleEdit(task)}
                         />
+                      )}
+                      {onDeleteTask && (
                         <IconButton
                           aria-label="削除"
                           icon={<DeleteIcon />}
@@ -227,26 +299,13 @@ export default function TaskList({
                           colorScheme="red"
                           onClick={() => handleDelete(task.id)}
                         />
-                      </HStack>
-                    </HStack>
-                    <Text color="gray.600">{task.description}</Text>
-                    <HStack
-                      justify="space-between"
-                      fontSize="sm"
-                      color="gray.500"
-                    >
-                      <Text>
-                        期限: {formatDateTime(task.due_date, task.is_all_day)}
-                      </Text>
-                      {task.created_by_username && (
-                        <Text>作成者: {task.created_by_username}</Text>
                       )}
-                    </HStack>
-                  </VStack>
-                </CardBody>
-              </Card>
-            ))
-          )}
+                    </Flex>
+                  </Flex>
+                </Flex>
+              </CardBody>
+            </Card>
+          ))}
         </VStack>
       ) : (
         <Card
@@ -302,22 +361,26 @@ export default function TaskList({
                       </Td>
                       <Td>
                         <HStack spacing={2}>
-                          <IconButton
-                            aria-label="編集"
-                            icon={<EditIcon />}
-                            size="sm"
-                            variant="ghost"
-                            colorScheme="blue"
-                            onClick={() => handleEdit(task)}
-                          />
-                          <IconButton
-                            aria-label="削除"
-                            icon={<DeleteIcon />}
-                            size="sm"
-                            variant="ghost"
-                            colorScheme="red"
-                            onClick={() => handleDelete(task.id)}
-                          />
+                          {onEditTask && (
+                            <IconButton
+                              aria-label="編集"
+                              icon={<EditIcon />}
+                              size="sm"
+                              variant="ghost"
+                              colorScheme="blue"
+                              onClick={() => handleEdit(task)}
+                            />
+                          )}
+                          {onDeleteTask && (
+                            <IconButton
+                              aria-label="削除"
+                              icon={<DeleteIcon />}
+                              size="sm"
+                              variant="ghost"
+                              colorScheme="red"
+                              onClick={() => handleDelete(task.id)}
+                            />
+                          )}
                         </HStack>
                       </Td>
                     </Tr>
