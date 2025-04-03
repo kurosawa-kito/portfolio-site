@@ -78,19 +78,11 @@ export default function TasksPage() {
         );
       });
 
-    // 未完了タスク（優先度 → 期限 → タイトルでソート）
+    // 未完了タスク（期限 → 優先度 → タイトルでソート）
     const pending = tasks
       .filter((task) => task.status !== "completed")
       .sort((a, b) => {
-        // 1. 優先度（high > medium > low）
-        const priorityOrder = { high: 0, medium: 1, low: 2 };
-        const priorityDiff =
-          priorityOrder[a.priority as keyof typeof priorityOrder] -
-          priorityOrder[b.priority as keyof typeof priorityOrder];
-
-        if (priorityDiff !== 0) return priorityDiff;
-
-        // 2. 期限（近い順）
+        // 1. 期限（近い順）
         if (a.due_date && b.due_date) {
           const dateDiff =
             new Date(a.due_date).getTime() - new Date(b.due_date).getTime();
@@ -100,6 +92,14 @@ export default function TasksPage() {
         } else if (b.due_date) {
           return 1; // bに期限があればbを先に
         }
+
+        // 2. 優先度（high > medium > low）
+        const priorityOrder = { high: 0, medium: 1, low: 2 };
+        const priorityDiff =
+          priorityOrder[a.priority as keyof typeof priorityOrder] -
+          priorityOrder[b.priority as keyof typeof priorityOrder];
+
+        if (priorityDiff !== 0) return priorityDiff;
 
         // 3. タイトル（アルファベット順）
         return a.title.localeCompare(b.title);
