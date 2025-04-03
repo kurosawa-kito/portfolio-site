@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import {
   Container,
   VStack,
@@ -60,6 +60,8 @@ export default function TasksPage() {
   const [deletingTaskId, setDeletingTaskId] = useState<string | number | null>(
     null
   );
+  // 再レンダリングを強制するための参照カウンタ
+  const forceUpdateRef = useRef<number>(0);
   const { user, isLoggedIn, setShowTaskHeader } = useAuth();
   const toast = useToast();
   const router = useRouter();
@@ -106,7 +108,7 @@ export default function TasksPage() {
       });
 
     return { completedTasks: completed, pendingTasks: pending };
-  }, [tasks]);
+  }, [tasks, forceUpdateRef.current]); // forceUpdateRefの値も依存配列に追加
 
   // ログインチェック
   useEffect(() => {
@@ -178,6 +180,17 @@ export default function TasksPage() {
     // タスク配列を更新して再レンダリングを強制
     setTasks(updatedTasks);
 
+    // forceUpdateRefの値を更新して再計算を強制
+    forceUpdateRef.current += 1;
+
+    // 状態の変更が確実に反映されるよう、再計算を強制
+    const forceRerender = () => {
+      // 一時的なステート更新で強制再レンダリング
+      setIsLoading((prev) => prev);
+    };
+    // 非同期で実行
+    setTimeout(forceRerender, 10);
+
     try {
       // ユーザー情報をBase64エンコードして非ASCII文字の問題を回避
       const userStr = JSON.stringify(user);
@@ -211,8 +224,8 @@ export default function TasksPage() {
           isClosable: true,
         });
 
-        // 成功時にタスク一覧を再取得して最新の状態に更新
-        // fetchTasks();
+        // 成功時にローカルステートを明示的に更新
+        setTasks((prev) => [...prev]);
       } else {
         // 失敗した場合は元に戻す
         const errorData = await response.json();

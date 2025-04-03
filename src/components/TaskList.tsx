@@ -139,7 +139,10 @@ export default function TaskList({
 
     // 親コンポーネントに変更を通知
     if (onStatusChange) {
-      onStatusChange(id, checked ? "completed" : "pending");
+      // setTimeout で非同期処理にして状態の更新を確実にする
+      setTimeout(() => {
+        onStatusChange(id, checked ? "completed" : "pending");
+      }, 0);
     }
   };
 
