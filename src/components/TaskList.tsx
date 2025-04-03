@@ -211,7 +211,7 @@ export default function TaskList({
                       isDisabled={!onStatusChange}
                     />
                     <Text
-                      fontSize="sm"
+                      fontSize="md"
                       fontWeight="bold"
                       textDecoration={
                         task.status === "completed" ? "line-through" : "none"

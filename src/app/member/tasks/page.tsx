@@ -337,8 +337,8 @@ export default function TasksPage() {
   }
 
   return (
-    <Container maxW="6xl" py={2}>
-      <VStack spacing={3} align="stretch">
+    <Container maxW="6xl" py={4}>
+      <VStack spacing={4} align="stretch">
         <PageTitle>タスク管理</PageTitle>
 
         <Flex justify="flex-end" align="center" mb={2}>

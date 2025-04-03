@@ -532,8 +532,8 @@ export default function SharedBoard() {
   }
 
   return (
-    <Container maxW="4xl" py={4}>
-      <VStack spacing={6} align="stretch">
+    <Container maxW="6xl" py={4}>
+      <VStack spacing={4} align="stretch">
         <PageTitle>共有ボード</PageTitle>
 
         {/* 共有ノート投稿セクション */}
