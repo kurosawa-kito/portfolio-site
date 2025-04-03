@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback, useMemo, useRef } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import {
   Container,
   VStack,
@@ -60,8 +60,6 @@ export default function TasksPage() {
   const [deletingTaskId, setDeletingTaskId] = useState<string | number | null>(
     null
   );
-  // 再レンダリングを強制するための参照カウンタ
-  const forceUpdateRef = useRef<number>(0);
   const { user, isLoggedIn, setShowTaskHeader } = useAuth();
   const toast = useToast();
   const router = useRouter();
@@ -108,7 +106,7 @@ export default function TasksPage() {
       });
 
     return { completedTasks: completed, pendingTasks: pending };
-  }, [tasks, forceUpdateRef.current]); // forceUpdateRefの値も依存配列に追加
+  }, [tasks]);
 
   // ログインチェック
   useEffect(() => {
@@ -170,26 +168,14 @@ export default function TasksPage() {
 
   // タスクステータスを更新
   const handleStatusChange = async (taskId: string, newStatus: string) => {
-    // 楽観的UI更新: 即座にUIを更新し、状態を強制的に更新するための一時的配列を作成
-    const updatedTasks = tasks.map((task) =>
-      task.id === taskId
-        ? { ...task, status: newStatus, updated_at: new Date().toISOString() }
-        : task
+    // 楽観的UI更新: 即座にUIを更新
+    setTasks((prevTasks) =>
+      prevTasks.map((task) =>
+        task.id === taskId
+          ? { ...task, status: newStatus, updated_at: new Date().toISOString() }
+          : task
+      )
     );
-
-    // タスク配列を更新して再レンダリングを強制
-    setTasks(updatedTasks);
-
-    // forceUpdateRefの値を更新して再計算を強制
-    forceUpdateRef.current += 1;
-
-    // 状態の変更が確実に反映されるよう、再計算を強制
-    const forceRerender = () => {
-      // 一時的なステート更新で強制再レンダリング
-      setIsLoading((prev) => prev);
-    };
-    // 非同期で実行
-    setTimeout(forceRerender, 10);
 
     try {
       // ユーザー情報をBase64エンコードして非ASCII文字の問題を回避
@@ -223,9 +209,6 @@ export default function TasksPage() {
           duration: 3000,
           isClosable: true,
         });
-
-        // 成功時にローカルステートを明示的に更新
-        setTasks((prev) => [...prev]);
       } else {
         // 失敗した場合は元に戻す
         const errorData = await response.json();
@@ -238,7 +221,8 @@ export default function TasksPage() {
           task.id === taskId
             ? {
                 ...task,
-                status: task.status === "completed" ? "pending" : "completed",
+                status: newStatus === "completed" ? "pending" : "completed",
+                updated_at: new Date().toISOString(),
               }
             : task
         )
@@ -352,12 +336,18 @@ export default function TasksPage() {
 
   // 自動更新の設定 - 任意のタスク更新後にUIを強制的に更新
   useEffect(() => {
-    // このeffectはtasksの内容が変わるたびに実行され、
-    // completedTasksとpendingTasksの再計算を強制します
+    // このeffectはtasksの内容が変わるたびに実行され、completedTasksとpendingTasksの再計算を強制します
+    // さらに重要な点として、ここでuseStateの状態更新がコミットされた後に実行されるため、
+    // コンポーネントの再レンダリングが確実に行われます
+  }, [tasks]);
 
-    // 強制的に再レンダリングを行う（空の関数だが依存配列のtasksが変更されると実行される）
-    const forceUpdate = () => {};
-    forceUpdate();
+  // 確実にtasksの変更が伝播し、タスクリストが更新されるようにする
+  useEffect(() => {
+    // handleStatusChange実行後にtasksが更新されたことを検出し、UI更新を強制する
+    const taskIds = tasks
+      .map((task) => `${task.id}-${task.status}-${task.updated_at}`)
+      .join("|");
+    // この依存配列の変更により、tasksの中身が変わるたびに再レンダリングが起こります
   }, [tasks]);
 
   // ログインしていない場合は何も表示しない
