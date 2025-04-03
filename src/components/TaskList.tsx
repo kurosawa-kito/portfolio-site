@@ -170,7 +170,7 @@ export default function TaskList({
       )}
 
       {viewType === "card" ? (
-        <VStack spacing={3} align="stretch" mt={showSubtitle ? -2 : 0}>
+        <VStack spacing={2} align="stretch" mt={showSubtitle ? -2 : 0}>
           {tasks.map((task) => (
             <Card
               key={task.id}
@@ -191,8 +191,8 @@ export default function TaskList({
                     ] + ".400"
               }
             >
-              <CardBody py={3} px={4}>
-                <Flex direction="column" gap={2}>
+              <CardBody py={2} px={3}>
+                <Flex direction="column" gap={1}>
                   {/* タイトル行 */}
                   <Flex align="center" gap={2}>
                     <Checkbox
@@ -204,14 +204,14 @@ export default function TaskList({
                           e.target.checked ? "completed" : "pending"
                         )
                       }
-                      size="lg"
+                      size="md"
                       colorScheme={
                         task.status === "completed" ? "green" : "blue"
                       }
                       isDisabled={!onStatusChange}
                     />
                     <Text
-                      fontSize="md"
+                      fontSize="sm"
                       fontWeight="bold"
                       textDecoration={
                         task.status === "completed" ? "line-through" : "none"
@@ -231,9 +231,10 @@ export default function TaskList({
                         ]
                       }
                       variant="subtle"
-                      px={2}
-                      py={1}
+                      px={1.5}
+                      py={0.5}
                       borderRadius="full"
+                      fontSize="2xs"
                     >
                       {
                         priorityLabels[
@@ -246,23 +247,23 @@ export default function TaskList({
                   {/* 説明文（あれば表示） */}
                   {task.description && (
                     <Box
-                      ml={10}
+                      ml={8}
                       color={
                         task.status === "completed" ? "gray.500" : "gray.700"
                       }
                     >
-                      <Text fontSize="sm" noOfLines={2}>
+                      <Text fontSize="xs" noOfLines={1}>
                         {task.description}
                       </Text>
                     </Box>
                   )}
 
                   {/* 日付と操作ボタン */}
-                  <Flex align="center" justify="space-between" ml={10} mt={1}>
-                    <Flex align="center" gap={2}>
+                  <Flex align="center" justify="space-between" ml={8} mt={0.5}>
+                    <Flex align="center" gap={1.5}>
                       <Tooltip label="期限" placement="top">
-                        <Flex align="center" color="gray.500" fontSize="xs">
-                          <TimeIcon mr={1} />
+                        <Flex align="center" color="gray.500" fontSize="2xs">
+                          <TimeIcon boxSize="2.5" mr={0.5} />
                           <Text>
                             {formatDateTime(task.due_date, task.is_all_day)}
                           </Text>
@@ -271,8 +272,8 @@ export default function TaskList({
 
                       {task.created_by_username && (
                         <Tooltip label="作成者" placement="top">
-                          <Flex align="center" color="gray.500" fontSize="xs">
-                            <InfoIcon mr={1} />
+                          <Flex align="center" color="gray.500" fontSize="2xs">
+                            <InfoIcon boxSize="2.5" mr={0.5} />
                             <Text>{task.created_by_username}</Text>
                           </Flex>
                         </Tooltip>
@@ -284,7 +285,7 @@ export default function TaskList({
                         <IconButton
                           aria-label="編集"
                           icon={<EditIcon />}
-                          size="sm"
+                          size="xs"
                           variant="ghost"
                           colorScheme="blue"
                           onClick={() => handleEdit(task)}
@@ -294,7 +295,7 @@ export default function TaskList({
                         <IconButton
                           aria-label="削除"
                           icon={<DeleteIcon />}
-                          size="sm"
+                          size="xs"
                           variant="ghost"
                           colorScheme="red"
                           onClick={() => handleDelete(task.id)}
