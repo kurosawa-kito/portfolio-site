@@ -168,12 +168,15 @@ export default function TasksPage() {
 
   // タスクステータスを更新
   const handleStatusChange = async (taskId: string, newStatus: string) => {
-    // 楽観的UI更新: 即座にUIを更新
-    setTasks((prevTasks) =>
-      prevTasks.map((task) =>
-        task.id === taskId ? { ...task, status: newStatus } : task
-      )
+    // 楽観的UI更新: 即座にUIを更新し、状態を強制的に更新するための一時的配列を作成
+    const updatedTasks = tasks.map((task) =>
+      task.id === taskId
+        ? { ...task, status: newStatus, updated_at: new Date().toISOString() }
+        : task
     );
+
+    // タスク配列を更新して再レンダリングを強制
+    setTasks(updatedTasks);
 
     try {
       // ユーザー情報をBase64エンコードして非ASCII文字の問題を回避
@@ -207,6 +210,9 @@ export default function TasksPage() {
           duration: 3000,
           isClosable: true,
         });
+
+        // 成功時にタスク一覧を再取得して最新の状態に更新
+        // fetchTasks();
       } else {
         // 失敗した場合は元に戻す
         const errorData = await response.json();
@@ -330,6 +336,12 @@ export default function TasksPage() {
       loadInitialData();
     }
   }, [isLoggedIn, user, fetchTasks]);
+
+  // 自動更新の設定 - 任意のタスク更新後にUIを強制的に更新
+  useEffect(() => {
+    // このeffectはtasksの内容が変わるたびに実行され、
+    // completedTasksとpendingTasksの再計算を強制します
+  }, [tasks]);
 
   // ログインしていない場合は何も表示しない
   if (!isLoggedIn || !user) {

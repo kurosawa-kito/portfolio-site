@@ -118,6 +118,13 @@ export default function TaskList({
     }
   };
 
+  // チェックボックス操作時のタスクステータス変更
+  const handleCheckboxChange = (id: string | number, checked: boolean) => {
+    if (onStatusChange) {
+      onStatusChange(id, checked ? "completed" : "pending");
+    }
+  };
+
   // ローディング表示
   if (isLoading) {
     return (
@@ -209,11 +216,7 @@ export default function TaskList({
                       <Checkbox
                         isChecked={task.status === "completed"}
                         onChange={(e) =>
-                          onStatusChange &&
-                          onStatusChange(
-                            task.id,
-                            e.target.checked ? "completed" : "pending"
-                          )
+                          handleCheckboxChange(task.id, e.target.checked)
                         }
                         size="md"
                         colorScheme={
