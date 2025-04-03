@@ -143,10 +143,10 @@ export default function TaskList({
       {showSubtitle && (
         <Box
           position="relative"
-          py={2}
-          mb={2}
-          mt={4}
-          px={3}
+          py={1}
+          mb={1}
+          mt={3}
+          px={2}
           borderLeftWidth="4px"
           borderLeftColor="blue.500"
           bg={subtitleBg}
@@ -154,14 +154,14 @@ export default function TaskList({
           boxShadow="sm"
         >
           <Text
-            fontSize="lg"
+            fontSize="md"
             fontWeight="bold"
             bgGradient="linear(to-r, blue.500, purple.500)"
             bgClip="text"
             display="flex"
             alignItems="center"
           >
-            <Box as="span" mr={2}>
+            <Box as="span" mr={1}>
               📋
             </Box>
             タスク管理
@@ -170,7 +170,7 @@ export default function TaskList({
       )}
 
       {viewType === "card" ? (
-        <VStack spacing={2} align="stretch" mt={showSubtitle ? -2 : 0}>
+        <VStack spacing={2} align="stretch" mt={showSubtitle ? -1 : 0}>
           {tasks.map((task) => (
             <Card
               key={task.id}
@@ -182,7 +182,7 @@ export default function TaskList({
               transition="all 0.2s"
               position="relative"
               overflow="hidden"
-              borderLeft="4px solid"
+              borderLeft="3px solid"
               borderLeftColor={
                 task.status === "completed"
                   ? "green.400"
@@ -194,7 +194,7 @@ export default function TaskList({
               <CardBody py={2} px={3}>
                 <Flex direction="column" gap={1}>
                   {/* タイトル行 */}
-                  <Flex align="center" gap={2}>
+                  <Flex align="center" gap={1}>
                     <Checkbox
                       isChecked={task.status === "completed"}
                       onChange={(e) =>
@@ -234,7 +234,7 @@ export default function TaskList({
                       px={1.5}
                       py={0.5}
                       borderRadius="full"
-                      fontSize="2xs"
+                      fontSize="xs"
                     >
                       {
                         priorityLabels[
@@ -259,11 +259,11 @@ export default function TaskList({
                   )}
 
                   {/* 日付と操作ボタン */}
-                  <Flex align="center" justify="space-between" ml={8} mt={0.5}>
-                    <Flex align="center" gap={1.5}>
+                  <Flex align="center" justify="space-between" ml={8} mt={0}>
+                    <Flex align="center" gap={1}>
                       <Tooltip label="期限" placement="top">
                         <Flex align="center" color="gray.500" fontSize="2xs">
-                          <TimeIcon boxSize="2.5" mr={0.5} />
+                          <TimeIcon mr={0.5} boxSize={2.5} />
                           <Text>
                             {formatDateTime(task.due_date, task.is_all_day)}
                           </Text>
@@ -273,7 +273,7 @@ export default function TaskList({
                       {task.created_by_username && (
                         <Tooltip label="作成者" placement="top">
                           <Flex align="center" color="gray.500" fontSize="2xs">
-                            <InfoIcon boxSize="2.5" mr={0.5} />
+                            <InfoIcon mr={0.5} boxSize={2.5} />
                             <Text>{task.created_by_username}</Text>
                           </Flex>
                         </Tooltip>

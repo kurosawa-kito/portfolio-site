@@ -330,175 +330,125 @@ export default function TaskModal({
     }
   };
 
-  // モーダルのタイトル
-  const modalTitle =
-    mode === "create"
-      ? "新しいタスクを作成"
-      : mode === "shared"
-      ? "新しい共有タスクを作成"
-      : "タスクを編集";
-
-  // ボタンのラベル
-  const buttonLabel = mode === "edit" ? "更新する" : "作成する";
-
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} size="lg">
-      <ModalOverlay className="chakra-modal-overlay" style={{ zIndex: 1000 }} />
-      <ModalContent className="chakra-modal__content">
-        <ModalHeader>{modalTitle}</ModalHeader>
+    <Modal isOpen={isOpen} onClose={handleClose} size="md">
+      <ModalOverlay />
+      <ModalContent>
+        <ModalHeader fontSize="md" py={2}>
+          {mode === "create"
+            ? "新しいタスクを作成"
+            : mode === "shared"
+            ? "共有タスクを追加"
+            : "タスクを編集"}
+        </ModalHeader>
         <ModalCloseButton />
-        <ModalBody>
-          <FormControl isRequired mb={4}>
-            <FormLabel>タイトル</FormLabel>
-            <Input
-              placeholder="タスクのタイトル"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-            />
-          </FormControl>
-
-          <FormControl mb={4}>
-            <FormLabel>説明</FormLabel>
-            <Textarea
-              placeholder="タスクの説明"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              rows={4}
-            />
-          </FormControl>
-
-          <HStack spacing={4} mb={4} alignItems="flex-start">
+        <ModalBody pb={3}>
+          <VStack spacing={2} align="stretch">
             <FormControl isRequired>
-              <VStack align="flex-start" spacing={2}>
-                <HStack
-                  width="100%"
-                  justifyContent="space-between"
-                  alignItems="center"
-                >
-                  <FormLabel mb={0}>期限</FormLabel>
-                  <Checkbox
-                    isChecked={isAllDay}
-                    onChange={handleAllDayChange}
-                    size="sm"
-                  >
-                    終日
-                  </Checkbox>
-                </HStack>
-                <Box className={classes.popupOverlay} w="100%">
-                  {isAllDay ? (
-                    <DatePicker
-                      value={dueDateObj}
-                      onChange={handleDateChange}
-                      format="yyyy/MM/dd"
-                      clearable
-                      placeholder="日付を選択"
-                      variant="inline"
-                      inputVariant="outlined"
-                      label=""
-                      fullWidth
-                      className={classes.picker}
-                      autoOk
-                      disableToolbar={false}
-                      InputProps={{
-                        endAdornment: (
-                          <InputAdornment position="end">
-                            <EventIcon style={{ color: "#3182CE" }} />
-                          </InputAdornment>
-                        ),
-                      }}
-                      PopoverProps={{
-                        className: "date-picker-popover",
-                        style: { zIndex: 9999 },
-                        disablePortal: false,
-                        anchorOrigin: {
-                          vertical: "bottom",
-                          horizontal: "left",
-                        },
-                        transformOrigin: {
-                          vertical: "top",
-                          horizontal: "left",
-                        },
-                      }}
-                      DialogProps={{
-                        className: "date-picker-dialog",
-                        style: { zIndex: 9999 },
-                      }}
-                    />
-                  ) : (
-                    <DateTimePicker
-                      value={dueDateObj}
-                      onChange={handleDateChange}
-                      format="yyyy/MM/dd HH:mm"
-                      ampm={false}
-                      clearable
-                      placeholder="日時を選択"
-                      variant="inline"
-                      inputVariant="outlined"
-                      label=""
-                      fullWidth
-                      className={classes.picker}
-                      autoOk
-                      disableToolbar={false}
-                      InputProps={{
-                        endAdornment: (
-                          <InputAdornment position="end">
-                            <EventIcon style={{ color: "#3182CE" }} />
-                          </InputAdornment>
-                        ),
-                      }}
-                      PopoverProps={{
-                        className: "date-picker-popover",
-                        style: { zIndex: 9999 },
-                        disablePortal: false,
-                        anchorOrigin: {
-                          vertical: "bottom",
-                          horizontal: "left",
-                        },
-                        transformOrigin: {
-                          vertical: "top",
-                          horizontal: "left",
-                        },
-                      }}
-                      DialogProps={{
-                        className: "date-picker-dialog",
-                        style: { zIndex: 9999 },
-                      }}
-                    />
-                  )}
-                </Box>
-              </VStack>
+              <FormLabel fontSize="sm">タイトル</FormLabel>
+              <Input
+                placeholder="タスクのタイトルを入力"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                size="sm"
+              />
             </FormControl>
 
-            <FormControl isRequired>
-              <FormLabel>優先度</FormLabel>
+            <FormControl>
+              <FormLabel fontSize="sm">説明</FormLabel>
+              <Textarea
+                placeholder="タスクの詳細を入力（任意）"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                size="sm"
+                minH="60px"
+              />
+            </FormControl>
+
+            <FormControl>
+              <FormLabel fontSize="sm">期限</FormLabel>
+              <Box className={classes.picker}>
+                {isAllDay ? (
+                  <DatePicker
+                    value={dueDateObj}
+                    onChange={handleDateChange}
+                    inputVariant="outlined"
+                    format="yyyy/MM/dd"
+                    placeholder="期限日を選択"
+                    autoOk
+                    clearable
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <EventIcon style={{ fontSize: "1.1rem" }} />
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+                ) : (
+                  <DateTimePicker
+                    value={dueDateObj}
+                    onChange={handleDateChange}
+                    inputVariant="outlined"
+                    format="yyyy/MM/dd HH:mm"
+                    placeholder="期限日時を選択"
+                    ampm={false}
+                    autoOk
+                    clearable
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <EventIcon style={{ fontSize: "1.1rem" }} />
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+                )}
+              </Box>
+              <Checkbox
+                isChecked={isAllDay}
+                onChange={handleAllDayChange}
+                size="sm"
+                mt={1}
+              >
+                終日
+              </Checkbox>
+            </FormControl>
+
+            <FormControl>
+              <FormLabel fontSize="sm">優先度</FormLabel>
               <Select
                 value={priority}
                 onChange={(e) => setPriority(e.target.value)}
+                size="sm"
               >
                 <option value="low">低</option>
                 <option value="medium">中</option>
                 <option value="high">高</option>
               </Select>
             </FormControl>
-          </HStack>
+          </VStack>
         </ModalBody>
 
-        <ModalFooter>
-          <Button
-            variant="ghost"
-            mr={3}
-            onClick={handleClose}
-            isDisabled={isSubmitting}
-          >
-            キャンセル
-          </Button>
-          <Button
-            colorScheme="blue"
-            onClick={handleSubmit}
-            isLoading={isSubmitting}
-          >
-            {buttonLabel}
-          </Button>
+        <ModalFooter py={2}>
+          <HStack spacing={2}>
+            <Button
+              onClick={handleClose}
+              size="sm"
+              variant="outline"
+              colorScheme="blue"
+            >
+              キャンセル
+            </Button>
+            <Button
+              colorScheme="blue"
+              onClick={handleSubmit}
+              isLoading={isSubmitting}
+              size="sm"
+            >
+              {mode === "create" ? "作成" : mode === "shared" ? "追加" : "更新"}
+            </Button>
+          </HStack>
         </ModalFooter>
       </ModalContent>
     </Modal>

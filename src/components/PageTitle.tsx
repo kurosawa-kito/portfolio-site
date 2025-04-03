@@ -8,11 +8,12 @@ export default function PageTitle({ children }: PageTitleProps) {
   return (
     <Box w="100%">
       <Heading
-        size="lg"
+        size="md"
         bgGradient="linear(to-r, blue.500, purple.500)"
         bgClip="text"
         textAlign="center"
-        mb={2}
+        mb={1}
+        py={1}
       >
         {children}
       </Heading>
