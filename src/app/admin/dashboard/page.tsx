@@ -12,6 +12,13 @@ import {
   useColorModeValue,
   Divider,
   Container,
+  Grid,
+  GridItem,
+  Heading,
+  Badge,
+  Center,
+  Spinner,
+  HStack,
 } from "@chakra-ui/react";
 import { useAuth } from "@/contexts/AuthContext";
 import PageTitle from "@/components/PageTitle";
@@ -22,6 +29,7 @@ type User = {
   id: string;
   username: string;
   role: string;
+  email: string;
 };
 
 type Task = {
@@ -85,9 +93,10 @@ const formatDateTime = (dateString: string, isAllDay?: boolean): string => {
 
 export default function AdminDashboard() {
   const [users, setUsers] = useState<User[]>([]);
-  const [selectedUser, setSelectedUser] = useState<string>("");
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingUsers, setIsLoadingUsers] = useState(false);
+  const [isLoadingTasks, setIsLoadingTasks] = useState(false);
   const toast = useToast();
   const { user, isLoggedIn, setShowTaskHeader } = useAuth();
   const router = useRouter();
@@ -133,6 +142,8 @@ export default function AdminDashboard() {
           duration: 3000,
           isClosable: true,
         });
+      } finally {
+        setIsLoadingUsers(false);
       }
     };
     fetchUsers();
@@ -144,7 +155,7 @@ export default function AdminDashboard() {
 
     const fetchTasks = async () => {
       if (!selectedUser) return;
-      setIsLoading(true);
+      setIsLoadingTasks(true);
       try {
         // ユーザー情報をBase64エンコードして非ASCII文字の問題を回避
         const userStr = JSON.stringify(user);
@@ -153,7 +164,7 @@ export default function AdminDashboard() {
             ? safeBase64Encode(userStr, user)
             : Buffer.from(userStr).toString("base64");
 
-        const res = await fetch(`/api/admin/tasks?userId=${selectedUser}`, {
+        const res = await fetch(`/api/admin/tasks?userId=${selectedUser.id}`, {
           headers: {
             "x-user-base64": userBase64,
           },
@@ -169,7 +180,7 @@ export default function AdminDashboard() {
           isClosable: true,
         });
       } finally {
-        setIsLoading(false);
+        setIsLoadingTasks(false);
       }
     };
     fetchTasks();
@@ -196,70 +207,168 @@ export default function AdminDashboard() {
   }
 
   return (
-    <Container maxW="960px" py={4}>
-      <VStack spacing={6} align="stretch" width="100%">
+    <Container maxW="6xl" py={4}>
+      <VStack spacing={4} align="stretch">
         <PageTitle>管理者ダッシュボード</PageTitle>
 
-        <Card bg={bgColor} borderWidth="1px" borderColor={borderColor}>
-          <CardBody>
-            <VStack align="start" spacing={4}>
+        <Grid templateColumns={{ base: "1fr", lg: "1fr 1fr" }} gap={4}>
+          {/* 左側：ユーザー一覧 */}
+          <GridItem>
+            <Box
+              borderWidth="1px"
+              borderRadius="lg"
+              p={4}
+              boxShadow="md"
+              bg={useColorModeValue("white", "gray.800")}
+              height="calc(100vh - 180px)"
+              display="flex"
+              flexDirection="column"
+            >
+              <Heading size="md" mb={4}>
+                ユーザー一覧
+              </Heading>
               <Box
-                position="relative"
-                py={2}
-                mb={2}
-                px={3}
-                width="100%"
-                borderLeftWidth="4px"
-                borderLeftColor="blue.500"
-                bg={subtitleBg}
-                borderRadius="md"
-                boxShadow="sm"
+                overflowY="auto"
+                flexGrow={1}
+                css={{
+                  "&::-webkit-scrollbar": {
+                    width: "8px",
+                  },
+                  "&::-webkit-scrollbar-track": {
+                    background: useColorModeValue("gray.100", "gray.700"),
+                    borderRadius: "4px",
+                  },
+                  "&::-webkit-scrollbar-thumb": {
+                    background: useColorModeValue("purple.300", "purple.600"),
+                    borderRadius: "4px",
+                    cursor: "pointer",
+                  },
+                  "&::-webkit-scrollbar-thumb:hover": {
+                    background: useColorModeValue("purple.400", "purple.500"),
+                  },
+                }}
               >
-                <Text
-                  fontSize="lg"
-                  fontWeight="bold"
-                  bgGradient="linear(to-r, blue.500, purple.500)"
-                  bgClip="text"
-                  display="flex"
-                  alignItems="center"
-                >
-                  <Box as="span" mr={2}>
-                    👤
-                  </Box>
-                  メンバータスク確認
-                </Text>
+                {isLoadingUsers ? (
+                  <Center py={4}>
+                    <Spinner size="lg" />
+                  </Center>
+                ) : (
+                  <VStack spacing={2} align="stretch">
+                    {users.map((user) => (
+                      <Box
+                        key={user.id}
+                        p={3}
+                        borderWidth="1px"
+                        borderRadius="md"
+                        cursor="pointer"
+                        _hover={{
+                          bg: useColorModeValue("gray.50", "gray.700"),
+                        }}
+                        bg={
+                          selectedUser?.id === user.id
+                            ? useColorModeValue("blue.50", "blue.900")
+                            : useColorModeValue("white", "gray.800")
+                        }
+                        onClick={() => setSelectedUser(user)}
+                      >
+                        <HStack justify="space-between">
+                          <Text fontWeight="bold">{user.username}</Text>
+                          <Badge
+                            colorScheme={user.role === "admin" ? "red" : "blue"}
+                          >
+                            {user.role === "admin" ? "管理者" : "メンバー"}
+                          </Badge>
+                        </HStack>
+                        <Text fontSize="sm" color="gray.500">
+                          {user.email}
+                        </Text>
+                      </Box>
+                    ))}
+                  </VStack>
+                )}
               </Box>
-              <Text mb={2}>ユーザーを選択してください：</Text>
-              <Select
-                value={selectedUser}
-                onChange={(e) => setSelectedUser(e.target.value)}
-                placeholder="ユーザーを選択"
-                maxW="300px"
-              >
-                {users.map((user) => (
-                  <option key={user.id} value={user.id}>
-                    {user.username} ({user.role})
-                  </option>
-                ))}
-              </Select>
-            </VStack>
-          </CardBody>
-        </Card>
+            </Box>
+          </GridItem>
 
-        {selectedUser && (
-          <>
-            <Divider />
-            <TaskList
-              tasks={tasks}
-              viewType="table"
-              isLoading={isLoading}
-              onStatusChange={undefined}
-              onEditTask={undefined}
-              onDeleteTask={undefined}
-              showSubtitle={false}
-            />
-          </>
-        )}
+          {/* 右側：ユーザー詳細とタスク */}
+          <GridItem>
+            <Box
+              borderWidth="1px"
+              borderRadius="lg"
+              p={4}
+              boxShadow="md"
+              bg={useColorModeValue("white", "gray.800")}
+              height="calc(100vh - 180px)"
+              display="flex"
+              flexDirection="column"
+            >
+              {selectedUser ? (
+                <>
+                  <Box mb={4}>
+                    <Heading size="md">ユーザー詳細</Heading>
+                    <Text mt={2}>
+                      <strong>ユーザー名:</strong> {selectedUser.username}
+                    </Text>
+                    <Text>
+                      <strong>メール:</strong> {selectedUser.email}
+                    </Text>
+                    <Text>
+                      <strong>権限:</strong>{" "}
+                      {selectedUser.role === "admin" ? "管理者" : "メンバー"}
+                    </Text>
+                  </Box>
+
+                  <Divider my={2} />
+                  <Heading size="sm" mb={2}>
+                    担当タスク
+                  </Heading>
+
+                  {isLoadingTasks ? (
+                    <Center py={4}>
+                      <Spinner size="lg" />
+                    </Center>
+                  ) : (
+                    <Box
+                      overflowY="auto"
+                      flexGrow={1}
+                      css={{
+                        "&::-webkit-scrollbar": {
+                          width: "8px",
+                        },
+                        "&::-webkit-scrollbar-track": {
+                          background: useColorModeValue("gray.100", "gray.700"),
+                          borderRadius: "4px",
+                        },
+                        "&::-webkit-scrollbar-thumb": {
+                          background: useColorModeValue("blue.300", "blue.600"),
+                          borderRadius: "4px",
+                          cursor: "pointer",
+                        },
+                        "&::-webkit-scrollbar-thumb:hover": {
+                          background: useColorModeValue("blue.400", "blue.500"),
+                        },
+                      }}
+                    >
+                      <TaskList
+                        tasks={tasks}
+                        isLoading={isLoadingTasks}
+                        viewType="table"
+                        onStatusChange={undefined}
+                        onEditTask={undefined}
+                        onDeleteTask={undefined}
+                        showSubtitle={false}
+                      />
+                    </Box>
+                  )}
+                </>
+              ) : (
+                <Center h="100%">
+                  <Text color="gray.500">ユーザーを選択してください</Text>
+                </Center>
+              )}
+            </Box>
+          </GridItem>
+        </Grid>
       </VStack>
     </Container>
   );
