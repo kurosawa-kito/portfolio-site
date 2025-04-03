@@ -216,9 +216,9 @@ export default function TaskList({
                     <Flex align="center" gap={1}>
                       <Checkbox
                         isChecked={task.status === "completed"}
-                        onChange={(e) =>
-                          handleCheckboxChange(task.id, e.target.checked)
-                        }
+                        onChange={(e) => {
+                          handleCheckboxChange(task.id, e.target.checked);
+                        }}
                         size="md"
                         colorScheme={
                           task.status === "completed" ? "green" : "blue"
@@ -373,7 +373,35 @@ export default function TaskList({
               ) : (
                 tasks.map((task) => (
                   <Tr key={task.id}>
-                    <Td>{task.title}</Td>
+                    <Td>
+                      <Flex align="center">
+                        <Checkbox
+                          isChecked={task.status === "completed"}
+                          onChange={(e) => {
+                            handleCheckboxChange(task.id, e.target.checked);
+                          }}
+                          size="md"
+                          colorScheme={
+                            task.status === "completed" ? "green" : "blue"
+                          }
+                          isDisabled={!onStatusChange}
+                          className="task-checkbox"
+                          mr={2}
+                        />
+                        <Text
+                          textDecoration={
+                            task.status === "completed"
+                              ? "line-through"
+                              : "none"
+                          }
+                          color={
+                            task.status === "completed" ? "gray.500" : "inherit"
+                          }
+                        >
+                          {task.title}
+                        </Text>
+                      </Flex>
+                    </Td>
                     <Td>{task.description}</Td>
                     <Td>{task.status === "completed" ? "完了" : "未完了"}</Td>
                     <Td>

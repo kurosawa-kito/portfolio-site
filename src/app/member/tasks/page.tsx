@@ -105,7 +105,10 @@ export default function TasksPage() {
         return a.title.localeCompare(b.title);
       });
 
-    return { completedTasks: completed, pendingTasks: pending };
+    // 全ての状態変更を含めるため、現在時刻を明示的に依存関係に入れる
+    const timestamp = new Date().getTime();
+
+    return { completedTasks: completed, pendingTasks: pending, timestamp };
   }, [tasks]);
 
   // ログインチェック
@@ -168,16 +171,17 @@ export default function TasksPage() {
 
   // タスクステータスを更新
   const handleStatusChange = async (taskId: string, newStatus: string) => {
-    // 楽観的UI更新: 即座にUIを更新
-    setTasks((prevTasks) =>
-      prevTasks.map((task) =>
+    try {
+      // UIに即座に反映する
+      const updatedTasks = tasks.map((task) =>
         task.id === taskId
           ? { ...task, status: newStatus, updated_at: new Date().toISOString() }
           : task
-      )
-    );
+      );
 
-    try {
+      // 即座にUI更新
+      setTasks(updatedTasks);
+
       // ユーザー情報をBase64エンコードして非ASCII文字の問題を回避
       const userStr = JSON.stringify(user);
 
@@ -209,6 +213,9 @@ export default function TasksPage() {
           duration: 3000,
           isClosable: true,
         });
+
+        // 処理成功後、再度タスクの状態を更新して確実に反映させる
+        setTasks((prevTasks) => [...prevTasks]);
       } else {
         // 失敗した場合は元に戻す
         const errorData = await response.json();
@@ -426,6 +433,9 @@ export default function TasksPage() {
               >
                 <TaskList
                   tasks={completedTasks}
+                  key={`completed-${completedTasks
+                    .map((t) => `${t.id}-${t.status}`)
+                    .join("-")}`}
                   isLoading={isLoading}
                   onStatusChange={(id, status) =>
                     handleStatusChange(String(id), status)
@@ -489,6 +499,9 @@ export default function TasksPage() {
               >
                 <TaskList
                   tasks={pendingTasks}
+                  key={`pending-${pendingTasks
+                    .map((t) => `${t.id}-${t.status}`)
+                    .join("-")}`}
                   isLoading={isLoading}
                   onStatusChange={(id, status) =>
                     handleStatusChange(String(id), status)
