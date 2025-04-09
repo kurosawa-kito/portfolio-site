@@ -366,7 +366,7 @@ export default function UserManagement() {
   return (
     <Container maxW="960px" py={4}>
       <VStack spacing={6} align="stretch" width="100%">
-        <PageTitle>ユーザー管理</PageTitle>
+        <PageTitle title="ユーザー管理" />
         <Card bg={bgColor} borderWidth="1px" borderColor={borderColor}>
           <CardBody>
             {user.role !== "admin" ? (

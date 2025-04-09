@@ -184,7 +184,7 @@ export default function AdminDashboard() {
     return (
       <div className="container mx-auto p-4">
         <VStack spacing={6} align="stretch" width="100%">
-          <PageTitle>管理者ダッシュボード</PageTitle>
+          <PageTitle title="管理者ダッシュボード" />
           <Card bg={bgColor} borderWidth="1px" borderColor={borderColor}>
             <CardBody>
               <Text>このページにアクセスする権限がありません。</Text>
@@ -198,7 +198,7 @@ export default function AdminDashboard() {
   return (
     <Container maxW="960px" py={4}>
       <VStack spacing={6} align="stretch" width="100%">
-        <PageTitle>管理者ダッシュボード</PageTitle>
+        <PageTitle title="管理者ダッシュボード" />
 
         <Card bg={bgColor} borderWidth="1px" borderColor={borderColor}>
           <CardBody>

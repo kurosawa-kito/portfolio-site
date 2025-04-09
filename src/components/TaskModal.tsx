@@ -26,6 +26,7 @@ import { DateTimePicker, DatePicker } from "@material-ui/pickers";
 import { makeStyles, createStyles } from "@material-ui/core/styles";
 import { InputAdornment } from "@material-ui/core";
 import EventIcon from "@material-ui/icons/Event";
+import api from "@/lib/api";
 
 // マルチバイト文字をエンコードするための安全なbase64エンコード関数
 const safeBase64Encode = (str: string, user: any) => {
@@ -249,78 +250,45 @@ export default function TaskModal({
     setIsSubmitting(true);
 
     try {
-      // モードに応じたエンドポイントとリクエストデータを設定
-      let endpoint = "/api/tasks";
-      let method = "POST";
-
-      if (mode === "shared") {
-        endpoint = "/api/shared/tasks";
-      } else if (mode === "edit" && task) {
-        endpoint = `/api/tasks/${task.id}`;
-        method = "PUT";
-      }
-
-      // ユーザー情報をBase64エンコードして非ASCII文字の問題を回避
-      const userStr = JSON.stringify(user);
-      const userBase64 =
-        typeof window !== "undefined"
-          ? safeBase64Encode(userStr, user)
-          : Buffer.from(userStr).toString("base64");
-
-      // APIリクエスト用のヘッダーを定義
-      const requestHeaders = {
-        "Content-Type": "application/json",
-        "x-user-base64": userBase64,
+      const taskData = {
+        title,
+        description,
+        due_date: dueDate,
+        priority,
+        is_all_day: isAllDay,
       };
 
-      const response = await fetch(endpoint, {
-        method: method,
-        headers: requestHeaders,
-        body: JSON.stringify({
-          title,
-          description,
-          due_date: dueDate,
-          priority,
-          is_all_day: isAllDay,
-        }),
-      });
-
-      if (response.ok) {
-        let successMessage = "";
-        if (mode === "create") {
-          successMessage = "タスクが作成されました";
-        } else if (mode === "shared") {
-          successMessage = "共有タスクが作成されました";
-        } else {
-          successMessage = "タスクが更新されました";
-        }
-
+      if (mode === "edit" && task) {
+        // 既存タスクの編集
+        await api.tasks.update(task.id, taskData);
         toast({
           title: "成功",
-          description: successMessage,
+          description: "タスクを更新しました",
           status: "success",
           duration: 3000,
           isClosable: true,
         });
-
-        // フォームをリセットして閉じる
-        handleClose();
-
-        // 成功時のコールバックがあれば実行（リスト更新など）
-        if (onSuccess) {
-          onSuccess();
-        }
       } else {
-        throw new Error("API request failed");
+        // 新規タスクの作成
+        await api.tasks.create(taskData);
+        toast({
+          title: "成功",
+          description: "タスクを作成しました",
+          status: "success",
+          duration: 3000,
+          isClosable: true,
+        });
+      }
+
+      handleClose();
+      if (onSuccess) {
+        onSuccess();
       }
     } catch (error) {
-      console.error("タスク操作エラー:", error);
       toast({
         title: "エラー",
         description:
-          mode === "edit"
-            ? "タスクの更新に失敗しました"
-            : "タスクの作成に失敗しました",
+          error instanceof Error ? error.message : "タスクの保存に失敗しました",
         status: "error",
         duration: 3000,
         isClosable: true,
@@ -330,146 +298,36 @@ export default function TaskModal({
     }
   };
 
-  // モーダルのタイトル
-  const modalTitle =
-    mode === "create"
-      ? "新しいタスクを作成"
-      : mode === "shared"
-      ? "新しい共有タスクを作成"
-      : "タスクを編集";
-
-  // ボタンのラベル
-  const buttonLabel = mode === "edit" ? "更新する" : "作成する";
-
   return (
     <Modal isOpen={isOpen} onClose={handleClose} size="lg">
-      <ModalOverlay className="chakra-modal-overlay" style={{ zIndex: 1000 }} />
-      <ModalContent className="chakra-modal__content">
-        <ModalHeader>{modalTitle}</ModalHeader>
+      <ModalOverlay />
+      <ModalContent>
+        <ModalHeader>
+          {mode === "edit" ? "タスクを編集" : "新しいタスク"}
+        </ModalHeader>
         <ModalCloseButton />
         <ModalBody>
-          <FormControl isRequired mb={4}>
-            <FormLabel>タイトル</FormLabel>
-            <Input
-              placeholder="タスクのタイトル"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-            />
-          </FormControl>
-
-          <FormControl mb={4}>
-            <FormLabel>説明</FormLabel>
-            <Textarea
-              placeholder="タスクの説明"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              rows={4}
-            />
-          </FormControl>
-
-          <HStack spacing={4} mb={4} alignItems="flex-start">
-            <FormControl isRequired>
-              <VStack align="flex-start" spacing={2}>
-                <HStack
-                  width="100%"
-                  justifyContent="space-between"
-                  alignItems="center"
-                >
-                  <FormLabel mb={0}>期限</FormLabel>
-                  <Checkbox
-                    isChecked={isAllDay}
-                    onChange={handleAllDayChange}
-                    size="sm"
-                  >
-                    終日
-                  </Checkbox>
-                </HStack>
-                <Box className={classes.popupOverlay} w="100%">
-                  {isAllDay ? (
-                    <DatePicker
-                      value={dueDateObj}
-                      onChange={handleDateChange}
-                      format="yyyy/MM/dd"
-                      clearable
-                      placeholder="日付を選択"
-                      variant="inline"
-                      inputVariant="outlined"
-                      label=""
-                      fullWidth
-                      className={classes.picker}
-                      autoOk
-                      disableToolbar={false}
-                      InputProps={{
-                        endAdornment: (
-                          <InputAdornment position="end">
-                            <EventIcon style={{ color: "#3182CE" }} />
-                          </InputAdornment>
-                        ),
-                      }}
-                      PopoverProps={{
-                        className: "date-picker-popover",
-                        style: { zIndex: 9999 },
-                        disablePortal: false,
-                        anchorOrigin: {
-                          vertical: "bottom",
-                          horizontal: "left",
-                        },
-                        transformOrigin: {
-                          vertical: "top",
-                          horizontal: "left",
-                        },
-                      }}
-                      DialogProps={{
-                        className: "date-picker-dialog",
-                        style: { zIndex: 9999 },
-                      }}
-                    />
-                  ) : (
-                    <DateTimePicker
-                      value={dueDateObj}
-                      onChange={handleDateChange}
-                      format="yyyy/MM/dd HH:mm"
-                      ampm={false}
-                      clearable
-                      placeholder="日時を選択"
-                      variant="inline"
-                      inputVariant="outlined"
-                      label=""
-                      fullWidth
-                      className={classes.picker}
-                      autoOk
-                      disableToolbar={false}
-                      InputProps={{
-                        endAdornment: (
-                          <InputAdornment position="end">
-                            <EventIcon style={{ color: "#3182CE" }} />
-                          </InputAdornment>
-                        ),
-                      }}
-                      PopoverProps={{
-                        className: "date-picker-popover",
-                        style: { zIndex: 9999 },
-                        disablePortal: false,
-                        anchorOrigin: {
-                          vertical: "bottom",
-                          horizontal: "left",
-                        },
-                        transformOrigin: {
-                          vertical: "top",
-                          horizontal: "left",
-                        },
-                      }}
-                      DialogProps={{
-                        className: "date-picker-dialog",
-                        style: { zIndex: 9999 },
-                      }}
-                    />
-                  )}
-                </Box>
-              </VStack>
+          <VStack spacing={4}>
+            <FormControl id="title" isRequired>
+              <FormLabel>タイトル</FormLabel>
+              <Input
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="タスクのタイトル"
+              />
             </FormControl>
 
-            <FormControl isRequired>
+            <FormControl id="description">
+              <FormLabel>詳細</FormLabel>
+              <Textarea
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="タスクの詳細"
+                rows={3}
+              />
+            </FormControl>
+
+            <FormControl id="priority">
               <FormLabel>優先度</FormLabel>
               <Select
                 value={priority}
@@ -480,25 +338,72 @@ export default function TaskModal({
                 <option value="high">高</option>
               </Select>
             </FormControl>
-          </HStack>
+
+            <FormControl id="is_all_day">
+              <Checkbox
+                isChecked={isAllDay}
+                onChange={handleAllDayChange}
+                colorScheme="blue"
+              >
+                終日タスク
+              </Checkbox>
+            </FormControl>
+
+            <FormControl id="due_date" isRequired>
+              <FormLabel>期限</FormLabel>
+              <Box className={classes.picker}>
+                {isAllDay ? (
+                  <DatePicker
+                    value={dueDateObj}
+                    onChange={handleDateChange}
+                    inputVariant="outlined"
+                    format="yyyy/MM/dd"
+                    placeholder="日付を選択"
+                    fullWidth
+                    InputProps={{
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <EventIcon />
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+                ) : (
+                  <DateTimePicker
+                    value={dueDateObj}
+                    onChange={handleDateChange}
+                    inputVariant="outlined"
+                    format="yyyy/MM/dd HH:mm"
+                    placeholder="日時を選択"
+                    fullWidth
+                    ampm={false}
+                    InputProps={{
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <EventIcon />
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+                )}
+              </Box>
+            </FormControl>
+          </VStack>
         </ModalBody>
 
         <ModalFooter>
-          <Button
-            variant="ghost"
-            mr={3}
-            onClick={handleClose}
-            isDisabled={isSubmitting}
-          >
-            キャンセル
-          </Button>
-          <Button
-            colorScheme="blue"
-            onClick={handleSubmit}
-            isLoading={isSubmitting}
-          >
-            {buttonLabel}
-          </Button>
+          <HStack spacing={3}>
+            <Button variant="outline" onClick={handleClose}>
+              キャンセル
+            </Button>
+            <Button
+              colorScheme="blue"
+              onClick={handleSubmit}
+              isLoading={isSubmitting}
+            >
+              {mode === "edit" ? "更新" : "作成"}
+            </Button>
+          </HStack>
         </ModalFooter>
       </ModalContent>
     </Modal>

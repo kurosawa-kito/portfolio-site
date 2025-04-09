@@ -17,6 +17,7 @@ import TaskList from "@/components/TaskList";
 import PageTitle from "@/components/PageTitle";
 import TaskModal from "@/components/TaskModal";
 import { useRouter } from "next/navigation";
+import api from "@/lib/api";
 
 interface Task {
   id: string | number;
@@ -80,37 +81,9 @@ export default function TasksPage() {
 
     setIsLoading(true);
     try {
-      // リクエストとキャッシュの設定
-      // ヘッダーを別変数に定義
-      // ユーザー情報をBase64エンコードして非ASCII文字の問題を回避
-      const userStr = JSON.stringify(user);
-
-      const userBase64 =
-        typeof window !== "undefined"
-          ? safeBase64Encode(userStr, user)
-          : Buffer.from(userStr).toString("base64");
-
-      const headers = {
-        "x-user-base64": userBase64, // Base64エンコードされたユーザー情報
-        "x-refresh": "true",
-        "Cache-Control": "no-cache, no-store",
-        Pragma: "no-cache",
-      };
-
-      const response = await fetch("/api/tasks", {
-        headers,
-        cache: "no-store",
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setTasks(data);
-      } else {
-        const errorText = await response.text();
-        throw new Error(
-          `タスクの取得に失敗しました: ${response.status} ${response.statusText}`
-        );
-      }
+      // Laravel APIを使用してタスク一覧を取得
+      const data = await api.tasks.getAll();
+      setTasks(data);
     } catch (error) {
       toast({
         title: "エラー",
@@ -125,7 +98,10 @@ export default function TasksPage() {
   }, [user, toast]);
 
   // タスクステータスを更新
-  const handleStatusChange = async (taskId: string, newStatus: string) => {
+  const handleStatusChange = async (
+    taskId: string | number,
+    newStatus: string
+  ) => {
     // 楽観的UI更新: 即座にUIを更新
     setTasks((prevTasks) =>
       prevTasks.map((task) =>
@@ -134,42 +110,16 @@ export default function TasksPage() {
     );
 
     try {
-      // ユーザー情報をBase64エンコードして非ASCII文字の問題を回避
-      const userStr = JSON.stringify(user);
+      // Laravel APIを使用してステータスを更新
+      await api.tasks.updateStatus(taskId, newStatus);
 
-      const userBase64 =
-        typeof window !== "undefined"
-          ? safeBase64Encode(userStr, user)
-          : Buffer.from(userStr).toString("base64");
-
-      // タスク更新用のヘッダーを定義
-      const statusHeaders = {
-        "Content-Type": "application/json",
-        "x-user-base64": userBase64,
-      };
-
-      const response = await fetch("/api/tasks", {
-        method: "PATCH",
-        headers: statusHeaders,
-        body: JSON.stringify({
-          id: taskId,
-          status: newStatus,
-        }),
+      toast({
+        title: "成功",
+        description: "タスクのステータスを更新しました",
+        status: "success",
+        duration: 3000,
+        isClosable: true,
       });
-
-      if (response.ok) {
-        toast({
-          title: "成功",
-          description: "タスクのステータスを更新しました",
-          status: "success",
-          duration: 3000,
-          isClosable: true,
-        });
-      } else {
-        // 失敗した場合は元に戻す
-        const errorData = await response.json();
-        throw new Error(errorData.error || "タスクの更新に失敗しました");
-      }
     } catch (error) {
       // エラーの場合は元の状態に戻す
       setTasks((prevTasks) =>
@@ -209,38 +159,18 @@ export default function TasksPage() {
     setDeletingTaskId(taskId);
 
     try {
-      // ユーザー情報をBase64エンコードして非ASCII文字の問題を回避
-      const userStr = JSON.stringify(user);
+      // Laravel APIを使用してタスクを削除
+      await api.tasks.delete(taskId);
 
-      const userBase64 =
-        typeof window !== "undefined"
-          ? safeBase64Encode(userStr, user)
-          : Buffer.from(userStr).toString("base64");
-
-      // 削除用のヘッダーを定義
-      const deleteHeaders = {
-        "x-user-base64": userBase64,
-      };
-
-      const response = await fetch(`/api/tasks/${taskId}`, {
-        method: "DELETE",
-        headers: deleteHeaders,
+      // 削除成功したらリストから削除
+      setTasks((prevTasks) => prevTasks.filter((task) => task.id !== taskId));
+      toast({
+        title: "タスク削除",
+        description: "タスクを削除しました",
+        status: "success",
+        duration: 3000,
+        isClosable: true,
       });
-
-      if (response.ok) {
-        // 削除成功したらリストから削除
-        setTasks((prevTasks) => prevTasks.filter((task) => task.id !== taskId));
-        toast({
-          title: "タスク削除",
-          description: "タスクを削除しました",
-          status: "success",
-          duration: 3000,
-          isClosable: true,
-        });
-      } else {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "タスクの削除に失敗しました");
-      }
     } catch (error) {
       toast({
         title: "エラー",
@@ -251,43 +181,27 @@ export default function TasksPage() {
         isClosable: true,
       });
     } finally {
+      // 削除中の状態を解除
       setDeletingTaskId(null);
     }
   };
 
-  // モーダルを閉じる時の処理
+  // モーダルを閉じる処理
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setEditingTask(null);
   };
 
-  // 初期データの読み込み
+  // ページ読み込み時にタスク一覧を取得
   useEffect(() => {
-    if (isLoggedIn && user) {
-      // 自動更新を設定
+    if (user) {
       const loadInitialData = async () => {
-        // 強制リフレッシュモードかどうかをチェック
-        const urlParams = new URLSearchParams(window.location.search);
-        const refresh = urlParams.get("refresh") === "true";
-
-        if (refresh) {
-          // 強制更新の場合、URLからクエリパラメータを削除
-          window.history.replaceState(
-            {},
-            document.title,
-            window.location.pathname
-          );
-          // タスクを取得
-          await fetchTasks();
-        } else {
-          // 通常の読み込み
-          fetchTasks();
-        }
+        await fetchTasks();
       };
 
       loadInitialData();
     }
-  }, [isLoggedIn, user, fetchTasks]);
+  }, [user, fetchTasks]);
 
   // ログインしていない場合は何も表示しない
   if (!isLoggedIn || !user) {
@@ -295,65 +209,34 @@ export default function TasksPage() {
   }
 
   return (
-    <Container maxW="4xl" py={4}>
-      <VStack spacing={6} align="stretch">
-        <PageTitle>タスク管理</PageTitle>
+    <Container maxW="container.xl" pt={4}>
+      <PageTitle
+        title="タスク管理"
+        subtitle="あなたのタスクを管理しましょう"
+        emoji="📝"
+      />
 
-        <Flex justify="space-between" align="center">
-          <Box
-            position="relative"
-            py={2}
-            px={3}
-            width="auto"
-            borderLeftWidth="4px"
-            borderLeftColor="blue.500"
-            bg={subtitleBg}
-            borderRadius="md"
-            boxShadow="sm"
-            mb={4}
-          >
-            <Text
-              fontSize="lg"
-              fontWeight="bold"
-              bgGradient="linear(to-r, blue.500, purple.500)"
-              bgClip="text"
-              display="flex"
-              alignItems="center"
-            >
-              <Box as="span" mr={2}>
-                📋
-              </Box>
-              あなたのタスク
-            </Text>
-          </Box>
-
+      <Flex direction="column" gap={4}>
+        <Box display="flex" justifyContent="flex-end" mb={2}>
           <Button
             leftIcon={<AddIcon />}
             colorScheme="blue"
-            onClick={() => {
-              setEditingTask(null);
-              setIsModalOpen(true);
-            }}
-            size="sm"
-            mb={4}
+            onClick={() => setIsModalOpen(true)}
+            size="md"
           >
-            新しいタスクを作成
+            新規タスク
           </Button>
-        </Flex>
+        </Box>
 
         <TaskList
           tasks={tasks}
+          onStatusChange={handleStatusChange}
           isLoading={isLoading}
-          onStatusChange={(id, status) =>
-            handleStatusChange(String(id), status)
-          }
-          showSubtitle={false}
           onEditTask={handleEditTask}
           onDeleteTask={handleDeleteTask}
         />
-      </VStack>
+      </Flex>
 
-      {/* タスク作成/編集モーダル */}
       <TaskModal
         isOpen={isModalOpen}
         onClose={handleCloseModal}

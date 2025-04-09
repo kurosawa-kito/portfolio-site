@@ -10,6 +10,7 @@ import {
   SetStateAction,
 } from "react";
 import { useRouter, usePathname } from "next/navigation";
+import api from "@/lib/api";
 
 // マルチバイト文字をエンコードするための安全なbase64エンコード関数
 const safeBase64Encode = (str: string, user: any) => {
@@ -170,18 +171,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (login_id: string, password: string) => {
     try {
-      // ヘッダーを別変数に定義
-      const headers = {
-        "Content-Type": "application/json",
-      };
-
-      const res = await fetch("/api/auth/login", {
-        method: "POST",
-        headers,
-        body: JSON.stringify({ login_id, password }),
-      });
-
-      const data = await res.json();
+      // Laravel APIを使用してログイン
+      const data = await api.auth.login(login_id, password);
 
       if (data.success) {
         // ユーザー情報を保存（IDは数値として保存）
@@ -216,11 +207,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     try {
-      const res = await fetch("/api/auth/logout", {
-        method: "POST",
-      });
-
-      const data = await res.json();
+      // Laravel APIを使用してログアウト
+      const data = await api.auth.logout();
 
       if (data.success) {
         // セッションストレージからユーザー情報を削除
@@ -249,7 +237,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const value = {
+  const values: AuthContextType = {
     user,
     setUser,
     isLoggedIn,
@@ -261,7 +249,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     resetSessionTimer,
   };
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return <AuthContext.Provider value={values}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {
