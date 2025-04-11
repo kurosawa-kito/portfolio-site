@@ -103,14 +103,12 @@ export async function DELETE(
     console.log("権限チェック:", {
       userRole: user.role,
       isAdmin: user.role === "admin",
-      taskCreatedBy: task.created_by,
-      userId: user.id,
-      isCreator: task.created_by === user.id,
     });
 
-    if (user.role !== "admin" && task.created_by !== user.id) {
+    // 管理者のみ削除可能に変更
+    if (user.role !== "admin") {
       return NextResponse.json(
-        { error: "このタスクを削除する権限がありません" },
+        { error: "共有タスクの削除は管理者のみ可能です" },
         { status: 403 }
       );
     }
