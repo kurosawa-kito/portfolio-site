@@ -467,7 +467,7 @@ export async function PATCH(request: NextRequest) {
 }
 
 // ユーザーが追加したタスクのIDリストを取得
-async function getUserAddedTasks(user: User, pool: any) {
+export async function getUserAddedTasks(user: User, pool: any) {
   try {
     const query = `
       SELECT id FROM tasks
@@ -549,4 +549,10 @@ async function addTaskToUser(taskId: string, user: User, pool: any) {
     console.error("タスク追加エラー:", error);
     return { success: false, error: "Database error" };
   }
+}
+
+// sharedTasksとupdateUserAddedTasksの宣言と初期化
+export const sharedTasks: any[] = [];
+export function updateUserAddedTasks(tasks: any[]) {
+  // 実装をここに追加
 }
