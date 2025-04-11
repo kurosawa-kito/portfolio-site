@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { User } from "@/types/user";
 import { sql } from "@vercel/postgres";
+import { cookies } from "next/headers";
 
 // タスク型の定義
 interface Task {
@@ -31,9 +32,13 @@ export async function DELETE(
       params,
     });
 
-    // ユーザー情報を取得（通常のx-userヘッダーとBase64エンコードされたx-user-base64ヘッダーの両方をサポート）
+    // ユーザー情報を取得する方法
+    // 1. x-userヘッダー（従来の方法）
+    // 2. x-user-base64ヘッダー
+    // 3. x-role-headerからロール情報を取得（セッションに相当）
     let userStr = request.headers.get("x-user");
     const userBase64 = request.headers.get("x-user-base64");
+    const roleHeader = request.headers.get("x-role"); // ロールヘッダーを取得
 
     // Base64エンコードされたユーザー情報を優先的に使用
     if (userBase64) {
@@ -66,7 +71,16 @@ export async function DELETE(
       return NextResponse.json({ error: "認証エラー" }, { status: 401 });
     }
 
-    const user = JSON.parse(userStr) as User;
+    // パースしたユーザー情報
+    let user = JSON.parse(userStr) as User;
+
+    // セッションからのロール情報がある場合は上書き
+    if (roleHeader) {
+      console.log("ロールヘッダーから取得:", roleHeader);
+      user.role = roleHeader;
+    }
+
+    console.log("完全なユーザー情報:", user);
 
     // タスクの存在確認
     const taskResult = await sql`
@@ -86,6 +100,13 @@ export async function DELETE(
     // 管理者または作成者のみタスク削除可能
     console.log("ユーザー情報:", user);
     console.log("タスク情報:", task);
+    console.log("権限チェック:", {
+      userRole: user.role,
+      isAdmin: user.role === "admin",
+      taskCreatedBy: task.created_by,
+      userId: user.id,
+      isCreator: task.created_by === user.id,
+    });
 
     if (user.role !== "admin" && task.created_by !== user.id) {
       return NextResponse.json(
