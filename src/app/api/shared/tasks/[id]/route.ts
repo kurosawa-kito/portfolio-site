@@ -84,6 +84,9 @@ export async function DELETE(
     const task = taskResult.rows[0];
 
     // 管理者または作成者のみタスク削除可能
+    console.log("ユーザー情報:", user);
+    console.log("タスク情報:", task);
+
     if (user.role !== "admin" && task.created_by !== user.id) {
       return NextResponse.json(
         { error: "このタスクを削除する権限がありません" },
