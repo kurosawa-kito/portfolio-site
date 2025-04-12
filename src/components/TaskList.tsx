@@ -141,7 +141,7 @@ export default function TaskList({
 
       {viewType === "card" ? (
         <SimpleGrid
-          columns={{ base: 1, md: 2 }}
+          columns={{ base: 2, md: 2 }}
           spacing={4}
           mt={showSubtitle ? -2 : 0}
         >
