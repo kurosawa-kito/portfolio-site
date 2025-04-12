@@ -65,7 +65,21 @@ export default function TasksPage() {
   useEffect(() => {
     if (isInitialized) {
       if (!isLoggedIn || !user) {
-        router.push("/products");
+        // セッションストレージを確認して、直前までログイン状態だった場合はリダイレクトを遅延させる
+        const storedUser = sessionStorage.getItem("user");
+        if (!storedUser) {
+          router.push("/products");
+        } else {
+          // セッションストレージにユーザー情報がある場合は、
+          // 少し待ってから再度チェックして、それでもログインしていなければリダイレクト
+          const checkTimer = setTimeout(() => {
+            if (!isLoggedIn || !user) {
+              router.push("/products");
+            }
+          }, 1000); // 1秒待機
+
+          return () => clearTimeout(checkTimer);
+        }
       } else {
         setShowTaskHeader(true);
       }
