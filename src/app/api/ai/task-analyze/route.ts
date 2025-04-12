@@ -21,116 +21,135 @@ export async function POST(request: NextRequest) {
     }
 
     // リクエストボディを取得
-    const requestData = await request.json();
-    const { user, tasks } = requestData;
-
-    if (!user || !tasks) {
-      return NextResponse.json(
-        { success: false, message: '無効なリクエストデータ' },
-        { status: 400 }
-      );
-    }
-
     try {
-      // 一時ファイルに入力データを書き込む
-      const tempInputFile = path.join(process.cwd(), 'tmp_input.json');
-      fs.writeFileSync(tempInputFile, JSON.stringify({ user, tasks }));
-
-      // Pythonスクリプトのパス
-      const scriptPath = path.join(process.cwd(), 'ai', 'task_summary.py');
+      const requestData = await request.json();
+      const { user, tasks } = requestData;
       
-      // ファイルの存在確認
-      const scriptExists = fs.existsSync(scriptPath);
-      if (!scriptExists) {
-        console.error('Pythonスクリプトが見つかりません:', scriptPath);
+      console.log("リクエストデータ:", JSON.stringify(requestData, null, 2).substring(0, 300) + '...');
+      console.log("user:", user ? "存在します" : "存在しません");
+      console.log("tasks:", tasks ? `${Array.isArray(tasks) ? tasks.length : 'オブジェクト'}件` : "存在しません");
+      
+      if (!user) {
         return NextResponse.json(
-          { success: false, message: 'AIエンジンの実行ファイルが見つかりません' },
-          { status: 500 }
+          { success: false, message: '無効なリクエストデータ: userフィールドがありません' },
+          { status: 400 }
+        );
+      }
+      
+      if (!tasks || !Array.isArray(tasks) || tasks.length === 0) {
+        return NextResponse.json(
+          { success: false, message: '無効なリクエストデータ: tasksフィールドが不正です' },
+          { status: 400 }
         );
       }
 
-      // 入力ファイルの内容をデバッグ表示
-      console.log('入力データ:', JSON.stringify({ user, tasks }).substring(0, 100) + '...');
-
-      // Python実行コマンドの選択肢
-      const commands = [
-        `/usr/bin/python3 "${scriptPath}" "${tempInputFile}"`, // システムPython
-        `/usr/local/bin/python3 "${scriptPath}" "${tempInputFile}"`, // Homebrewなどでインストールしたpython
-        `python3 "${scriptPath}" "${tempInputFile}"`, // PATHにあるpython
-        `python "${scriptPath}" "${tempInputFile}"`, // 代替コマンド
-      ];
-
-      let stdout = '';
-      let stderr = '';
-      let success = false;
-
-      // 各コマンドを順番に試す
-      for (const command of commands) {
-        try {
-          console.log('実行コマンド:', command);
-          const result = await execPromise(command);
-          stdout = result.stdout;
-          stderr = result.stderr;
-          
-          // デバッグ出力
-          console.log('Python stdout:', stdout);
-          if (stderr) {
-            console.error('Python stderr:', stderr);
-          }
-          
-          // stdoutが空でなければ成功とみなす
-          if (stdout.trim()) {
-            success = true;
-            break; // 成功したらループを抜ける
-          }
-        } catch (execError) {
-          console.error(`コマンド ${command} の実行に失敗:`, execError);
-          stderr = (execError as any).stderr || (execError as Error).message;
-        }
-      }
-
-      // 一時ファイルを削除
       try {
-        fs.unlinkSync(tempInputFile);
-      } catch (error) {
-        console.warn('一時ファイルの削除に失敗:', error);
-      }
+        // 一時ファイルに入力データを書き込む
+        const tempInputFile = path.join(process.cwd(), 'tmp_input.json');
+        fs.writeFileSync(tempInputFile, JSON.stringify({ user, tasks }));
 
-      if (!success) {
-        if (stderr) {
-          console.error('Python実行エラー:', stderr);
+        // Pythonスクリプトのパス
+        const scriptPath = path.join(process.cwd(), 'ai', 'task_summary.py');
+        
+        // ファイルの存在確認
+        const scriptExists = fs.existsSync(scriptPath);
+        if (!scriptExists) {
+          console.error('Pythonスクリプトが見つかりません:', scriptPath);
           return NextResponse.json(
-            { success: false, message: 'AIエンジンの実行に失敗しました: ' + stderr },
-            { status: 500 }
-          );
-        } else {
-          // stdoutもstderrも空の場合
-          return NextResponse.json(
-            { success: false, message: 'AIエンジンから応答がありませんでした' },
+            { success: false, message: 'AIエンジンの実行ファイルが見つかりません' },
             { status: 500 }
           );
         }
-      }
 
-      // 結果が空でないことを確認
-      const trimmedOutput = stdout.trim();
-      if (!trimmedOutput) {
+        // 入力ファイルの内容をデバッグ表示
+        console.log('入力データ:', JSON.stringify({ user, tasks }).substring(0, 100) + '...');
+
+        // Python実行コマンドの選択肢
+        const commands = [
+          `/usr/bin/python3 "${scriptPath}" "${tempInputFile}"`, // システムPython
+          `/usr/local/bin/python3 "${scriptPath}" "${tempInputFile}"`, // Homebrewなどでインストールしたpython
+          `python3 "${scriptPath}" "${tempInputFile}"`, // PATHにあるpython
+          `python "${scriptPath}" "${tempInputFile}"`, // 代替コマンド
+        ];
+
+        let stdout = '';
+        let stderr = '';
+        let success = false;
+
+        // 各コマンドを順番に試す
+        for (const command of commands) {
+          try {
+            console.log('実行コマンド:', command);
+            const result = await execPromise(command);
+            stdout = result.stdout;
+            stderr = result.stderr;
+            
+            // デバッグ出力
+            console.log('Python stdout:', stdout);
+            if (stderr) {
+              console.error('Python stderr:', stderr);
+            }
+            
+            // stdoutが空でなければ成功とみなす
+            if (stdout.trim()) {
+              success = true;
+              break; // 成功したらループを抜ける
+            }
+          } catch (execError) {
+            console.error(`コマンド ${command} の実行に失敗:`, execError);
+            stderr = (execError as any).stderr || (execError as Error).message;
+          }
+        }
+
+        // 一時ファイルを削除
+        try {
+          fs.unlinkSync(tempInputFile);
+        } catch (error) {
+          console.warn('一時ファイルの削除に失敗:', error);
+        }
+
+        if (!success) {
+          if (stderr) {
+            console.error('Python実行エラー:', stderr);
+            return NextResponse.json(
+              { success: false, message: 'AIエンジンの実行に失敗しました: ' + stderr },
+              { status: 500 }
+            );
+          } else {
+            // stdoutもstderrも空の場合
+            return NextResponse.json(
+              { success: false, message: 'AIエンジンから応答がありませんでした' },
+              { status: 500 }
+            );
+          }
+        }
+
+        // 結果が空でないことを確認
+        const trimmedOutput = stdout.trim();
+        if (!trimmedOutput) {
+          return NextResponse.json(
+            { success: false, message: 'AIエンジンからの出力が空でした' },
+            { status: 500 }
+          );
+        }
+
+        // 結果を返す
+        return NextResponse.json({
+          success: true,
+          analysis: trimmedOutput
+        });
+      } catch (innerError) {
+        console.error('Python処理エラー:', innerError);
         return NextResponse.json(
-          { success: false, message: 'AIエンジンからの出力が空でした' },
+          { success: false, message: 'AIエンジン処理中にエラーが発生しました: ' + (innerError as Error).message },
           { status: 500 }
         );
       }
-
-      // 結果を返す
-      return NextResponse.json({
-        success: true,
-        analysis: trimmedOutput
-      });
-    } catch (innerError) {
-      console.error('Python処理エラー:', innerError);
+    } catch (parseError) {
+      console.error('リクエストJSONのパースに失敗:', parseError);
       return NextResponse.json(
-        { success: false, message: 'AIエンジン処理中にエラーが発生しました: ' + (innerError as Error).message },
-        { status: 500 }
+        { success: false, message: 'リクエストデータのJSONパースに失敗しました' },
+        { status: 400 }
       );
     }
   } catch (error) {

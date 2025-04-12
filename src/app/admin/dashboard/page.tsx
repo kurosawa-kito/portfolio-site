@@ -201,10 +201,10 @@ export default function AdminDashboard() {
   // AI分析を取得する関数
   const fetchAiAnalysis = async () => {
     if (!selectedUser || tasks.length === 0) return;
-    
+
     setIsAnalysisLoading(true);
-    setAiAnalysis("");  // 分析開始時に以前の結果をクリア
-    
+    setAiAnalysis(""); // 分析開始時に以前の結果をクリア
+
     try {
       // ユーザー情報をBase64エンコードして非ASCII文字の問題を回避
       const userStr = JSON.stringify(user);
@@ -214,7 +214,35 @@ export default function AdminDashboard() {
           : Buffer.from(userStr).toString("base64");
 
       // 選択されたユーザーの情報を取得
-      const selectedUserData = users.find(u => u.id === selectedUser);
+      const selectedUserData = users.find((u) => u.id === selectedUser);
+
+      if (!selectedUserData) {
+        throw new Error("選択されたユーザーの情報が見つかりません");
+      }
+
+      // リクエストデータの準備
+      const requestData = {
+        user: {
+          id: selectedUserData.id,
+          username: selectedUserData.username,
+          role: selectedUserData.role,
+        },
+        tasks: tasks.map((task) => ({
+          id: task.id,
+          title: task.title,
+          description: task.description || "",
+          status: task.status,
+          priority: task.priority,
+          due_date: task.due_date,
+          created_by_username: task.created_by_username,
+          assigned_to_username: task.assigned_to_username,
+        })),
+      };
+
+      console.log(
+        "送信データ:",
+        JSON.stringify(requestData).substring(0, 200) + "..."
+      );
 
       // APIリクエスト
       const res = await fetch("/api/ai/task-analyze", {
@@ -223,10 +251,7 @@ export default function AdminDashboard() {
           "Content-Type": "application/json",
           "x-user-base64": userBase64,
         },
-        body: JSON.stringify({
-          user: selectedUserData,
-          tasks: tasks
-        }),
+        body: JSON.stringify(requestData),
       });
 
       // レスポンスが成功したか確認
@@ -256,9 +281,10 @@ export default function AdminDashboard() {
       console.error("タスク分析エラー:", error);
       toast({
         title: "エラー",
-        description: error instanceof Error 
-          ? `タスク分析の取得に失敗しました: ${error.message}` 
-          : "タスク分析の取得に失敗しました",
+        description:
+          error instanceof Error
+            ? `タスク分析の取得に失敗しました: ${error.message}`
+            : "タスク分析の取得に失敗しました",
         status: "error",
         duration: 5000,
         isClosable: true,
@@ -370,10 +396,10 @@ export default function AdminDashboard() {
                     </TabPanel>
                     <TabPanel>
                       {aiAnalysis ? (
-                        <Box 
-                          whiteSpace="pre-wrap" 
-                          p={4} 
-                          borderWidth="1px" 
+                        <Box
+                          whiteSpace="pre-wrap"
+                          p={4}
+                          borderWidth="1px"
                           borderRadius="md"
                           bg={useColorModeValue("gray.50", "gray.700")}
                         >
@@ -389,8 +415,8 @@ export default function AdminDashboard() {
                           ) : (
                             <>
                               <Text>タスクのAI分析を行うことができます</Text>
-                              <Button 
-                                colorScheme="blue" 
+                              <Button
+                                colorScheme="blue"
                                 onClick={fetchAiAnalysis}
                                 isDisabled={tasks.length === 0}
                               >
