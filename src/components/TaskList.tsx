@@ -141,7 +141,7 @@ export default function TaskList({
 
       {viewType === "card" ? (
         <SimpleGrid
-          columns={{ base: 2, md: 2 }}
+          columns={{ base: 1, md: 2 }}
           spacing={4}
           mt={showSubtitle ? -2 : 0}
         >
@@ -162,10 +162,11 @@ export default function TaskList({
                 borderColor={borderColor}
                 _hover={{ transform: "translateY(-2px)", boxShadow: "lg" }}
                 transition="all 0.2s"
+                size="sm"
               >
-                <CardBody>
-                  <HStack direction="column" spacing={2}>
-                    <HStack justify="space-between">
+                <CardBody p={3}>
+                  <Box>
+                    <HStack justify="space-between" mb={1}>
                       <Checkbox
                         isChecked={task.status === "completed"}
                         onChange={(e) =>
@@ -175,27 +176,29 @@ export default function TaskList({
                             e.target.checked ? "completed" : "pending"
                           )
                         }
-                        size="lg"
+                        size="md"
                       >
                         <Text
-                          fontSize="lg"
+                          fontSize="md"
                           fontWeight="bold"
                           textDecoration={
                             task.status === "completed"
                               ? "line-through"
                               : "none"
                           }
+                          noOfLines={1}
                         >
                           {task.title}
                         </Text>
                       </Checkbox>
-                      <HStack>
+                      <HStack spacing={1}>
                         <Badge
                           colorScheme={
                             priorityColors[
                               task.priority as keyof typeof priorityColors
                             ]
                           }
+                          fontSize="xs"
                         >
                           {
                             priorityLabels[
@@ -206,7 +209,7 @@ export default function TaskList({
                         <IconButton
                           aria-label="編集"
                           icon={<EditIcon />}
-                          size="sm"
+                          size="xs"
                           variant="ghost"
                           colorScheme="blue"
                           onClick={() => handleEdit(task)}
@@ -214,17 +217,19 @@ export default function TaskList({
                         <IconButton
                           aria-label="削除"
                           icon={<DeleteIcon />}
-                          size="sm"
+                          size="xs"
                           variant="ghost"
                           colorScheme="red"
                           onClick={() => handleDelete(task.id)}
                         />
                       </HStack>
                     </HStack>
-                    <Text color="gray.600">{task.description}</Text>
+                    <Text color="gray.600" fontSize="sm" noOfLines={2} mb={1}>
+                      {task.description}
+                    </Text>
                     <HStack
                       justify="space-between"
-                      fontSize="sm"
+                      fontSize="xs"
                       color="gray.500"
                     >
                       <Text>
@@ -234,7 +239,7 @@ export default function TaskList({
                         <Text>作成者: {task.created_by_username}</Text>
                       )}
                     </HStack>
-                  </HStack>
+                  </Box>
                 </CardBody>
               </Card>
             ))
