@@ -11,10 +11,8 @@ import {
 } from "react";
 import { useRouter, usePathname } from "next/navigation";
 
-// マルチバイト文字をエンコードするための安全なbase64エンコード関数
 const safeBase64Encode = (str: string, user: any) => {
   try {
-    // UTF-8でエンコードしてからbase64に変換
     return btoa(
       encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (_, p1) => {
         return String.fromCharCode(parseInt(p1, 16));
@@ -22,7 +20,6 @@ const safeBase64Encode = (str: string, user: any) => {
     );
   } catch (e) {
     console.error("Base64エンコードエラー:", e);
-    // エラー時は単純な文字列を返す（ロールバック）
     return btoa(JSON.stringify({ id: user?.id || 0 }));
   }
 };
@@ -38,6 +35,7 @@ type AuthContextType = {
   setUser: Dispatch<SetStateAction<User | null>>;
   isLoggedIn: boolean;
   setIsLoggedIn: (isLoggedIn: boolean) => void;
+  isInitialized: boolean; // 追加
   showTaskHeader: boolean;
   setShowTaskHeader: Dispatch<SetStateAction<boolean>>;
   login: (login_id: string, password: string) => Promise<void>;
@@ -47,18 +45,17 @@ type AuthContextType = {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// セッションタイムアウト時間（ミリ秒）: 30分
 const SESSION_TIMEOUT = 30 * 60 * 1000;
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User>(null);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false); // 追加
   const [showTaskHeader, setShowTaskHeader] = useState(false);
   const [sessionTimer, setSessionTimer] = useState<NodeJS.Timeout | null>(null);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
 
-  // セッションタイマーをリセットする関数
   const resetSessionTimer = () => {
     if (sessionTimer) {
       clearTimeout(sessionTimer);
@@ -66,166 +63,72 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     if (user) {
       const timer = setTimeout(() => {
-        // タイムアウト時に自動ログアウト
         logout();
       }, SESSION_TIMEOUT);
-
       setSessionTimer(timer);
     }
   };
 
-  // ユーザーのアクティビティを検出するイベントリスナー
   useEffect(() => {
     const activityEvents = ["mousedown", "keypress", "scroll", "touchstart"];
+    const handleActivity = () => resetSessionTimer();
 
-    const handleActivity = () => {
-      resetSessionTimer();
-    };
-
-    // ユーザーがログインしている場合のみイベントリスナーを設定
     if (user) {
       activityEvents.forEach((event) => {
         window.addEventListener(event, handleActivity);
       });
-
-      // 初期タイマーを設定
       resetSessionTimer();
     }
 
     return () => {
-      // クリーンアップ時にイベントリスナーとタイマーを削除
       activityEvents.forEach((event) => {
         window.removeEventListener(event, handleActivity);
       });
-
       if (sessionTimer) {
         clearTimeout(sessionTimer);
       }
     };
-  }, [user]); // userが変わったときに再設定
-
-  // セッションストレージからユーザーデータを取得
-  useEffect(() => {
-    const restoreSession = async () => {
-      // 初期ロード時にセッションストレージからユーザー情報を取得
-      try {
-        const userStr = sessionStorage.getItem("user");
-
-        if (userStr) {
-          try {
-            const userData = JSON.parse(userStr);
-
-            // ユーザーIDを数値に変換
-            userData.id = parseInt(userData.id);
-
-            // 必須フィールドの存在を確認
-            if (!userData.id || !userData.username || !userData.role) {
-              // 不完全なデータは使用しない
-              sessionStorage.removeItem("user");
-              return;
-            }
-
-            // 認証状態を更新（単純に状態を更新するだけでリダイレクトはしない）
-            setUser(userData);
-            setIsLoggedIn(true);
-
-            // 現在のパスに基づいてタスクヘッダーの表示を設定
-            const taskRelatedPaths = [
-              "/member/tasks",
-              "/admin/dashboard",
-              "/shared",
-              "/admin/users",
-            ];
-
-            const currentPath = window.location.pathname;
-            const shouldShowHeader = taskRelatedPaths.some((path) =>
-              currentPath.startsWith(path)
-            );
-
-            setShowTaskHeader(shouldShowHeader);
-            console.log("セッションから認証情報を復元しました:", userData);
-          } catch (e) {
-            console.error("セッションデータ解析エラー:", e);
-            sessionStorage.removeItem("user");
-          }
-        }
-      } catch (e) {
-        console.error("セッションアクセスエラー:", e);
-      }
-    };
-
-    // セッション復元処理を実行
-    restoreSession();
-  }, []); // 初期レンダリング時のみ実行
-
-  // 認証状態チェック用（二重保険）
-  useEffect(() => {
-    // ページ読み込み時に一度だけ実行される
-    const checkAndRestoreSession = () => {
-      // ユーザーがログインしていない場合はセッションストレージをチェック
-      if (!isLoggedIn) {
-        try {
-          const userStr = sessionStorage.getItem("user");
-          if (userStr) {
-            const userData = JSON.parse(userStr);
-            if (userData && userData.id && userData.username && userData.role) {
-              // セッションが有効な場合は認証状態を復元
-              setUser({
-                id: parseInt(userData.id),
-                username: userData.username,
-                role: userData.role,
-              });
-              setIsLoggedIn(true);
-
-              // 現在のパスに基づいてタスクヘッダーの表示を設定
-              const taskRelatedPaths = [
-                "/member/tasks",
-                "/admin/dashboard",
-                "/shared",
-                "/admin/users",
-              ];
-
-              const currentPath = window.location.pathname;
-              const shouldShowHeader = taskRelatedPaths.some((path) =>
-                currentPath.startsWith(path)
-              );
-
-              setShowTaskHeader(shouldShowHeader);
-            }
-          }
-        } catch (e) {
-          console.error("セッション復元エラー:", e);
-        }
-      }
-    };
-
-    checkAndRestoreSession();
-  }, [isLoggedIn]); // isLoggedInが変わったときのみ実行
-
-  // ユーザー情報が変更されたときにログイン状態と表示状態を更新
-  useEffect(() => {
-    // ユーザー情報が存在する場合はログイン状態を更新
-    setIsLoggedIn(!!user);
-
-    if (user) {
-      setShowTaskHeader(true);
-    } else {
-      setShowTaskHeader(false);
-    }
   }, [user]);
 
-  // パスの変更を監視し、タスク管理ツール以外のページではヘッダーを非表示にする
+  useEffect(() => {
+    const initializeAuth = async () => {
+      try {
+        const userStr = sessionStorage.getItem("user");
+        if (userStr) {
+          const userData = JSON.parse(userStr);
+          userData.id = parseInt(userData.id);
+          if (!userData.id || !userData.username || !userData.role) {
+            sessionStorage.removeItem("user");
+            setIsInitialized(true);
+            return;
+          }
+          setUser(userData);
+          setIsLoggedIn(true);
+          setShowTaskHeader(true);
+        }
+      } catch (e) {
+        sessionStorage.removeItem("user");
+      } finally {
+        setIsInitialized(true); // 初期化完了
+      }
+    };
+
+    initializeAuth();
+  }, []);
+
+  useEffect(() => {
+    setIsLoggedIn(!!user);
+    setShowTaskHeader(!!user);
+  }, [user]);
+
   useEffect(() => {
     if (user) {
-      // タスク管理ツール関連のページパスのリスト
       const taskRelatedPaths = [
         "/member/tasks",
         "/admin/dashboard",
         "/shared",
         "/admin/users",
       ];
-
-      // 現在のパスがタスク管理ツール関連でない場合はヘッダーを非表示に
       const isTaskRelatedPath = taskRelatedPaths.some((path) =>
         pathname?.startsWith(path)
       );
@@ -235,55 +138,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (login_id: string, password: string) => {
     try {
-      // リクエストを最適化してパフォーマンスを向上
       const controller = new AbortController();
-      const signal = controller.signal;
-
-      // タイムアウト設定（10秒）
       const timeoutId = setTimeout(() => controller.abort(), 10000);
-
-      // ヘッダーを別変数に定義
-      const headers = {
-        "Content-Type": "application/json",
-      };
+      const headers = { "Content-Type": "application/json" };
 
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers,
         body: JSON.stringify({ login_id, password }),
-        signal,
-        // キャッシュを無効化して常に新しいリクエストを送信
+        signal: controller.signal,
         cache: "no-store",
       });
 
-      // タイムアウトをクリア
       clearTimeout(timeoutId);
-
       const data = await res.json();
 
       if (data.success) {
-        // ユーザー情報を保存（IDは数値として保存）
         const userData = {
-          id: parseInt(data.userId), // 数値に変換
+          id: parseInt(data.userId),
           username: data.username,
           role: data.role,
         };
 
-        // セッションストレージに保存処理を最適化
-        try {
-          sessionStorage.setItem("user", JSON.stringify(userData));
-          sessionStorage.setItem("role", data.role);
-        } catch (storageError) {
-          console.error("セッションストレージ保存エラー:", storageError);
-          // エラーが発生しても処理は続行
-        }
+        sessionStorage.setItem("user", JSON.stringify(userData));
+        sessionStorage.setItem("role", data.role);
 
-        // 認証状態を一括更新
         setUser(userData);
         setIsLoggedIn(true);
         setShowTaskHeader(true);
 
-        // ロールに応じてリダイレクト
         if (data.role === "admin") {
           router.push("/admin/dashboard");
         } else {
@@ -299,30 +182,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     try {
-      const res = await fetch("/api/auth/logout", {
-        method: "POST",
-      });
-
+      const res = await fetch("/api/auth/logout", { method: "POST" });
       const data = await res.json();
 
       if (data.success) {
-        // セッションストレージからユーザー情報を削除
         sessionStorage.removeItem("user");
         sessionStorage.removeItem("role");
-
-        // タイマーをクリア
         if (sessionTimer) {
           clearTimeout(sessionTimer);
           setSessionTimer(null);
         }
-
-        // 認証状態を更新
         setUser(null);
         setIsLoggedIn(false);
-        // タスクヘッダーを非表示にする
         setShowTaskHeader(false);
-
-        // ログアウト後は/productsページにリダイレクト
         router.push("/products");
       } else {
         throw new Error(data.message);
@@ -337,6 +209,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser,
     isLoggedIn,
     setIsLoggedIn,
+    isInitialized, // 追加
     showTaskHeader,
     setShowTaskHeader,
     login,

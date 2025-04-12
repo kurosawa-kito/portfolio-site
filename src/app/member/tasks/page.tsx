@@ -10,6 +10,7 @@ import {
   Button,
   useColorModeValue,
   Flex,
+  Spinner,
 } from "@chakra-ui/react";
 import { AddIcon } from "@chakra-ui/icons";
 import { useAuth } from "@/contexts/AuthContext";
@@ -34,10 +35,8 @@ interface Task {
   is_all_day?: boolean;
 }
 
-// マルチバイト文字をエンコードするための安全なbase64エンコード関数
 const safeBase64Encode = (str: string, user: any) => {
   try {
-    // UTF-8でエンコードしてからbase64に変換
     return btoa(
       encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (_, p1) => {
         return String.fromCharCode(parseInt(p1, 16));
@@ -45,7 +44,6 @@ const safeBase64Encode = (str: string, user: any) => {
     );
   } catch (e) {
     console.error("Base64エンコードエラー:", e);
-    // エラー時は単純な文字列を返す（ロールバック）
     return btoa(JSON.stringify({ id: user?.id || 0 }));
   }
 };
@@ -55,34 +53,38 @@ export default function TasksPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
-  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [deletingTaskId, setDeletingTaskId] = useState<string | number | null>(
     null
   );
-  const [isInitialized, setIsInitialized] = useState(false);
-  const { user, isLoggedIn, setShowTaskHeader } = useAuth();
+  const { user, isLoggedIn, isInitialized, setShowTaskHeader } = useAuth();
   const toast = useToast();
   const router = useRouter();
   const subtitleBg = useColorModeValue("blue.50", "blue.900");
 
-  // タスク一覧を取得
+  // 認証チェックとリダイレクト
+  useEffect(() => {
+    if (isInitialized) {
+      if (!isLoggedIn || !user) {
+        router.push("/products");
+      } else {
+        setShowTaskHeader(true);
+      }
+    }
+  }, [isInitialized, isLoggedIn, user, router, setShowTaskHeader]);
+
   const fetchTasks = useCallback(async () => {
     if (!user) return;
 
     setIsLoading(true);
     try {
-      // リクエストとキャッシュの設定
-      // ヘッダーを別変数に定義
-      // ユーザー情報をBase64エンコードして非ASCII文字の問題を回避
       const userStr = JSON.stringify(user);
-
       const userBase64 =
         typeof window !== "undefined"
           ? safeBase64Encode(userStr, user)
           : Buffer.from(userStr).toString("base64");
 
       const headers = {
-        "x-user-base64": userBase64, // Base64エンコードされたユーザー情報
+        "x-user-base64": userBase64,
         "x-refresh": "true",
         "Cache-Control": "no-cache, no-store",
         Pragma: "no-cache",
@@ -95,10 +97,9 @@ export default function TasksPage() {
 
       if (response.ok) {
         const data = await response.json();
-        console.log(data);
+        console.log("タスクデータ:", data);
         setTasks(data);
       } else {
-        const errorText = await response.text();
         throw new Error(
           `タスクの取得に失敗しました: ${response.status} ${response.statusText}`
         );
@@ -116,77 +117,19 @@ export default function TasksPage() {
     }
   }, [user, toast]);
 
-  // 初期化状態の設定
-  useEffect(() => {
-    // セッションストレージから直接チェック（初期レンダリング時のみ）
-    const checkSession = () => {
-      try {
-        const userStr = sessionStorage.getItem("user");
-        if (userStr) {
-          // セッションがあればOK
-          setIsInitialized(true);
-          return true;
-        }
-        return false;
-      } catch (e) {
-        console.error("セッションチェックエラー:", e);
-        return false;
-      }
-    };
-
-    // まだ初期化されておらず、ユーザー情報もない場合はセッションをチェック
-    if (!isInitialized && !user) {
-      const hasSession = checkSession();
-      // セッションチェックのみ行い、リダイレクトはログインチェックに任せる
-      if (!hasSession) {
-        console.log("セッションなし - タスク管理ページ");
-      }
-    } else if (user) {
-      // ユーザー情報がある場合は初期化完了
-      setIsInitialized(true);
-    }
-  }, [user, isInitialized]);
-
-  // ログインチェック
-  useEffect(() => {
-    // 初期化完了後にのみログインチェックを行う
-    if (isInitialized) {
-      if (!isLoggedIn || !user) {
-        console.log("未ログイン状態が検出されました - リダイレクト");
-        router.push("/products");
-      } else {
-        // タスク管理ヘッダーを表示
-        setShowTaskHeader(true);
-      }
-    }
-  }, [isLoggedIn, user, setShowTaskHeader, isInitialized, router]);
-
-  // データ読み込みは別のuseEffectに分離
-  useEffect(() => {
-    if (isInitialized && isLoggedIn && user) {
-      // タスク一覧を取得
-      fetchTasks();
-    }
-  }, [isInitialized, isLoggedIn, user, fetchTasks]);
-
-  // タスクステータスを更新
   const handleStatusChange = async (taskId: string, newStatus: string) => {
-    // 元のステータスを保存
     const originalTask = tasks.find(
       (task) => String(task.id) === String(taskId)
     );
     const originalStatus = originalTask?.status;
 
-    // 楽観的UI更新
-    setTasks((prevTasks) => {
-      const updatedTasks = prevTasks.map((task) =>
+    setTasks((prevTasks) =>
+      prevTasks.map((task) =>
         String(task.id) === String(taskId)
           ? { ...task, status: newStatus }
           : task
-      );
-      console.log("Updated tasks:", updatedTasks);
-      return updatedTasks;
-    });
+      )
+    );
 
     try {
       const userStr = sessionStorage.getItem("user") || "{}";
@@ -217,7 +160,6 @@ export default function TasksPage() {
         throw new Error("タスクの更新に失敗しました");
       }
     } catch (error) {
-      // エラー時に元のステータスに戻す
       setTasks((prevTasks) =>
         prevTasks.map((task) =>
           String(task.id) === String(taskId)
@@ -225,7 +167,6 @@ export default function TasksPage() {
             : task
         )
       );
-
       toast({
         title: "エラー",
         description: "タスクの更新に失敗しました",
@@ -236,29 +177,20 @@ export default function TasksPage() {
     }
   };
 
-  // タスク編集の処理
   const handleEditTask = (task: Task) => {
     setEditingTask(task);
     setIsModalOpen(true);
   };
 
-  // タスク削除の処理
   const handleDeleteTask = async (taskId: string | number) => {
     if (!window.confirm("本当にこのタスクを削除しますか？")) {
       return;
     }
 
-    // 削除中の状態を設定
     setDeletingTaskId(taskId);
-
     try {
-      // セッションストレージからユーザー情報を取得
       const userStr = sessionStorage.getItem("user") || "{}";
-
-      // ユーザー情報をBase64エンコードして非ASCII文字の問題を回避
       const userBase64 = safeBase64Encode(userStr, JSON.parse(userStr));
-
-      // 削除用のヘッダーを定義
       const deleteHeaders = {
         "Content-Type": "application/json",
         "x-user-base64": userBase64,
@@ -270,7 +202,6 @@ export default function TasksPage() {
       });
 
       if (response.ok) {
-        // 削除成功したらリストから削除
         setTasks((prevTasks) => prevTasks.filter((task) => task.id !== taskId));
         toast({
           title: "タスク削除",
@@ -297,13 +228,41 @@ export default function TasksPage() {
     }
   };
 
-  // モーダルを閉じる時の処理
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setEditingTask(null);
   };
 
-  // ログインしていない場合は何も表示しない
+  useEffect(() => {
+    if (isInitialized && isLoggedIn && user) {
+      const loadInitialData = async () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const refresh = urlParams.get("refresh") === "true";
+        if (refresh) {
+          window.history.replaceState(
+            {},
+            document.title,
+            window.location.pathname
+          );
+        }
+        await fetchTasks();
+      };
+      loadInitialData();
+    }
+  }, [isInitialized, isLoggedIn, user, fetchTasks]);
+
+  // 初期化中のローディング表示
+  if (!isInitialized) {
+    return (
+      <Container maxW="4xl" py={4}>
+        <Flex justify="center" align="center" minH="200px">
+          <Spinner size="lg" color="blue.500" />
+        </Flex>
+      </Container>
+    );
+  }
+
+  // 未ログイン時は何も表示しない（リダイレクトは useEffect で処理）
   if (!isLoggedIn || !user) {
     return null;
   }
@@ -315,7 +274,6 @@ export default function TasksPage() {
 
         <Flex justify="space-between" align="center">
           <Box
-            position="relative"
             py={2}
             px={3}
             width="auto"
@@ -367,7 +325,6 @@ export default function TasksPage() {
         />
       </VStack>
 
-      {/* タスク作成/編集モーダル */}
       <TaskModal
         isOpen={isModalOpen}
         onClose={handleCloseModal}
