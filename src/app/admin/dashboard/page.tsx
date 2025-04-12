@@ -203,6 +203,8 @@ export default function AdminDashboard() {
     if (!selectedUser || tasks.length === 0) return;
     
     setIsAnalysisLoading(true);
+    setAiAnalysis("");  // 分析開始時に以前の結果をクリア
+    
     try {
       // ユーザー情報をBase64エンコードして非ASCII文字の問題を回避
       const userStr = JSON.stringify(user);
@@ -227,16 +229,26 @@ export default function AdminDashboard() {
         }),
       });
 
+      // レスポンスが成功したか確認
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(`API エラー: ${res.status} ${errorText}`);
+      }
+
+      // JSONとして解析を試みる
       const data = await res.json();
 
-      if (data.success) {
+      if (data.success && data.analysis) {
         setAiAnalysis(data.analysis);
       } else {
+        // サーバーサイドエラーメッセージがある場合はそれを表示
+        const errorMessage = data.message || "分析に失敗しました";
+        console.error("API エラー:", errorMessage);
         toast({
           title: "エラー",
-          description: data.message || "分析に失敗しました",
+          description: errorMessage,
           status: "error",
-          duration: 3000,
+          duration: 5000,
           isClosable: true,
         });
       }
@@ -244,9 +256,11 @@ export default function AdminDashboard() {
       console.error("タスク分析エラー:", error);
       toast({
         title: "エラー",
-        description: "タスク分析の取得に失敗しました",
+        description: error instanceof Error 
+          ? `タスク分析の取得に失敗しました: ${error.message}` 
+          : "タスク分析の取得に失敗しました",
         status: "error",
-        duration: 3000,
+        duration: 5000,
         isClosable: true,
       });
     } finally {

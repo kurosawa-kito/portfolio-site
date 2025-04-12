@@ -1,40 +1,12 @@
-import google.generativeai as genai
 import os
 import json
 import sys
 import traceback
-from pathlib import Path
-
-# 環境変数の読み込み試行
-try:
-    from dotenv import load_dotenv
-    # 複数のパスを試す
-    potential_env_paths = [
-        os.path.join(os.getcwd(), '.env'),
-        os.path.join(os.getcwd(), '.env.local'),
-        os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), '.env'),
-        os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), '.env.local'),
-    ]
-    for env_path in potential_env_paths:
-        if os.path.exists(env_path):
-            print(f"環境変数ファイルを読み込み: {env_path}", file=sys.stderr)
-            load_dotenv(env_path)
-            break
-except ImportError:
-    print("python-dotenvがインストールされていないため、環境変数は直接利用します", file=sys.stderr)
-
-# APIキーを設定
-API_KEY = os.getenv("GEMINI_API_KEY")
-if not API_KEY:
-    API_KEY = "AIzaSyDOFONEB_t5Mf42k2MFmEy2ZxtI-tL4bBw"
-    print(f"警告: 環境変数からGEMINI_API_KEYが見つからないため、デフォルト値を使用します", file=sys.stderr)
-    
-print(f"使用するAPIキー: {API_KEY[:5]}...{API_KEY[-5:]}", file=sys.stderr)
-genai.configure(api_key=API_KEY)
+from datetime import datetime
 
 def analyze_tasks(user_info, tasks):
     """
-    ユーザーとそのタスク情報に基づいて分析を行う
+    ユーザーとそのタスク情報に基づいて分析を行う（シンプル版）
     
     Args:
         user_info (dict): ユーザー情報を含む辞書
@@ -44,42 +16,102 @@ def analyze_tasks(user_info, tasks):
         str: 生成された分析テキスト
     """
     try:
-        # モデルを初期化
-        print("Geminiモデルを初期化中...", file=sys.stderr)
-        model = genai.GenerativeModel('models/gemini-2.0-pro-exp')
-        
-        # プロンプトを作成
+        # ユーザー名を取得
         username = user_info.get('username', '担当者')
         
-        # タスク情報をテキストフォーマットに変換
-        tasks_text = ""
-        for task in tasks:
-            priority = {"high": "高", "medium": "中", "low": "低"}.get(task.get('priority', ''), '')
-            due_date = task.get('due_date', '不明')
-            status = "完了" if task.get('status') == 'completed' else "未完了"
+        # タスク分析のためのデータ集計
+        total_tasks = len(tasks)
+        if total_tasks == 0:
+            return f"{username}さんのタスク状況\n\n現在タスクは登録されていません。"
+        
+        # 完了したタスクと未完了タスクを分類
+        completed_tasks = [t for t in tasks if t.get('status') == 'completed']
+        pending_tasks = [t for t in tasks if t.get('status') != 'completed']
+        
+        # 優先度別のタスク数
+        high_priority = len([t for t in tasks if t.get('priority') == 'high'])
+        medium_priority = len([t for t in tasks if t.get('priority') == 'medium'])
+        low_priority = len([t for t in tasks if t.get('priority') == 'low'])
+        
+        # 期限切れタスクの確認
+        today = datetime.now()
+        overdue_tasks = []
+        for task in pending_tasks:
+            due_date_str = task.get('due_date', '')
+            if due_date_str:
+                try:
+                    # ISO形式の日付文字列をパース（T区切りに対応）
+                    if 'T' in due_date_str:
+                        due_date = datetime.fromisoformat(due_date_str.replace('Z', '+00:00'))
+                    else:
+                        # 日付のみの場合
+                        due_date = datetime.strptime(due_date_str, '%Y/%m/%d')
+                    if due_date < today:
+                        overdue_tasks.append(task)
+                except ValueError:
+                    # 日付パースエラーは無視
+                    pass
+        
+        # タスク分析テキストの構築
+        report = [f"{username}さんのタスク状況"]
+        report.append("")
+        report.append(f"■ 概要")
+        report.append(f"・全タスク数: {total_tasks}件")
+        report.append(f"・完了タスク: {len(completed_tasks)}件")
+        report.append(f"・未完了タスク: {len(pending_tasks)}件")
+        report.append(f"・期限切れタスク: {len(overdue_tasks)}件")
+        report.append("")
+        
+        report.append(f"■ 優先度内訳")
+        report.append(f"・高優先度: {high_priority}件")
+        report.append(f"・中優先度: {medium_priority}件")
+        report.append(f"・低優先度: {low_priority}件")
+        report.append("")
+        
+        if len(pending_tasks) > 0:
+            report.append(f"■ 対応が必要なタスク")
+            for i, task in enumerate(pending_tasks[:5], 1):  # 最大5件まで表示
+                priority_jp = {"high": "高", "medium": "中", "low": "低"}.get(task.get('priority', ''), '')
+                report.append(f"{i}. {task.get('title')} （優先度: {priority_jp}）")
             
-            task_line = (
-                f"{task.get('title', 'タスク')} {priority} "
-                f"{task.get('description', '')} "
-                f"期限: {due_date} "
-                f"作成者: {task.get('created_by_username', '不明')} "
-                f"状態: {status}"
+            if len(pending_tasks) > 5:
+                report.append(f"...他 {len(pending_tasks) - 5}件")
+            report.append("")
+        
+        if len(overdue_tasks) > 0:
+            report.append(f"■ 期限切れタスク")
+            for i, task in enumerate(overdue_tasks[:3], 1):  # 最大3件まで表示
+                priority_jp = {"high": "高", "medium": "中", "low": "低"}.get(task.get('priority', ''), '')
+                due_date = task.get('due_date', '不明')
+                if 'T' in due_date:
+                    due_date = due_date.split('T')[0]  # 日付部分のみ取得
+                report.append(f"{i}. {task.get('title')} （期限: {due_date}, 優先度: {priority_jp}）")
+            
+            if len(overdue_tasks) > 3:
+                report.append(f"...他 {len(overdue_tasks) - 3}件")
+            report.append("")
+        
+        if len(completed_tasks) > 0:
+            report.append(f"■ 最近完了したタスク")
+            # 作成日時でソート（最新順）
+            sorted_completed = sorted(
+                completed_tasks,
+                key=lambda x: x.get('updated_at', ''),
+                reverse=True
             )
-            tasks_text += task_line + "\n"
+            
+            for i, task in enumerate(sorted_completed[:3], 1):  # 最大3件まで表示
+                report.append(f"{i}. {task.get('title')}")
+            
+            if len(completed_tasks) > 3:
+                report.append(f"...他 {len(completed_tasks) - 3}件")
         
-        # プロンプトの構築
-        prompt = f"以下は{username}さんのタスクです。これらからこの人のタスク状況を分析して、チーム管理者にわかりやすく、あまり長くならないように視覚的に見やすい形で出力して。「{username}さんのタスク状況」という始まりから出力。\n\n{tasks_text}"
-        
-        print("Gemini APIにリクエスト送信中...", file=sys.stderr)
-        # テキスト生成を実行
-        response = model.generate_content(prompt)
-        print("Gemini APIからレスポンスを受信", file=sys.stderr)
-        return response.text
+        return "\n".join(report)
     except Exception as e:
         error_trace = traceback.format_exc()
         error_msg = f"タスク分析エラー: {str(e)}\n{error_trace}"
         print(error_msg, file=sys.stderr)
-        return f"エラーが発生しました: {str(e)}"
+        return f"タスク分析中にエラーが発生しました: {str(e)}"
 
 def main():
     """
@@ -104,7 +136,7 @@ def main():
         
         # JSONファイルを読み込む
         try:
-            with open(input_file, 'r') as f:
+            with open(input_file, 'r', encoding='utf-8') as f:
                 file_content = f.read()
                 print(f"ファイル内容のプレビュー: {file_content[:100]}...", file=sys.stderr)
                 data = json.loads(file_content)
@@ -121,12 +153,15 @@ def main():
             sys.stdout.flush()  # 確実に出力をフラッシュ
         except json.JSONDecodeError as je:
             print(f"JSONパースエラー: {str(je)}", file=sys.stderr)
+            print("タスク分析中にJSONパースエラーが発生しました。")
             sys.exit(1)
         except Exception as e:
             print(f"予期せぬエラー: {str(e)}\n{traceback.format_exc()}", file=sys.stderr)
+            print("タスク分析中に予期せぬエラーが発生しました。")
             sys.exit(1)
     except Exception as e:
         print(f"クリティカルエラー: {str(e)}\n{traceback.format_exc()}", file=sys.stderr)
+        print("タスク分析の実行に失敗しました。")
         sys.exit(1)
 
 if __name__ == "__main__":
