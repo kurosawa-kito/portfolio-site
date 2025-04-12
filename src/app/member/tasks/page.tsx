@@ -104,8 +104,8 @@ export default function TasksPage() {
 
       if (response.ok) {
         const data = await response.json();
+        console.log(data);
         setTasks(data);
-        console.log(tasks);
       } else {
         const errorText = await response.text();
         throw new Error(
