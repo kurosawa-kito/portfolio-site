@@ -257,7 +257,7 @@ export default function AdminDashboard() {
                   showEditButton={false}
                   showDeleteButton={false}
                   showCheckbox={false}
-                  subtitleSpacing={4}
+                  subtitleSpacing={6}
                   showSubtitle={true}
                   viewType="card"
                 />
