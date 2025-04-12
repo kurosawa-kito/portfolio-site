@@ -256,6 +256,10 @@ export default function AdminDashboard() {
                   isLoading={isLoading}
                   showEditButton={false}
                   showDeleteButton={false}
+                  showCheckbox={false}
+                  subtitleSpacing={4}
+                  showSubtitle={true}
+                  viewType="card"
                 />
               </CardBody>
             </Card>

@@ -43,6 +43,8 @@ interface TaskListProps {
   onDeleteTask?: (id: string | number) => void;
   showEditButton?: boolean;
   showDeleteButton?: boolean;
+  showCheckbox?: boolean;
+  subtitleSpacing?: number;
 }
 
 const priorityColors = {
@@ -86,6 +88,8 @@ export default function TaskList({
   onDeleteTask,
   showEditButton = true,
   showDeleteButton = true,
+  showCheckbox = true,
+  subtitleSpacing = 2,
 }: TaskListProps) {
   const bgColor = useColorModeValue("white", "gray.800");
   const borderColor = useColorModeValue("gray.200", "gray.700");
@@ -143,7 +147,7 @@ export default function TaskList({
         <Box
           position="relative"
           py={2}
-          mb={2}
+          mb={subtitleSpacing}
           mt={4}
           px={3}
           borderLeftWidth="4px"
@@ -196,16 +200,31 @@ export default function TaskList({
                 <CardBody p={3}>
                   <Box>
                     <HStack justify="space-between" mb={1}>
-                      <Checkbox
-                        isChecked={task.status === "completed"}
-                        onChange={(e) =>
-                          handleStatusChange(
-                            String(task.id),
-                            e.target.checked ? "completed" : "pending"
-                          )
-                        }
-                        size="md"
-                      >
+                      {showCheckbox ? (
+                        <Checkbox
+                          isChecked={task.status === "completed"}
+                          onChange={(e) =>
+                            handleStatusChange(
+                              String(task.id),
+                              e.target.checked ? "completed" : "pending"
+                            )
+                          }
+                          size="md"
+                        >
+                          <Text
+                            fontSize="md"
+                            fontWeight="bold"
+                            textDecoration={
+                              task.status === "completed"
+                                ? "line-through"
+                                : "none"
+                            }
+                            noOfLines={1}
+                          >
+                            {task.title}
+                          </Text>
+                        </Checkbox>
+                      ) : (
                         <Text
                           fontSize="md"
                           fontWeight="bold"
@@ -218,7 +237,7 @@ export default function TaskList({
                         >
                           {task.title}
                         </Text>
-                      </Checkbox>
+                      )}
                       <HStack spacing={1}>
                         <Badge
                           colorScheme={
@@ -325,15 +344,21 @@ export default function TaskList({
                         </Badge>
                       </Td>
                       <Td>
-                        <Checkbox
-                          isChecked={task.status === "completed"}
-                          onChange={(e) =>
-                            handleStatusChange(
-                              String(task.id),
-                              e.target.checked ? "completed" : "pending"
-                            )
-                          }
-                        />
+                        {showCheckbox ? (
+                          <Checkbox
+                            isChecked={task.status === "completed"}
+                            onChange={(e) =>
+                              handleStatusChange(
+                                String(task.id),
+                                e.target.checked ? "completed" : "pending"
+                              )
+                            }
+                          />
+                        ) : task.status === "completed" ? (
+                          "完了"
+                        ) : (
+                          "未完了"
+                        )}
                       </Td>
                       <Td textAlign="right">
                         {showEditButton && (
