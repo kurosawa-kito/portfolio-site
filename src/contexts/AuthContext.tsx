@@ -170,6 +170,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (login_id: string, password: string) => {
     try {
+      // リクエストを最適化してパフォーマンスを向上
+      const controller = new AbortController();
+      const signal = controller.signal;
+
+      // タイムアウト設定（10秒）
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
+
       // ヘッダーを別変数に定義
       const headers = {
         "Content-Type": "application/json",
@@ -179,7 +186,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         method: "POST",
         headers,
         body: JSON.stringify({ login_id, password }),
+        signal,
+        // キャッシュを無効化して常に新しいリクエストを送信
+        cache: "no-store",
       });
+
+      // タイムアウトをクリア
+      clearTimeout(timeoutId);
 
       const data = await res.json();
 
@@ -191,11 +204,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           role: data.role,
         };
 
-        // セッションストレージに保存
-        sessionStorage.setItem("user", JSON.stringify(userData));
-        sessionStorage.setItem("role", data.role);
+        // セッションストレージに保存処理を最適化
+        try {
+          sessionStorage.setItem("user", JSON.stringify(userData));
+          sessionStorage.setItem("role", data.role);
+        } catch (storageError) {
+          console.error("セッションストレージ保存エラー:", storageError);
+          // エラーが発生しても処理は続行
+        }
 
-        // 認証状態を更新
+        // 認証状態を一括更新
         setUser(userData);
         setIsLoggedIn(true);
         setShowTaskHeader(true);

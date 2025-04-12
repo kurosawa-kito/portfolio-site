@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Box,
   Button,
@@ -26,6 +26,8 @@ export default function Login() {
   const [loginId, setLoginId] = useState("");
   const [password, setPassword] = useState("");
   const [loginIdError, setLoginIdError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const isSubmitting = useRef(false);
   const { login, isLoggedIn } = useAuth();
   const toast = useToast();
   const router = useRouter();
@@ -57,8 +59,17 @@ export default function Login() {
       return;
     }
 
+    // すでに実行中なら処理をスキップ
+    if (isSubmitting.current || isLoading) {
+      return;
+    }
+
     try {
+      isSubmitting.current = true;
+      setIsLoading(true);
+
       await login(loginId, password);
+
       toast({
         title: "ログイン成功",
         status: "success",
@@ -74,6 +85,9 @@ export default function Login() {
         duration: 3000,
         isClosable: true,
       });
+    } finally {
+      isSubmitting.current = false;
+      setIsLoading(false);
     }
   };
 
@@ -127,6 +141,9 @@ export default function Login() {
                   size="lg"
                   w="full"
                   _hover={{ transform: "translateY(-1px)", boxShadow: "md" }}
+                  isLoading={isLoading}
+                  loadingText="ログイン中..."
+                  isDisabled={isLoading}
                 >
                   ログイン
                 </Button>
