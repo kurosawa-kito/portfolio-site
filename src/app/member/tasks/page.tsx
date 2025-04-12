@@ -65,69 +65,6 @@ export default function TasksPage() {
   const router = useRouter();
   const subtitleBg = useColorModeValue("blue.50", "blue.900");
 
-  // 初期化状態の設定
-  useEffect(() => {
-    // セッションストレージから直接チェック（初期レンダリング時のみ）
-    const checkSession = () => {
-      try {
-        const userStr = sessionStorage.getItem("user");
-        if (userStr) {
-          // セッションがあればOK
-          setIsInitialized(true);
-
-          // 即時にユーザーデータを取得して状態を更新（Next.jsルーターの予期せぬ動作を防ぐ）
-          try {
-            const userData = JSON.parse(userStr);
-            console.log("セッションから復元したユーザーデータ:", userData);
-
-            // ローカルキャッシュとして使用（認証コンテキストの更新を待たずに判断できるように）
-            return {
-              valid: true,
-              role: userData.role,
-            };
-          } catch (e) {
-            console.error("セッションデータ解析エラー:", e);
-          }
-
-          return { valid: true };
-        }
-        return { valid: false };
-      } catch (e) {
-        console.error("セッションチェックエラー:", e);
-        return { valid: false };
-      }
-    };
-
-    // まだ初期化されておらず、ユーザー情報もない場合はセッションをチェック
-    if (!isInitialized && !user) {
-      const sessionInfo = checkSession();
-      if (!sessionInfo.valid) {
-        // セッションもない場合は製品ページへリダイレクト（直接URLを使用）
-        console.log("セッションなし - リダイレクト");
-        window.location.href = "/products";
-      }
-    } else if (user) {
-      // ユーザー情報がある場合は初期化完了
-      setIsInitialized(true);
-      console.log("認証済みユーザー:", user);
-    }
-  }, [user, isInitialized, router]);
-
-  // ログインチェック
-  useEffect(() => {
-    // 初期化完了後にのみログインチェックを行う
-    if (isInitialized) {
-      if (!isLoggedIn || !user) {
-        console.log("未ログイン状態が検出されました - リダイレクト");
-        window.location.href = "/products";
-      } else {
-        // タスク管理ヘッダーを表示
-        setShowTaskHeader(true);
-        console.log("ログイン確認OK - タスク管理ページ");
-      }
-    }
-  }, [isLoggedIn, user, setShowTaskHeader, isInitialized]);
-
   // タスク一覧を取得
   const fetchTasks = useCallback(async () => {
     if (!user) return;
@@ -178,6 +115,59 @@ export default function TasksPage() {
       setIsLoading(false);
     }
   }, [user, toast]);
+
+  // 初期化状態の設定
+  useEffect(() => {
+    // セッションストレージから直接チェック（初期レンダリング時のみ）
+    const checkSession = () => {
+      try {
+        const userStr = sessionStorage.getItem("user");
+        if (userStr) {
+          // セッションがあればOK
+          setIsInitialized(true);
+          return true;
+        }
+        return false;
+      } catch (e) {
+        console.error("セッションチェックエラー:", e);
+        return false;
+      }
+    };
+
+    // まだ初期化されておらず、ユーザー情報もない場合はセッションをチェック
+    if (!isInitialized && !user) {
+      const hasSession = checkSession();
+      // セッションチェックのみ行い、リダイレクトはログインチェックに任せる
+      if (!hasSession) {
+        console.log("セッションなし - タスク管理ページ");
+      }
+    } else if (user) {
+      // ユーザー情報がある場合は初期化完了
+      setIsInitialized(true);
+    }
+  }, [user, isInitialized]);
+
+  // ログインチェック
+  useEffect(() => {
+    // 初期化完了後にのみログインチェックを行う
+    if (isInitialized) {
+      if (!isLoggedIn || !user) {
+        console.log("未ログイン状態が検出されました - リダイレクト");
+        router.push("/products");
+      } else {
+        // タスク管理ヘッダーを表示
+        setShowTaskHeader(true);
+      }
+    }
+  }, [isLoggedIn, user, setShowTaskHeader, isInitialized, router]);
+
+  // データ読み込みは別のuseEffectに分離
+  useEffect(() => {
+    if (isInitialized && isLoggedIn && user) {
+      // タスク一覧を取得
+      fetchTasks();
+    }
+  }, [isInitialized, isLoggedIn, user, fetchTasks]);
 
   // タスクステータスを更新
   const handleStatusChange = async (taskId: string, newStatus: string) => {
@@ -312,34 +302,6 @@ export default function TasksPage() {
     setIsModalOpen(false);
     setEditingTask(null);
   };
-
-  // 初期データの読み込み
-  useEffect(() => {
-    if (isLoggedIn && user) {
-      // 自動更新を設定
-      const loadInitialData = async () => {
-        // 強制リフレッシュモードかどうかをチェック
-        const urlParams = new URLSearchParams(window.location.search);
-        const refresh = urlParams.get("refresh") === "true";
-
-        if (refresh) {
-          // 強制更新の場合、URLからクエリパラメータを削除
-          window.history.replaceState(
-            {},
-            document.title,
-            window.location.pathname
-          );
-          // タスクを取得
-          await fetchTasks();
-        } else {
-          // 通常の読み込み
-          fetchTasks();
-        }
-      };
-
-      loadInitialData();
-    }
-  }, [isLoggedIn, user, fetchTasks]);
 
   // ログインしていない場合は何も表示しない
   if (!isLoggedIn || !user) {

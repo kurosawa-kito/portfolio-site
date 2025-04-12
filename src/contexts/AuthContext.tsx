@@ -125,70 +125,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               return;
             }
 
-            // 認証状態を即時更新
+            // 認証状態を更新（単純に状態を更新するだけでリダイレクトはしない）
             setUser(userData);
             setIsLoggedIn(true);
-            setShowTaskHeader(true);
 
-            // 現在のURL情報を取得
+            // 現在のパスに基づいてタスクヘッダーの表示を設定
+            const taskRelatedPaths = [
+              "/member/tasks",
+              "/admin/dashboard",
+              "/shared",
+              "/admin/users",
+            ];
+
             const currentPath = window.location.pathname;
-            console.log("現在のパス:", currentPath);
-            console.log("認証情報復元:", userData);
-
-            // アクセス可能なパスのリスト
-            const pathMap = {
-              admin: [
-                "/admin/dashboard",
-                "/admin/users",
-                "/admin/input",
-                "/shared",
-              ],
-              member: [
-                "/member/tasks",
-                "/member/calendar",
-                "/member/suggestions",
-                "/shared",
-              ],
-            };
-
-            // ログインページまたはトップページの場合、適切なリダイレクト
-            if (
-              currentPath === "/login" ||
-              currentPath === "/products" ||
-              currentPath === "/"
-            ) {
-              console.log("ログインページ/トップページからリダイレクト");
-              if (userData.role === "admin") {
-                window.location.href = "/admin/dashboard";
-              } else {
-                window.location.href = "/member/tasks";
-              }
-              return;
-            }
-
-            // ページの権限チェック
-            const allowedPaths =
-              userData.role === "admin" ? pathMap.admin : pathMap.member;
-
-            const hasAccess = allowedPaths.some((path) =>
+            const shouldShowHeader = taskRelatedPaths.some((path) =>
               currentPath.startsWith(path)
             );
 
-            if (!hasAccess) {
-              console.log("権限のないページへのアクセス");
-              // 強制的な URL 変更（Next.jsのルーターをバイパス）
-              if (userData.role === "admin") {
-                window.location.href = "/admin/dashboard";
-              } else {
-                window.location.href = "/member/tasks";
-              }
-            } else {
-              console.log("セッション復元成功：現在のページに留まります");
-            }
+            setShowTaskHeader(shouldShowHeader);
+            console.log("セッションから認証情報を復元しました:", userData);
           } catch (e) {
             console.error("セッションデータ解析エラー:", e);
             sessionStorage.removeItem("user");
-            window.location.href = "/login";
           }
         }
       } catch (e) {

@@ -87,49 +87,6 @@ export default function SharedBoard() {
   const noteBgColor = useColorModeValue("blue.50", "blue.900");
   const subtitleBg = useColorModeValue("blue.50", "blue.900");
 
-  // 初期化状態の設定
-  useEffect(() => {
-    // セッションストレージから直接チェック（初期レンダリング時のみ）
-    const checkSession = () => {
-      try {
-        const userStr = sessionStorage.getItem("user");
-        if (userStr) {
-          // セッションがあればOK
-          setIsInitialized(true);
-          return true;
-        }
-        return false;
-      } catch (e) {
-        return false;
-      }
-    };
-
-    // まだ初期化されておらず、ユーザー情報もない場合はセッションをチェック
-    if (!isInitialized && !user) {
-      const hasSession = checkSession();
-      if (!hasSession) {
-        // セッションもない場合は製品ページへリダイレクト
-        router.push("/products");
-      }
-    } else if (user) {
-      // ユーザー情報がある場合は初期化完了
-      setIsInitialized(true);
-    }
-  }, [user, isInitialized, router]);
-
-  // ログインチェック
-  useEffect(() => {
-    // 初期化完了後にのみログインチェックを行う
-    if (isInitialized) {
-      if (!isLoggedIn) {
-        router.push("/products");
-      } else {
-        // タスク管理ヘッダーを表示
-        setShowTaskHeader(true);
-      }
-    }
-  }, [isLoggedIn, router, setShowTaskHeader, isInitialized]);
-
   // 共有ノートを取得（useCallbackでメモ化）
   const fetchNotes = useCallback(async () => {
     if (!user) return;
@@ -222,6 +179,56 @@ export default function SharedBoard() {
       setIsLoadingTasks(false);
     }
   }, [user, toast]);
+
+  // 初期化状態の設定
+  useEffect(() => {
+    // セッションストレージから直接チェック（初期レンダリング時のみ）
+    const checkSession = () => {
+      try {
+        const userStr = sessionStorage.getItem("user");
+        if (userStr) {
+          // セッションがあればOK
+          setIsInitialized(true);
+          return true;
+        }
+        return false;
+      } catch (e) {
+        console.error("セッションチェックエラー:", e);
+        return false;
+      }
+    };
+
+    // まだ初期化されておらず、ユーザー情報もない場合はセッションをチェック
+    if (!isInitialized && !user) {
+      checkSession();
+    } else if (user) {
+      // ユーザー情報がある場合は初期化完了
+      setIsInitialized(true);
+    }
+  }, [user, isInitialized]);
+
+  // ログインチェック
+  useEffect(() => {
+    // 初期化完了後にのみログインチェックを行う
+    if (isInitialized) {
+      if (!isLoggedIn) {
+        router.push("/products");
+      } else {
+        // タスク管理ヘッダーを表示
+        setShowTaskHeader(true);
+        // 初期データ取得
+        fetchNotes();
+        fetchTasks();
+      }
+    }
+  }, [
+    isLoggedIn,
+    router,
+    setShowTaskHeader,
+    isInitialized,
+    fetchNotes,
+    fetchTasks,
+  ]);
 
   // ノートを追加
   const addNote = async () => {

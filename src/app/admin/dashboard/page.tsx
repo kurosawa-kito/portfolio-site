@@ -105,51 +105,30 @@ export default function AdminDashboard() {
         if (userStr) {
           try {
             const userData = JSON.parse(userStr);
-            console.log("セッションから復元したユーザーデータ:", userData);
 
             // 管理者権限のチェック
             if (userData.role === "admin") {
               // 管理者権限があれば初期化完了とする
               setIsInitialized(true);
-              return { valid: true, role: "admin" };
+              return true;
             }
-
-            // 管理者でない場合は無効
-            return { valid: false, role: userData.role };
           } catch (e) {
             console.error("セッションデータ解析エラー:", e);
-            return { valid: false };
           }
         }
-        return { valid: false };
+        return false;
       } catch (e) {
         console.error("セッションチェックエラー:", e);
-        return { valid: false };
+        return false;
       }
     };
 
     // まだ初期化されておらず、ユーザー情報もない場合はセッションをチェック
     if (!isInitialized && !user) {
-      const sessionInfo = checkSession();
-      if (!sessionInfo.valid) {
-        // セッションもない場合は製品ページへリダイレクト
-        console.log("有効なセッションがないため製品ページへリダイレクト");
-        window.location.href = "/products";
-      } else if (sessionInfo.role !== "admin") {
-        // 管理者でない場合はメンバーページへリダイレクト
-        console.log("管理者権限がないためメンバーページへリダイレクト");
-        window.location.href = "/member/tasks";
-      }
+      checkSession();
     } else if (user) {
       // ユーザー情報がある場合
       setIsInitialized(true);
-      console.log("認証済み管理者:", user);
-
-      if (user.role !== "admin") {
-        // 管理者でない場合はリダイレクト
-        console.log("管理者権限がないためリダイレクト");
-        window.location.href = "/member/tasks";
-      }
     }
   }, [user, isInitialized]);
 
@@ -158,15 +137,16 @@ export default function AdminDashboard() {
     // 初期化完了後にのみログインチェックを行う
     if (isInitialized) {
       if (!isLoggedIn) {
-        console.log("ログインしていないためリダイレクト");
-        window.location.href = "/products";
+        router.push("/products");
+      } else if (user && user.role !== "admin") {
+        // 管理者でない場合はメンバーページへリダイレクト
+        router.push("/member/tasks");
       } else {
         // タスク管理ヘッダーを表示
         setShowTaskHeader(true);
-        console.log("管理者ダッシュボード表示");
       }
     }
-  }, [isLoggedIn, setShowTaskHeader, isInitialized]);
+  }, [isLoggedIn, user, router, setShowTaskHeader, isInitialized]);
 
   useEffect(() => {
     // ログインしていない場合は処理しない
