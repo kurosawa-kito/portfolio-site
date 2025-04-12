@@ -200,11 +200,20 @@ export default function AdminDashboard() {
 
   // AI分析を取得する関数
   const fetchAiAnalysis = async () => {
-    if (!selectedUser || tasks.length === 0) return;
-
+    if (!selectedUser || tasks.length === 0) {
+      toast({
+        title: "エラー",
+        description: "ユーザーが選択されていないか、タスクがありません",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
+      return;
+    }
+    
     setIsAnalysisLoading(true);
-    setAiAnalysis(""); // 分析開始時に以前の結果をクリア
-
+    setAiAnalysis("");  // 分析開始時に以前の結果をクリア
+    
     try {
       // ユーザー情報をBase64エンコードして非ASCII文字の問題を回避
       const userStr = JSON.stringify(user);
@@ -214,10 +223,21 @@ export default function AdminDashboard() {
           : Buffer.from(userStr).toString("base64");
 
       // 選択されたユーザーの情報を取得
-      const selectedUserData = users.find((u) => u.id === selectedUser);
-
+      const selectedUserData = users.find(u => u.id === selectedUser);
+      
       if (!selectedUserData) {
-        throw new Error("選択されたユーザーの情報が見つかりません");
+        console.error("選択されたユーザーID:", selectedUser);
+        console.error("利用可能なユーザー:", users.map(u => ({ id: u.id, username: u.username })));
+        
+        toast({
+          title: "エラー",
+          description: "選択されたユーザーの情報が見つかりません。他のユーザーを選択してください。",
+          status: "error",
+          duration: 5000,
+          isClosable: true,
+        });
+        setIsAnalysisLoading(false);
+        return;
       }
 
       // リクエストデータの準備
@@ -225,9 +245,9 @@ export default function AdminDashboard() {
         user: {
           id: selectedUserData.id,
           username: selectedUserData.username,
-          role: selectedUserData.role,
+          role: selectedUserData.role
         },
-        tasks: tasks.map((task) => ({
+        tasks: tasks.map(task => ({
           id: task.id,
           title: task.title,
           description: task.description || "",
@@ -235,14 +255,11 @@ export default function AdminDashboard() {
           priority: task.priority,
           due_date: task.due_date,
           created_by_username: task.created_by_username,
-          assigned_to_username: task.assigned_to_username,
-        })),
+          assigned_to_username: task.assigned_to_username
+        }))
       };
 
-      console.log(
-        "送信データ:",
-        JSON.stringify(requestData).substring(0, 200) + "..."
-      );
+      console.log("送信データ:", JSON.stringify(requestData).substring(0, 200) + "...");
 
       // APIリクエスト
       const res = await fetch("/api/ai/task-analyze", {
