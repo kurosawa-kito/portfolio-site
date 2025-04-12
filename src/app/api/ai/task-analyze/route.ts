@@ -44,10 +44,9 @@ export async function POST(request: NextRequest) {
       }
 
       try {
-        // 一時ファイルに入力データを書き込む
-        const tempInputFile = path.join(process.cwd(), 'tmp_input.json');
-        fs.writeFileSync(tempInputFile, JSON.stringify({ user, tasks }));
-
+        // 一時ファイルではなく、コマンドラインから直接JSONデータを渡す
+        const jsonData = JSON.stringify({ user, tasks });
+        
         // Pythonスクリプトのパス
         const scriptPath = path.join(process.cwd(), 'ai', 'task_summary.py');
         
@@ -61,15 +60,15 @@ export async function POST(request: NextRequest) {
           );
         }
 
-        // 入力ファイルの内容をデバッグ表示
-        console.log('入力データ:', JSON.stringify({ user, tasks }).substring(0, 100) + '...');
+        // 入力データの内容をデバッグ表示
+        console.log('入力データ:', jsonData.substring(0, 100) + '...');
 
-        // Python実行コマンドの選択肢
+        // Python実行コマンドの選択肢 - 標準入力でデータを渡す
         const commands = [
-          `/usr/bin/python3 "${scriptPath}" "${tempInputFile}"`, // システムPython
-          `/usr/local/bin/python3 "${scriptPath}" "${tempInputFile}"`, // Homebrewなどでインストールしたpython
-          `python3 "${scriptPath}" "${tempInputFile}"`, // PATHにあるpython
-          `python "${scriptPath}" "${tempInputFile}"`, // 代替コマンド
+          `/usr/bin/python3 "${scriptPath}" -`, // システムPython
+          `/usr/local/bin/python3 "${scriptPath}" -`, // Homebrewなどでインストールしたpython
+          `python3 "${scriptPath}" -`, // PATHにあるpython
+          `python "${scriptPath}" -`, // 代替コマンド
         ];
 
         let stdout = '';
@@ -80,7 +79,13 @@ export async function POST(request: NextRequest) {
         for (const command of commands) {
           try {
             console.log('実行コマンド:', command);
-            const result = await execPromise(command);
+            // 標準入力からではなく、環境変数でデータを渡す方式に変更
+            const result = await execPromise(command, { 
+              env: { 
+                ...process.env, 
+                TASK_DATA: jsonData 
+              } 
+            });
             stdout = result.stdout;
             stderr = result.stderr;
             
@@ -99,13 +104,6 @@ export async function POST(request: NextRequest) {
             console.error(`コマンド ${command} の実行に失敗:`, execError);
             stderr = (execError as any).stderr || (execError as Error).message;
           }
-        }
-
-        // 一時ファイルを削除
-        try {
-          fs.unlinkSync(tempInputFile);
-        } catch (error) {
-          console.warn('一時ファイルの削除に失敗:', error);
         }
 
         if (!success) {

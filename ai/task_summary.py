@@ -213,60 +213,79 @@ def main():
     print(f"コマンドライン引数: {sys.argv}", file=sys.stderr)
     
     try:
-        if len(sys.argv) != 2:
-            print("使用方法: python task_summary.py <入力JSONファイルパス>", file=sys.stderr)
-            print("タスク分析エラー: コマンドライン引数が不正です")
-            sys.exit(1)
-        
-        input_file = sys.argv[1]
-        print(f"入力ファイル: {input_file}", file=sys.stderr)
-        
-        # JSONファイルが存在するか確認
-        if not os.path.exists(input_file):
-            print(f"エラー: 入力ファイルが見つかりません: {input_file}", file=sys.stderr)
-            print("タスク分析エラー: 入力ファイルが見つかりません")
-            sys.exit(1)
-        
-        # JSONファイルを読み込む
-        try:
-            with open(input_file, 'r', encoding='utf-8') as f:
-                file_content = f.read()
-                print(f"ファイル内容のプレビュー: {file_content[:200]}...", file=sys.stderr)
-                data = json.loads(file_content)
-            
-            # データの検証
-            if not isinstance(data, dict):
-                print(f"エラー: 無効なJSONデータ形式です（オブジェクトではありません）", file=sys.stderr)
-                print("タスク分析エラー: 無効なJSONデータ形式です")
+        # 環境変数からJSONデータを取得
+        task_data = os.environ.get('TASK_DATA')
+        if task_data:
+            print("環境変数TASK_DATAからデータを読み込みます", file=sys.stderr)
+            try:
+                data = json.loads(task_data)
+                print(f"環境変数から読み込んだデータのプレビュー: {task_data[:200]}...", file=sys.stderr)
+            except json.JSONDecodeError as je:
+                print(f"環境変数のJSONパースエラー: {str(je)}", file=sys.stderr)
+                print("タスク分析中にJSONパースエラーが発生しました。")
                 sys.exit(1)
+        # コマンドライン引数からファイルパスを取得
+        elif len(sys.argv) == 2 and sys.argv[1] != '-':
+            input_file = sys.argv[1]
+            print(f"入力ファイル: {input_file}", file=sys.stderr)
+            
+            # JSONファイルが存在するか確認
+            if not os.path.exists(input_file):
+                print(f"エラー: 入力ファイルが見つかりません: {input_file}", file=sys.stderr)
+                print("タスク分析エラー: 入力ファイルが見つかりません")
+                sys.exit(1)
+            
+            # JSONファイルを読み込む
+            try:
+                with open(input_file, 'r', encoding='utf-8') as f:
+                    file_content = f.read()
+                    print(f"ファイル内容のプレビュー: {file_content[:200]}...", file=sys.stderr)
+                    data = json.loads(file_content)
+            except json.JSONDecodeError as je:
+                print(f"JSONパースエラー: {str(je)}", file=sys.stderr)
+                print("タスク分析中にJSONパースエラーが発生しました。")
+                sys.exit(1)
+        # 標準入力からデータを読み込む
+        elif len(sys.argv) == 2 and sys.argv[1] == '-':
+            print("標準入力からデータを読み込みます", file=sys.stderr)
+            try:
+                stdin_data = sys.stdin.read()
+                print(f"標準入力から読み込んだデータのプレビュー: {stdin_data[:200]}...", file=sys.stderr)
+                data = json.loads(stdin_data)
+            except json.JSONDecodeError as je:
+                print(f"標準入力のJSONパースエラー: {str(je)}", file=sys.stderr)
+                print("タスク分析中にJSONパースエラーが発生しました。")
+                sys.exit(1)
+        else:
+            print("使用方法: python task_summary.py <入力JSONファイルパス | - | 環境変数TASK_DATA>", file=sys.stderr)
+            print("タスク分析エラー: 入力データがありません")
+            sys.exit(1)
+        
+        # データの検証
+        if not isinstance(data, dict):
+            print(f"エラー: 無効なJSONデータ形式です（オブジェクトではありません）", file=sys.stderr)
+            print("タスク分析エラー: 無効なJSONデータ形式です")
+            sys.exit(1)
                 
-            user_info = data.get('user', {})
-            tasks = data.get('tasks', [])
-            
-            if not user_info:
-                print(f"警告: ユーザー情報が空または存在しません", file=sys.stderr)
-            
-            if not tasks:
-                print(f"警告: タスク情報が空または存在しません", file=sys.stderr)
-            
-            print(f"ユーザー: {user_info.get('username', '不明')}", file=sys.stderr)
-            print(f"タスク数: {len(tasks)}", file=sys.stderr)
-            
-            # タスク分析を実行して結果を標準出力に出力
-            result = analyze_tasks(user_info, tasks)
-            print(result)
-            sys.stdout.flush()  # 確実に出力をフラッシュ
-        except json.JSONDecodeError as je:
-            print(f"JSONパースエラー: {str(je)}", file=sys.stderr)
-            print("タスク分析中にJSONパースエラーが発生しました。")
-            sys.exit(1)
-        except Exception as e:
-            print(f"予期せぬエラー: {str(e)}\n{traceback.format_exc()}", file=sys.stderr)
-            print("タスク分析中に予期せぬエラーが発生しました。")
-            sys.exit(1)
+        user_info = data.get('user', {})
+        tasks = data.get('tasks', [])
+        
+        if not user_info:
+            print(f"警告: ユーザー情報が空または存在しません", file=sys.stderr)
+        
+        if not tasks:
+            print(f"警告: タスク情報が空または存在しません", file=sys.stderr)
+        
+        print(f"ユーザー: {user_info.get('username', '不明')}", file=sys.stderr)
+        print(f"タスク数: {len(tasks)}", file=sys.stderr)
+        
+        # タスク分析を実行して結果を標準出力に出力
+        result = analyze_tasks(user_info, tasks)
+        print(result)
+        sys.stdout.flush()  # 確実に出力をフラッシュ
     except Exception as e:
-        print(f"クリティカルエラー: {str(e)}\n{traceback.format_exc()}", file=sys.stderr)
-        print("タスク分析の実行に失敗しました。")
+        print(f"予期せぬエラー: {str(e)}\n{traceback.format_exc()}", file=sys.stderr)
+        print("タスク分析中に予期せぬエラーが発生しました。")
         sys.exit(1)
 
 if __name__ == "__main__":
