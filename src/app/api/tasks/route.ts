@@ -254,25 +254,34 @@ export async function PATCH(request: NextRequest) {
 
     const user = JSON.parse(userStr) as User;
 
-    // タスクを更新
     const result = await sql`
       UPDATE tasks
-      SET 
-        status = ${status},
-        updated_at = CURRENT_TIMESTAMP
+      SET status = ${status}, updated_at = CURRENT_TIMESTAMP
       WHERE id = ${id} AND assigned_to = ${user.id}
       RETURNING *;
     `;
 
     if (result.rowCount === 0) {
       return NextResponse.json(
-        { error: "タスクが見つからないか、更新権限がありません" },
+        { error: "タスクが見つからないか、更新する権限がありません" },
         { status: 404 }
       );
     }
 
-    const updatedTask = result.rows[0] as Task;
-    return NextResponse.json({ success: true, task: updatedTask });
+    // 更新されたタスク情報を取得してレスポンスとして返す
+    const updatedTaskResult = await sql`
+      SELECT 
+        t.*,
+        u.username as assigned_to_username,
+        c.username as created_by_username
+      FROM tasks t
+      LEFT JOIN users u ON t.assigned_to = u.id
+      LEFT JOIN users c ON t.created_by = c.id
+      WHERE t.id = ${id}
+    `;
+
+    const updatedTask = updatedTaskResult.rows[0];
+    return NextResponse.json(updatedTask);
   } catch (error) {
     console.error("タスク更新エラー:", error);
     return NextResponse.json(

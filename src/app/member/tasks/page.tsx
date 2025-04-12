@@ -126,7 +126,10 @@ export default function TasksPage() {
   }, [user, toast]);
 
   // タスクステータスを更新
-  const handleStatusChange = async (taskId: string, newStatus: string) => {
+  const handleStatusChange = async (
+    taskId: string | number,
+    newStatus: string
+  ) => {
     // 楽観的UI更新: 即座にUIを更新
     setTasks((prevTasks) =>
       prevTasks.map((task) =>
@@ -135,10 +138,9 @@ export default function TasksPage() {
     );
 
     try {
-      // ユーザー情報をBase64エンコードして非ASCII文字の問題を回避
-      const userStr = sessionStorage.getItem("user") || "{}";
-
-      const userBase64 = safeBase64Encode(userStr, JSON.parse(userStr));
+      // ユーザー情報を取得
+      const userStr = JSON.stringify(user);
+      const userBase64 = safeBase64Encode(userStr, user);
 
       // タスク更新用のヘッダーを定義
       const statusHeaders = {
@@ -156,6 +158,16 @@ export default function TasksPage() {
       });
 
       if (response.ok) {
+        // APIレスポンスからタスクデータを取得して状態を更新
+        const updatedTask = await response.json();
+
+        // 状態を更新して正確に反映
+        setTasks((prevTasks) =>
+          prevTasks.map((task) =>
+            task.id === taskId ? { ...task, ...updatedTask } : task
+          )
+        );
+
         toast({
           title: "成功",
           description: "タスクのステータスを更新しました",
