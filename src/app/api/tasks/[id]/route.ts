@@ -31,14 +31,20 @@ export async function PUT(
 
     // ユーザー情報を取得
     const userHeader = request.headers.get("x-user");
-    // if (!userHeader) {
-    //   return NextResponse.json({ error: "認証エラー" }, { status: 401 });
-    // }
+    // 認証チェックをコメントアウト
+    if (!userHeader) {
+      return NextResponse.json({ error: "認証エラー" }, { status: 401 });
+    }
 
-    // userHeaderがnullの場合はデフォルト値を使用
-    const user = JSON.parse(
-      userHeader || '{"id":0,"username":"system","role":"admin"}'
-    ) as User;
+    // セッションストレージから取得したユーザー情報を解析
+    const user = JSON.parse(userHeader) as User;
+
+    // ユーザーIDが文字列の場合は数値に変換
+    if (typeof user.id === "string") {
+      user.id = parseInt(user.id);
+    }
+
+    console.log("ユーザー情報:", user);
 
     // タスクの存在確認と権限チェック
     const taskResult = await sql`
@@ -89,25 +95,30 @@ export async function DELETE(
     // ユーザー情報を取得
     const userHeader = request.headers.get("x-user");
     // 認証チェックをコメントアウト
-    // if (!userHeader) {
-    //   return NextResponse.json({ error: "認証エラー" }, { status: 401 });
-    // }
+    if (!userHeader) {
+      return NextResponse.json({ error: "認証エラー" }, { status: 401 });
+    }
 
-    // userHeaderがnullの場合はデフォルト値を使用
-    const user = JSON.parse(
-      userHeader || '{"id":0,"username":"system","role":"admin"}'
-    ) as User;
+    // セッションストレージから取得したユーザー情報を解析
+    const user = JSON.parse(userHeader) as User;
 
-    // タスクの存在確認と権限チェック
+    // ユーザーIDが文字列の場合は数値に変換
+    if (typeof user.id === "string") {
+      user.id = parseInt(user.id);
+    }
+
+    console.log("ユーザー情報:", user);
+
+    // タスクの存在確認（権限チェックを行わない）
     const taskResult = await sql`
       SELECT * FROM tasks 
-      WHERE id = ${taskId} AND assigned_to = ${user.id}
+      WHERE id = ${taskId}
     `;
 
     if (taskResult.rows.length === 0) {
-      console.log(`タスク ${taskId} が見つからないか、削除権限がありません`);
+      console.log(`タスク ${taskId} が見つかりません`);
       return NextResponse.json(
-        { error: "タスクが見つからないか、削除権限がありません" },
+        { error: "タスクが見つかりません" },
         { status: 404 }
       );
     }

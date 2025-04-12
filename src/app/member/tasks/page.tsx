@@ -135,17 +135,12 @@ export default function TasksPage() {
 
     try {
       // ユーザー情報をBase64エンコードして非ASCII文字の問題を回避
-      const userStr = JSON.stringify(user);
-
-      const userBase64 =
-        typeof window !== "undefined"
-          ? safeBase64Encode(userStr, user)
-          : Buffer.from(userStr).toString("base64");
+      const userStr = sessionStorage.getItem("user") || "{}";
 
       // タスク更新用のヘッダーを定義
       const statusHeaders = {
         "Content-Type": "application/json",
-        "x-user-base64": userBase64,
+        "x-user-base64": userStr,
       };
 
       const response = await fetch("/api/tasks", {
@@ -210,20 +205,13 @@ export default function TasksPage() {
 
     try {
       // ユーザー情報をBase64エンコードして非ASCII文字の問題を回避
-      const userStr = JSON.stringify(user);
-
-      const userBase64 =
-        typeof window !== "undefined"
-          ? safeBase64Encode(userStr, user)
-          : Buffer.from(userStr).toString("base64");
+      const userStr = sessionStorage.getItem("user") || "{}";
 
       // 削除用のヘッダーを定義
       const deleteHeaders = {
-        "x-user-base64": userBase64,
+        "Content-Type": "application/json",
+        "x-user": userStr,
       };
-
-      console.log("deleteHeaders", deleteHeaders);
-      console.log(sessionStorage.getItem("user"));
 
       const response = await fetch(`/api/tasks/${taskId}`, {
         method: "DELETE",
