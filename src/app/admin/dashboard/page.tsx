@@ -12,6 +12,13 @@ import {
   useColorModeValue,
   Divider,
   Container,
+  Tabs,
+  TabList,
+  TabPanels,
+  Tab,
+  TabPanel,
+  Button,
+  Spinner,
 } from "@chakra-ui/react";
 import { useAuth } from "@/contexts/AuthContext";
 import PageTitle from "@/components/PageTitle";
@@ -88,6 +95,8 @@ export default function AdminDashboard() {
   const [selectedUser, setSelectedUser] = useState<string>("");
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [aiAnalysis, setAiAnalysis] = useState<string>("");
+  const [isAnalysisLoading, setIsAnalysisLoading] = useState(false);
   const toast = useToast();
   const { user, isLoggedIn, setShowTaskHeader } = useAuth();
   const router = useRouter();
@@ -189,6 +198,67 @@ export default function AdminDashboard() {
     fetchTasks();
   }, [selectedUser, toast, isLoggedIn, user]);
 
+  // AI分析を取得する関数
+  const fetchAiAnalysis = async () => {
+    if (!selectedUser || tasks.length === 0) return;
+    
+    setIsAnalysisLoading(true);
+    try {
+      // ユーザー情報をBase64エンコードして非ASCII文字の問題を回避
+      const userStr = JSON.stringify(user);
+      const userBase64 =
+        typeof window !== "undefined"
+          ? safeBase64Encode(userStr, user)
+          : Buffer.from(userStr).toString("base64");
+
+      // 選択されたユーザーの情報を取得
+      const selectedUserData = users.find(u => u.id === selectedUser);
+
+      // APIリクエスト
+      const res = await fetch("/api/ai/task-analyze", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-user-base64": userBase64,
+        },
+        body: JSON.stringify({
+          user: selectedUserData,
+          tasks: tasks
+        }),
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        setAiAnalysis(data.analysis);
+      } else {
+        toast({
+          title: "エラー",
+          description: data.message || "分析に失敗しました",
+          status: "error",
+          duration: 3000,
+          isClosable: true,
+        });
+      }
+    } catch (error) {
+      console.error("タスク分析エラー:", error);
+      toast({
+        title: "エラー",
+        description: "タスク分析の取得に失敗しました",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
+    } finally {
+      setIsAnalysisLoading(false);
+    }
+  };
+
+  // タスクが変更されたときに分析を初期化
+  useEffect(() => {
+    setAiAnalysis("");
+  }, [tasks]);
+
   // ログインしていない場合は何も表示しない
   if (!isLoggedIn) {
     return null;
@@ -265,17 +335,60 @@ export default function AdminDashboard() {
             <Divider my={2} />
             <Card bg={bgColor} borderWidth="1px" borderColor={borderColor}>
               <CardBody>
-                <TaskList
-                  tasks={tasks}
-                  isLoading={isLoading}
-                  showEditButton={false}
-                  showDeleteButton={false}
-                  showCheckbox={false}
-                  showStatusBadge={true}
-                  subtitleSpacing={8}
-                  showSubtitle={true}
-                  viewType="card"
-                />
+                <Tabs variant="enclosed" colorScheme="blue">
+                  <TabList mb={4}>
+                    <Tab>タスクカード表示</Tab>
+                    <Tab>AI分析</Tab>
+                  </TabList>
+                  <TabPanels>
+                    <TabPanel p={0}>
+                      <TaskList
+                        tasks={tasks}
+                        isLoading={isLoading}
+                        showEditButton={false}
+                        showDeleteButton={false}
+                        showCheckbox={false}
+                        showStatusBadge={true}
+                        subtitleSpacing={8}
+                        showSubtitle={true}
+                        viewType="card"
+                      />
+                    </TabPanel>
+                    <TabPanel>
+                      {aiAnalysis ? (
+                        <Box 
+                          whiteSpace="pre-wrap" 
+                          p={4} 
+                          borderWidth="1px" 
+                          borderRadius="md"
+                          bg={useColorModeValue("gray.50", "gray.700")}
+                        >
+                          {aiAnalysis}
+                        </Box>
+                      ) : (
+                        <VStack spacing={4} py={8}>
+                          {isAnalysisLoading ? (
+                            <>
+                              <Spinner size="xl" />
+                              <Text>分析中...</Text>
+                            </>
+                          ) : (
+                            <>
+                              <Text>タスクのAI分析を行うことができます</Text>
+                              <Button 
+                                colorScheme="blue" 
+                                onClick={fetchAiAnalysis}
+                                isDisabled={tasks.length === 0}
+                              >
+                                分析開始
+                              </Button>
+                            </>
+                          )}
+                        </VStack>
+                      )}
+                    </TabPanel>
+                  </TabPanels>
+                </Tabs>
               </CardBody>
             </Card>
           </>
