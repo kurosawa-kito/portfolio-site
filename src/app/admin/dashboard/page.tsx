@@ -248,16 +248,17 @@ export default function AdminDashboard() {
 
         {selectedUser && (
           <>
-            <Divider />
-            <TaskList
-              tasks={tasks}
-              viewType="table"
-              isLoading={isLoading}
-              onStatusChange={undefined}
-              onEditTask={undefined}
-              onDeleteTask={undefined}
-              showSubtitle={false}
-            />
+            <Divider my={2} />
+            <Card bg={bgColor} borderWidth="1px" borderColor={borderColor}>
+              <CardBody>
+                <TaskList
+                  tasks={tasks}
+                  isLoading={isLoading}
+                  showEditButton={false}
+                  showDeleteButton={false}
+                />
+              </CardBody>
+            </Card>
           </>
         )}
       </VStack>
