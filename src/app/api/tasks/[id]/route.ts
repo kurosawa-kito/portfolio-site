@@ -156,7 +156,6 @@ export async function DELETE(
       const updatedTask = await sql`
         UPDATE tasks 
         SET 
-          is_shared = ${false},
           shared_at = ${null},
           assigned_to = ${null},
           updated_at = NOW()
