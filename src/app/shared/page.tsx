@@ -86,12 +86,26 @@ export default function SharedBoard() {
   const noteBgColor = useColorModeValue("blue.50", "blue.900");
   const subtitleBg = useColorModeValue("blue.50", "blue.900");
 
-  // ログインチェック
+  // 認証チェックとリダイレクト
   useEffect(() => {
     if (!isLoggedIn) {
-      router.push("/products");
+      // セッションストレージを確認して、直前までログイン状態だった場合はリダイレクトを遅延させる
+      const storedUser = sessionStorage.getItem("user");
+      if (!storedUser) {
+        router.push("/products");
+      } else {
+        // セッションストレージにユーザー情報がある場合は、
+        // 少し待ってから再度チェックして、それでもログインしていなければリダイレクト
+        const checkTimer = setTimeout(() => {
+          if (!isLoggedIn) {
+            router.push("/products");
+          }
+        }, 1000); // 1秒待機
+
+        return () => clearTimeout(checkTimer);
+      }
     } else {
-      // タスク管理ヘッダーを表示
+      // ヘッダーを表示
       setShowTaskHeader(true);
     }
   }, [isLoggedIn, router, setShowTaskHeader]);

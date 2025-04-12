@@ -265,23 +265,6 @@ export default function TasksPage() {
     }
   }, [isInitialized, isLoggedIn, user, fetchTasks]);
 
-  // ページリロード前に確認ダイアログを表示する
-  useEffect(() => {
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      // 確認メッセージは現代のブラウザでは無視されますが、イベントをキャンセルするために必要です
-      const confirmationMessage = "このページを離れますか？変更が失われる可能性があります。";
-      e.preventDefault();
-      e.returnValue = confirmationMessage;
-      return confirmationMessage;
-    };
-
-    window.addEventListener("beforeunload", handleBeforeUnload);
-
-    return () => {
-      window.removeEventListener("beforeunload", handleBeforeUnload);
-    };
-  }, []);
-
   // 初期化中のローディング表示
   if (!isInitialized) {
     return (
