@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo, useCallback } from "react";
 import {
   Box,
   Text,
@@ -88,24 +88,42 @@ export default function TaskList({
   const subtitleBg = useColorModeValue("blue.50", "blue.900");
   const toast = useToast();
 
-  // タスクを完了状態に基づいてソート
-  const sortedTasks = [...tasks].sort((a, b) => {
-    if (a.status === "completed" && b.status !== "completed") return 1;
-    if (a.status !== "completed" && b.status === "completed") return -1;
-    return 0;
-  });
+  // タスクを完了状態に基づいてソート（useMemoを使用してメモ化）
+  const sortedTasks = useMemo(() => {
+    return [...tasks].sort((a, b) => {
+      if (a.status === "completed" && b.status !== "completed") return 1;
+      if (a.status !== "completed" && b.status === "completed") return -1;
+      return 0;
+    });
+  }, [tasks]);
 
-  const handleDelete = async (id: string | number) => {
-    if (onDeleteTask) {
-      onDeleteTask(id);
-    }
-  };
+  // イベントハンドラをメモ化
+  const handleDelete = useCallback(
+    (id: string | number) => {
+      if (onDeleteTask) {
+        onDeleteTask(id);
+      }
+    },
+    [onDeleteTask]
+  );
 
-  const handleEdit = (task: Task) => {
-    if (onEditTask) {
-      onEditTask(task);
-    }
-  };
+  const handleEdit = useCallback(
+    (task: Task) => {
+      if (onEditTask) {
+        onEditTask(task);
+      }
+    },
+    [onEditTask]
+  );
+
+  const handleStatusChange = useCallback(
+    (id: string | number, status: string) => {
+      if (onStatusChange) {
+        onStatusChange(id, status);
+      }
+    },
+    [onStatusChange]
+  );
 
   if (isLoading) {
     return (
@@ -177,8 +195,7 @@ export default function TaskList({
                       <Checkbox
                         isChecked={task.status === "completed"}
                         onChange={(e) =>
-                          onStatusChange &&
-                          onStatusChange(
+                          handleStatusChange(
                             String(task.id),
                             e.target.checked ? "completed" : "pending"
                           )
