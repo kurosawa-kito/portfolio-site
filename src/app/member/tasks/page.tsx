@@ -138,10 +138,12 @@ export default function TasksPage() {
       // ユーザー情報をBase64エンコードして非ASCII文字の問題を回避
       const userStr = sessionStorage.getItem("user") || "{}";
 
+      const userBase64 = safeBase64Encode(userStr, JSON.parse(userStr));
+
       // タスク更新用のヘッダーを定義
       const statusHeaders = {
         "Content-Type": "application/json",
-        "x-user-base64": userStr,
+        "x-user-base64": userBase64,
       };
 
       const response = await fetch("/api/tasks", {
