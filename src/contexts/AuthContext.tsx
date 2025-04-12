@@ -127,6 +127,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setUser(userData);
           setIsLoggedIn(true);
           setShowTaskHeader(true);
+
+          // リロード時に現在のパスに基づいて適切な処理を行う
+          const currentPath = window.location.pathname;
+
+          // ログインページにいる場合は、ロールに応じたページにリダイレクト
+          if (currentPath === "/login") {
+            if (userData.role === "admin") {
+              router.push("/admin/dashboard");
+            } else {
+              router.push("/member/tasks");
+            }
+          }
+          // それ以外の場合は現在のページに留まる（リダイレクトしない）
         } catch (e) {
           // 不正なデータを削除
           sessionStorage.removeItem("user");
@@ -135,7 +148,51 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (e) {
       // セッションストレージにアクセスできない場合はエラー処理
     }
-  }, []);
+  }, [router]); // routerを依存配列に追加
+
+  // 認証状態チェック用
+  useEffect(() => {
+    // ページ読み込み時に一度だけ実行される
+    const checkAndRestoreSession = () => {
+      // ユーザーがログインしていない場合はセッションストレージをチェック
+      if (!isLoggedIn) {
+        try {
+          const userStr = sessionStorage.getItem("user");
+          if (userStr) {
+            const userData = JSON.parse(userStr);
+            if (userData && userData.id && userData.username && userData.role) {
+              // セッションが有効な場合は認証状態を復元
+              setUser({
+                id: parseInt(userData.id),
+                username: userData.username,
+                role: userData.role,
+              });
+              setIsLoggedIn(true);
+
+              // 現在のパスに基づいてタスクヘッダーの表示を設定
+              const taskRelatedPaths = [
+                "/member/tasks",
+                "/admin/dashboard",
+                "/shared",
+                "/admin/users",
+              ];
+
+              const currentPath = window.location.pathname;
+              const shouldShowHeader = taskRelatedPaths.some((path) =>
+                currentPath.startsWith(path)
+              );
+
+              setShowTaskHeader(shouldShowHeader);
+            }
+          }
+        } catch (e) {
+          console.error("セッション復元エラー:", e);
+        }
+      }
+    };
+
+    checkAndRestoreSession();
+  }, [isLoggedIn]); // isLoggedInが変わったときのみ実行
 
   // ユーザー情報が変更されたときにログイン状態と表示状態を更新
   useEffect(() => {
