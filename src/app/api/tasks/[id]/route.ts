@@ -140,6 +140,8 @@ export async function DELETE(
       WHERE id = ${taskId}
     `;
 
+    console.log("タスク結果:", taskResult.rows);
+
     if (taskResult.rows.length === 0) {
       console.log(`タスク ${taskId} が見つかりません`);
       return NextResponse.json(
