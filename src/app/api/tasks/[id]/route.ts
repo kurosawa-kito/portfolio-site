@@ -30,14 +30,27 @@ export async function PUT(
     const { title, description, due_date, priority, is_all_day } = body;
 
     // ユーザー情報を取得
-    const userHeader = request.headers.get("x-user");
+    let userStr = request.headers.get("x-user");
+    const userBase64 = request.headers.get("x-user-base64");
+
+    // Base64エンコードされたユーザー情報を優先的に使用
+    if (userBase64) {
+      try {
+        // Base64からデコード
+        const decodedStr = Buffer.from(userBase64, "base64").toString("utf-8");
+        userStr = decodedStr;
+      } catch (e) {
+        console.error("Base64デコードエラー:", e);
+      }
+    }
+
     // 認証チェックをコメントアウト
-    if (!userHeader) {
+    if (!userStr) {
       return NextResponse.json({ error: "認証エラー" }, { status: 401 });
     }
 
     // セッションストレージから取得したユーザー情報を解析
-    const user = JSON.parse(userHeader) as User;
+    const user = JSON.parse(userStr) as User;
 
     // ユーザーIDが文字列の場合は数値に変換
     if (typeof user.id === "string") {
@@ -93,14 +106,27 @@ export async function DELETE(
     console.log(`タスク削除リクエスト: ${taskId}`);
 
     // ユーザー情報を取得
-    const userHeader = request.headers.get("x-user");
+    let userStr = request.headers.get("x-user");
+    const userBase64 = request.headers.get("x-user-base64");
+
+    // Base64エンコードされたユーザー情報を優先的に使用
+    if (userBase64) {
+      try {
+        // Base64からデコード
+        const decodedStr = Buffer.from(userBase64, "base64").toString("utf-8");
+        userStr = decodedStr;
+      } catch (e) {
+        console.error("Base64デコードエラー:", e);
+      }
+    }
+
     // 認証チェックをコメントアウト
-    if (!userHeader) {
+    if (!userStr) {
       return NextResponse.json({ error: "認証エラー" }, { status: 401 });
     }
 
     // セッションストレージから取得したユーザー情報を解析
-    const user = JSON.parse(userHeader) as User;
+    const user = JSON.parse(userStr) as User;
 
     // ユーザーIDが文字列の場合は数値に変換
     if (typeof user.id === "string") {

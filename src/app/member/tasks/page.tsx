@@ -204,13 +204,16 @@ export default function TasksPage() {
     setDeletingTaskId(taskId);
 
     try {
-      // ユーザー情報をBase64エンコードして非ASCII文字の問題を回避
+      // セッションストレージからユーザー情報を取得
       const userStr = sessionStorage.getItem("user") || "{}";
+
+      // ユーザー情報をBase64エンコードして非ASCII文字の問題を回避
+      const userBase64 = safeBase64Encode(userStr, JSON.parse(userStr));
 
       // 削除用のヘッダーを定義
       const deleteHeaders = {
         "Content-Type": "application/json",
-        "x-user": userStr,
+        "x-user-base64": userBase64,
       };
 
       const response = await fetch(`/api/tasks/${taskId}`, {
