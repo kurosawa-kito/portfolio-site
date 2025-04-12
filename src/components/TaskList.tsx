@@ -2,7 +2,7 @@ import React from "react";
 import {
   Box,
   Text,
-  VStack,
+  SimpleGrid,
   Card,
   CardBody,
   Badge,
@@ -55,26 +55,17 @@ const priorityLabels = {
   high: "高",
 };
 
-// 日付と時間をフォーマットする関数
 const formatDateTime = (dateString: string, isAllDay?: boolean): string => {
   if (!dateString) return "";
-
   try {
-    // データベースのタイムスタンプ文字列を直接解析（タイムゾーン指定なし）
     const date = new Date(dateString);
-    if (isNaN(date.getTime())) return dateString; // 無効な日付の場合はそのまま返す
-
-    // UTCとして扱い、タイムゾーン変換を避ける
+    if (isNaN(date.getTime())) return dateString;
     const year = date.getUTCFullYear();
     const month = String(date.getUTCMonth() + 1).padStart(2, "0");
     const day = String(date.getUTCDate()).padStart(2, "0");
-
-    // 終日タスクの場合は時間を表示しない
     if (isAllDay) {
       return `${year}/${month}/${day}`;
     }
-
-    // 時間情報も表示（UTCの値をそのまま使用）
     const hours = String(date.getUTCHours()).padStart(2, "0");
     const minutes = String(date.getUTCMinutes()).padStart(2, "0");
     return `${year}/${month}/${day} ${hours}:${minutes}`;
@@ -97,21 +88,18 @@ export default function TaskList({
   const subtitleBg = useColorModeValue("blue.50", "blue.900");
   const toast = useToast();
 
-  // タスク削除処理
   const handleDelete = async (id: string | number) => {
     if (onDeleteTask) {
       onDeleteTask(id);
     }
   };
 
-  // タスク編集処理
   const handleEdit = (task: Task) => {
     if (onEditTask) {
       onEditTask(task);
     }
   };
 
-  // ローディング表示
   if (isLoading) {
     return (
       <Box textAlign="center" py={8}>
@@ -152,7 +140,11 @@ export default function TaskList({
       )}
 
       {viewType === "card" ? (
-        <VStack spacing={4} align="stretch" mt={showSubtitle ? -2 : 0}>
+        <SimpleGrid
+          columns={{ base: 1, md: 2 }}
+          spacing={4}
+          mt={showSubtitle ? -2 : 0}
+        >
           {tasks.length === 0 ? (
             <Card bg={bgColor} borderWidth="1px" borderColor={borderColor}>
               <CardBody>
@@ -172,14 +164,14 @@ export default function TaskList({
                 transition="all 0.2s"
               >
                 <CardBody>
-                  <VStack align="stretch" spacing={2}>
+                  <HStack direction="column" spacing={2}>
                     <HStack justify="space-between">
                       <Checkbox
                         isChecked={task.status === "completed"}
                         onChange={(e) =>
                           onStatusChange &&
                           onStatusChange(
-                            String(task.id), // IDを文字列に変換
+                            String(task.id),
                             e.target.checked ? "completed" : "pending"
                           )
                         }
@@ -242,12 +234,12 @@ export default function TaskList({
                         <Text>作成者: {task.created_by_username}</Text>
                       )}
                     </HStack>
-                  </VStack>
+                  </HStack>
                 </CardBody>
               </Card>
             ))
           )}
-        </VStack>
+        </SimpleGrid>
       ) : (
         <Card
           bg={bgColor}
