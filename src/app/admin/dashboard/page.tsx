@@ -271,7 +271,8 @@ export default function AdminDashboard() {
                   showEditButton={false}
                   showDeleteButton={false}
                   showCheckbox={false}
-                  subtitleSpacing={6}
+                  showStatusBadge={true}
+                  subtitleSpacing={8}
                   showSubtitle={true}
                   viewType="card"
                 />

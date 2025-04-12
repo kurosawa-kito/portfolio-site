@@ -44,6 +44,7 @@ interface TaskListProps {
   showEditButton?: boolean;
   showDeleteButton?: boolean;
   showCheckbox?: boolean;
+  showStatusBadge?: boolean;
   subtitleSpacing?: number;
 }
 
@@ -89,6 +90,7 @@ export default function TaskList({
   showEditButton = true,
   showDeleteButton = true,
   showCheckbox = true,
+  showStatusBadge = false,
   subtitleSpacing = 2,
 }: TaskListProps) {
   const bgColor = useColorModeValue("white", "gray.800");
@@ -222,6 +224,15 @@ export default function TaskList({
                             noOfLines={1}
                           >
                             {task.title}
+                            {showStatusBadge && (
+                              <Badge
+                                ml={2}
+                                colorScheme={task.status === "completed" ? "green" : "blue"}
+                                fontSize="xs"
+                              >
+                                {task.status === "completed" ? "完了" : "未完了"}
+                              </Badge>
+                            )}
                           </Text>
                         </Checkbox>
                       ) : (
@@ -236,6 +247,15 @@ export default function TaskList({
                           noOfLines={1}
                         >
                           {task.title}
+                          {showStatusBadge && (
+                            <Badge
+                              ml={2}
+                              colorScheme={task.status === "completed" ? "green" : "blue"}
+                              fontSize="xs"
+                            >
+                              {task.status === "completed" ? "完了" : "未完了"}
+                            </Badge>
+                          )}
                         </Text>
                       )}
                       <HStack spacing={1}>
