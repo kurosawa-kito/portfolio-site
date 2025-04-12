@@ -41,6 +41,24 @@ export async function DELETE(
     if (!skipAuth) {
       // ユーザー情報を取得
       let userStr = request.headers.get("x-user");
+      const userBase64 = request.headers.get("x-user-base64");
+
+      // Base64エンコードされたユーザー情報を優先的に使用
+      if (userBase64) {
+        try {
+          // Base64からデコード
+          const decodedStr = Buffer.from(userBase64, "base64").toString(
+            "utf-8"
+          );
+          userStr = decodedStr;
+        } catch (e) {
+          console.error("Base64デコードエラー:", e);
+          return NextResponse.json(
+            { error: "ユーザー情報のデコードに失敗しました" },
+            { status: 400 }
+          );
+        }
+      }
 
       if (!userStr) {
         return NextResponse.json({ error: "認証エラー" }, { status: 401 });

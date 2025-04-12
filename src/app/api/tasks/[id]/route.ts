@@ -103,7 +103,6 @@ export async function DELETE(
 ) {
   try {
     const taskId = parseInt(params.id);
-    console.log(`タスク削除リクエスト: ${taskId}`);
 
     // ユーザー情報を取得
     let userStr = request.headers.get("x-user");
