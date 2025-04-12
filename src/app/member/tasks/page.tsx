@@ -126,23 +126,27 @@ export default function TasksPage() {
   }, [user, toast]);
 
   // タスクステータスを更新
-  const handleStatusChange = async (
-    taskId: string | number,
-    newStatus: string
-  ) => {
-    // 楽観的UI更新: 即座にUIを更新
-    setTasks((prevTasks) =>
-      prevTasks.map((task) =>
-        task.id === taskId ? { ...task, status: newStatus } : task
-      )
+  const handleStatusChange = async (taskId: string, newStatus: string) => {
+    // 元のステータスを保存
+    const originalTask = tasks.find(
+      (task) => String(task.id) === String(taskId)
     );
+    const originalStatus = originalTask?.status;
+
+    // 楽観的UI更新
+    setTasks((prevTasks) => {
+      const updatedTasks = prevTasks.map((task) =>
+        String(task.id) === String(taskId)
+          ? { ...task, status: newStatus }
+          : task
+      );
+      console.log("Updated tasks:", updatedTasks);
+      return updatedTasks;
+    });
 
     try {
-      // ユーザー情報を取得
-      const userStr = JSON.stringify(user);
-      const userBase64 = safeBase64Encode(userStr, user);
-
-      // タスク更新用のヘッダーを定義
+      const userStr = sessionStorage.getItem("user") || "{}";
+      const userBase64 = safeBase64Encode(userStr, JSON.parse(userStr));
       const statusHeaders = {
         "Content-Type": "application/json",
         "x-user-base64": userBase64,
@@ -158,16 +162,6 @@ export default function TasksPage() {
       });
 
       if (response.ok) {
-        // APIレスポンスからタスクデータを取得して状態を更新
-        const updatedTask = await response.json();
-
-        // 状態を更新して正確に反映
-        setTasks((prevTasks) =>
-          prevTasks.map((task) =>
-            task.id === taskId ? { ...task, ...updatedTask } : task
-          )
-        );
-
         toast({
           title: "成功",
           description: "タスクのステータスを更新しました",
@@ -176,19 +170,14 @@ export default function TasksPage() {
           isClosable: true,
         });
       } else {
-        // 失敗した場合は元に戻す
-        const errorData = await response.json();
-        throw new Error(errorData.error || "タスクの更新に失敗しました");
+        throw new Error("タスクの更新に失敗しました");
       }
     } catch (error) {
-      // エラーの場合は元の状態に戻す
+      // エラー時に元のステータスに戻す
       setTasks((prevTasks) =>
         prevTasks.map((task) =>
-          task.id === taskId
-            ? {
-                ...task,
-                status: task.status === "completed" ? "pending" : "completed",
-              }
+          String(task.id) === String(taskId)
+            ? { ...task, status: originalStatus || "pending" }
             : task
         )
       );

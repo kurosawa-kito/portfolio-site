@@ -179,7 +179,7 @@ export default function TaskList({
                         onChange={(e) =>
                           onStatusChange &&
                           onStatusChange(
-                            task.id,
+                            String(task.id), // IDを文字列に変換
                             e.target.checked ? "completed" : "pending"
                           )
                         }
