@@ -74,24 +74,42 @@ export default function TasksPage() {
         if (userStr) {
           // セッションがあればOK
           setIsInitialized(true);
-          return true;
+
+          // 即時にユーザーデータを取得して状態を更新（Next.jsルーターの予期せぬ動作を防ぐ）
+          try {
+            const userData = JSON.parse(userStr);
+            console.log("セッションから復元したユーザーデータ:", userData);
+
+            // ローカルキャッシュとして使用（認証コンテキストの更新を待たずに判断できるように）
+            return {
+              valid: true,
+              role: userData.role,
+            };
+          } catch (e) {
+            console.error("セッションデータ解析エラー:", e);
+          }
+
+          return { valid: true };
         }
-        return false;
+        return { valid: false };
       } catch (e) {
-        return false;
+        console.error("セッションチェックエラー:", e);
+        return { valid: false };
       }
     };
 
     // まだ初期化されておらず、ユーザー情報もない場合はセッションをチェック
     if (!isInitialized && !user) {
-      const hasSession = checkSession();
-      if (!hasSession) {
-        // セッションもない場合は製品ページへリダイレクト
-        router.push("/products");
+      const sessionInfo = checkSession();
+      if (!sessionInfo.valid) {
+        // セッションもない場合は製品ページへリダイレクト（直接URLを使用）
+        console.log("セッションなし - リダイレクト");
+        window.location.href = "/products";
       }
     } else if (user) {
       // ユーザー情報がある場合は初期化完了
       setIsInitialized(true);
+      console.log("認証済みユーザー:", user);
     }
   }, [user, isInitialized, router]);
 
@@ -100,13 +118,15 @@ export default function TasksPage() {
     // 初期化完了後にのみログインチェックを行う
     if (isInitialized) {
       if (!isLoggedIn || !user) {
-        router.push("/products");
+        console.log("未ログイン状態が検出されました - リダイレクト");
+        window.location.href = "/products";
       } else {
         // タスク管理ヘッダーを表示
         setShowTaskHeader(true);
+        console.log("ログイン確認OK - タスク管理ページ");
       }
     }
-  }, [isLoggedIn, user, router, setShowTaskHeader, isInitialized]);
+  }, [isLoggedIn, user, setShowTaskHeader, isInitialized]);
 
   // タスク一覧を取得
   const fetchTasks = useCallback(async () => {

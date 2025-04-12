@@ -103,48 +103,70 @@ export default function AdminDashboard() {
       try {
         const userStr = sessionStorage.getItem("user");
         if (userStr) {
-          const userData = JSON.parse(userStr);
-          if (userData.role === "admin") {
-            // 管理者権限があれば初期化完了とする
-            setIsInitialized(true);
-            return true;
+          try {
+            const userData = JSON.parse(userStr);
+            console.log("セッションから復元したユーザーデータ:", userData);
+
+            // 管理者権限のチェック
+            if (userData.role === "admin") {
+              // 管理者権限があれば初期化完了とする
+              setIsInitialized(true);
+              return { valid: true, role: "admin" };
+            }
+
+            // 管理者でない場合は無効
+            return { valid: false, role: userData.role };
+          } catch (e) {
+            console.error("セッションデータ解析エラー:", e);
+            return { valid: false };
           }
         }
-        return false;
+        return { valid: false };
       } catch (e) {
-        return false;
+        console.error("セッションチェックエラー:", e);
+        return { valid: false };
       }
     };
 
     // まだ初期化されておらず、ユーザー情報もない場合はセッションをチェック
     if (!isInitialized && !user) {
-      const hasSession = checkSession();
-      if (!hasSession) {
+      const sessionInfo = checkSession();
+      if (!sessionInfo.valid) {
         // セッションもない場合は製品ページへリダイレクト
-        router.push("/products");
+        console.log("有効なセッションがないため製品ページへリダイレクト");
+        window.location.href = "/products";
+      } else if (sessionInfo.role !== "admin") {
+        // 管理者でない場合はメンバーページへリダイレクト
+        console.log("管理者権限がないためメンバーページへリダイレクト");
+        window.location.href = "/member/tasks";
       }
     } else if (user) {
       // ユーザー情報がある場合
       setIsInitialized(true);
+      console.log("認証済み管理者:", user);
+
       if (user.role !== "admin") {
         // 管理者でない場合はリダイレクト
-        router.push("/member/tasks");
+        console.log("管理者権限がないためリダイレクト");
+        window.location.href = "/member/tasks";
       }
     }
-  }, [user, isInitialized, router]);
+  }, [user, isInitialized]);
 
   // ログインチェック
   useEffect(() => {
     // 初期化完了後にのみログインチェックを行う
     if (isInitialized) {
       if (!isLoggedIn) {
-        router.push("/products");
+        console.log("ログインしていないためリダイレクト");
+        window.location.href = "/products";
       } else {
         // タスク管理ヘッダーを表示
         setShowTaskHeader(true);
+        console.log("管理者ダッシュボード表示");
       }
     }
-  }, [isLoggedIn, router, setShowTaskHeader, isInitialized]);
+  }, [isLoggedIn, setShowTaskHeader, isInitialized]);
 
   useEffect(() => {
     // ログインしていない場合は処理しない

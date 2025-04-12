@@ -106,51 +106,101 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // セッションストレージからユーザーデータを取得
   useEffect(() => {
-    // 初期ロード時にセッションストレージからユーザー情報を取得
-    try {
-      const userStr = sessionStorage.getItem("user");
+    const restoreSession = async () => {
+      // 初期ロード時にセッションストレージからユーザー情報を取得
+      try {
+        const userStr = sessionStorage.getItem("user");
 
-      if (userStr) {
-        try {
-          const userData = JSON.parse(userStr);
+        if (userStr) {
+          try {
+            const userData = JSON.parse(userStr);
 
-          // ユーザーIDを数値に変換
-          userData.id = parseInt(userData.id);
+            // ユーザーIDを数値に変換
+            userData.id = parseInt(userData.id);
 
-          // 必須フィールドの存在を確認
-          if (!userData.id || !userData.username || !userData.role) {
-            // 不完全なデータは使用しない
-            sessionStorage.removeItem("user");
-            return;
-          }
-
-          setUser(userData);
-          setIsLoggedIn(true);
-          setShowTaskHeader(true);
-
-          // リロード時に現在のパスに基づいて適切な処理を行う
-          const currentPath = window.location.pathname;
-
-          // ログインページにいる場合は、ロールに応じたページにリダイレクト
-          if (currentPath === "/login") {
-            if (userData.role === "admin") {
-              router.push("/admin/dashboard");
-            } else {
-              router.push("/member/tasks");
+            // 必須フィールドの存在を確認
+            if (!userData.id || !userData.username || !userData.role) {
+              // 不完全なデータは使用しない
+              sessionStorage.removeItem("user");
+              return;
             }
-          }
-          // それ以外の場合は現在のページに留まる（リダイレクトしない）
-        } catch (e) {
-          // 不正なデータを削除
-          sessionStorage.removeItem("user");
-        }
-      }
-    } catch (e) {
-      // セッションストレージにアクセスできない場合はエラー処理
-    }
-  }, [router]); // routerを依存配列に追加
 
-  // 認証状態チェック用
+            // 認証状態を即時更新
+            setUser(userData);
+            setIsLoggedIn(true);
+            setShowTaskHeader(true);
+
+            // 現在のURL情報を取得
+            const currentPath = window.location.pathname;
+            console.log("現在のパス:", currentPath);
+            console.log("認証情報復元:", userData);
+
+            // アクセス可能なパスのリスト
+            const pathMap = {
+              admin: [
+                "/admin/dashboard",
+                "/admin/users",
+                "/admin/input",
+                "/shared",
+              ],
+              member: [
+                "/member/tasks",
+                "/member/calendar",
+                "/member/suggestions",
+                "/shared",
+              ],
+            };
+
+            // ログインページまたはトップページの場合、適切なリダイレクト
+            if (
+              currentPath === "/login" ||
+              currentPath === "/products" ||
+              currentPath === "/"
+            ) {
+              console.log("ログインページ/トップページからリダイレクト");
+              if (userData.role === "admin") {
+                window.location.href = "/admin/dashboard";
+              } else {
+                window.location.href = "/member/tasks";
+              }
+              return;
+            }
+
+            // ページの権限チェック
+            const allowedPaths =
+              userData.role === "admin" ? pathMap.admin : pathMap.member;
+
+            const hasAccess = allowedPaths.some((path) =>
+              currentPath.startsWith(path)
+            );
+
+            if (!hasAccess) {
+              console.log("権限のないページへのアクセス");
+              // 強制的な URL 変更（Next.jsのルーターをバイパス）
+              if (userData.role === "admin") {
+                window.location.href = "/admin/dashboard";
+              } else {
+                window.location.href = "/member/tasks";
+              }
+            } else {
+              console.log("セッション復元成功：現在のページに留まります");
+            }
+          } catch (e) {
+            console.error("セッションデータ解析エラー:", e);
+            sessionStorage.removeItem("user");
+            window.location.href = "/login";
+          }
+        }
+      } catch (e) {
+        console.error("セッションアクセスエラー:", e);
+      }
+    };
+
+    // セッション復元処理を実行
+    restoreSession();
+  }, []); // 初期レンダリング時のみ実行
+
+  // 認証状態チェック用（二重保険）
   useEffect(() => {
     // ページ読み込み時に一度だけ実行される
     const checkAndRestoreSession = () => {
