@@ -1,8 +1,8 @@
-import React from "react";
+import React, { useMemo, useCallback } from "react";
 import {
   Box,
   Text,
-  VStack,
+  SimpleGrid,
   Card,
   CardBody,
   Badge,
@@ -41,6 +41,10 @@ interface TaskListProps {
   isLoading?: boolean;
   onEditTask?: (task: Task) => void;
   onDeleteTask?: (id: string | number) => void;
+  showEditButton?: boolean;
+  showDeleteButton?: boolean;
+  showCheckbox?: boolean;
+  subtitleSpacing?: number;
 }
 
 const priorityColors = {
@@ -55,26 +59,17 @@ const priorityLabels = {
   high: "高",
 };
 
-// 日付と時間をフォーマットする関数
 const formatDateTime = (dateString: string, isAllDay?: boolean): string => {
   if (!dateString) return "";
-
   try {
-    // データベースのタイムスタンプ文字列を直接解析（タイムゾーン指定なし）
     const date = new Date(dateString);
-    if (isNaN(date.getTime())) return dateString; // 無効な日付の場合はそのまま返す
-
-    // UTCとして扱い、タイムゾーン変換を避ける
+    if (isNaN(date.getTime())) return dateString;
     const year = date.getUTCFullYear();
     const month = String(date.getUTCMonth() + 1).padStart(2, "0");
     const day = String(date.getUTCDate()).padStart(2, "0");
-
-    // 終日タスクの場合は時間を表示しない
     if (isAllDay) {
       return `${year}/${month}/${day}`;
     }
-
-    // 時間情報も表示（UTCの値をそのまま使用）
     const hours = String(date.getUTCHours()).padStart(2, "0");
     const minutes = String(date.getUTCMinutes()).padStart(2, "0");
     return `${year}/${month}/${day} ${hours}:${minutes}`;
@@ -91,27 +86,53 @@ export default function TaskList({
   isLoading = false,
   onEditTask,
   onDeleteTask,
+  showEditButton = true,
+  showDeleteButton = true,
+  showCheckbox = true,
+  subtitleSpacing = 2,
 }: TaskListProps) {
   const bgColor = useColorModeValue("white", "gray.800");
   const borderColor = useColorModeValue("gray.200", "gray.700");
   const subtitleBg = useColorModeValue("blue.50", "blue.900");
   const toast = useToast();
 
-  // タスク削除処理
-  const handleDelete = async (id: string | number) => {
-    if (onDeleteTask) {
-      onDeleteTask(id);
-    }
-  };
+  // タスクを完了状態に基づいてソート（useMemoを使用してメモ化）
+  const sortedTasks = useMemo(() => {
+    return [...tasks].sort((a, b) => {
+      if (a.status === "completed" && b.status !== "completed") return 1;
+      if (a.status !== "completed" && b.status === "completed") return -1;
+      return 0;
+    });
+  }, [tasks]);
 
-  // タスク編集処理
-  const handleEdit = (task: Task) => {
-    if (onEditTask) {
-      onEditTask(task);
-    }
-  };
+  // イベントハンドラをメモ化
+  const handleDelete = useCallback(
+    (id: string | number) => {
+      if (onDeleteTask) {
+        onDeleteTask(id);
+      }
+    },
+    [onDeleteTask]
+  );
 
-  // ローディング表示
+  const handleEdit = useCallback(
+    (task: Task) => {
+      if (onEditTask) {
+        onEditTask(task);
+      }
+    },
+    [onEditTask]
+  );
+
+  const handleStatusChange = useCallback(
+    (id: string | number, status: string) => {
+      if (onStatusChange) {
+        onStatusChange(id, status);
+      }
+    },
+    [onStatusChange]
+  );
+
   if (isLoading) {
     return (
       <Box textAlign="center" py={8}>
@@ -126,7 +147,7 @@ export default function TaskList({
         <Box
           position="relative"
           py={2}
-          mb={2}
+          mb={subtitleSpacing}
           mt={4}
           px={3}
           borderLeftWidth="4px"
@@ -152,7 +173,11 @@ export default function TaskList({
       )}
 
       {viewType === "card" ? (
-        <VStack spacing={4} align="stretch" mt={showSubtitle ? -2 : 0}>
+        <SimpleGrid
+          columns={{ base: 1, md: 2 }}
+          spacing={4}
+          mt={showSubtitle ? -2 : 0}
+        >
           {tasks.length === 0 ? (
             <Card bg={bgColor} borderWidth="1px" borderColor={borderColor}>
               <CardBody>
@@ -162,7 +187,7 @@ export default function TaskList({
               </CardBody>
             </Card>
           ) : (
-            tasks.map((task) => (
+            sortedTasks.map((task) => (
               <Card
                 key={task.id}
                 bg={bgColor}
@@ -170,40 +195,57 @@ export default function TaskList({
                 borderColor={borderColor}
                 _hover={{ transform: "translateY(-2px)", boxShadow: "lg" }}
                 transition="all 0.2s"
+                size="sm"
               >
-                <CardBody>
-                  <VStack align="stretch" spacing={2}>
-                    <HStack justify="space-between">
-                      <Checkbox
-                        isChecked={task.status === "completed"}
-                        onChange={(e) =>
-                          onStatusChange &&
-                          onStatusChange(
-                            String(task.id), // IDを文字列に変換
-                            e.target.checked ? "completed" : "pending"
-                          )
-                        }
-                        size="lg"
-                      >
+                <CardBody p={3}>
+                  <Box>
+                    <HStack justify="space-between" mb={1}>
+                      {showCheckbox ? (
+                        <Checkbox
+                          isChecked={task.status === "completed"}
+                          onChange={(e) =>
+                            handleStatusChange(
+                              String(task.id),
+                              e.target.checked ? "completed" : "pending"
+                            )
+                          }
+                          size="md"
+                        >
+                          <Text
+                            fontSize="md"
+                            fontWeight="bold"
+                            textDecoration={
+                              task.status === "completed"
+                                ? "line-through"
+                                : "none"
+                            }
+                            noOfLines={1}
+                          >
+                            {task.title}
+                          </Text>
+                        </Checkbox>
+                      ) : (
                         <Text
-                          fontSize="lg"
+                          fontSize="md"
                           fontWeight="bold"
                           textDecoration={
                             task.status === "completed"
                               ? "line-through"
                               : "none"
                           }
+                          noOfLines={1}
                         >
                           {task.title}
                         </Text>
-                      </Checkbox>
-                      <HStack>
+                      )}
+                      <HStack spacing={1}>
                         <Badge
                           colorScheme={
                             priorityColors[
                               task.priority as keyof typeof priorityColors
                             ]
                           }
+                          fontSize="xs"
                         >
                           {
                             priorityLabels[
@@ -211,28 +253,34 @@ export default function TaskList({
                             ]
                           }
                         </Badge>
-                        <IconButton
-                          aria-label="編集"
-                          icon={<EditIcon />}
-                          size="sm"
-                          variant="ghost"
-                          colorScheme="blue"
-                          onClick={() => handleEdit(task)}
-                        />
-                        <IconButton
-                          aria-label="削除"
-                          icon={<DeleteIcon />}
-                          size="sm"
-                          variant="ghost"
-                          colorScheme="red"
-                          onClick={() => handleDelete(task.id)}
-                        />
+                        {showEditButton && (
+                          <IconButton
+                            aria-label="編集"
+                            icon={<EditIcon />}
+                            size="xs"
+                            variant="ghost"
+                            colorScheme="blue"
+                            onClick={() => handleEdit(task)}
+                          />
+                        )}
+                        {showDeleteButton && (
+                          <IconButton
+                            aria-label="削除"
+                            icon={<DeleteIcon />}
+                            size="xs"
+                            variant="ghost"
+                            colorScheme="red"
+                            onClick={() => handleDelete(task.id)}
+                          />
+                        )}
                       </HStack>
                     </HStack>
-                    <Text color="gray.600">{task.description}</Text>
+                    <Text color="gray.600" fontSize="sm" noOfLines={2} mb={1}>
+                      {task.description}
+                    </Text>
                     <HStack
                       justify="space-between"
-                      fontSize="sm"
+                      fontSize="xs"
                       color="gray.500"
                     >
                       <Text>
@@ -242,12 +290,12 @@ export default function TaskList({
                         <Text>作成者: {task.created_by_username}</Text>
                       )}
                     </HStack>
-                  </VStack>
+                  </Box>
                 </CardBody>
               </Card>
             ))
           )}
-        </VStack>
+        </SimpleGrid>
       ) : (
         <Card
           bg={bgColor}
@@ -261,25 +309,25 @@ export default function TaskList({
                 <Tr>
                   <Th>タイトル</Th>
                   <Th>説明</Th>
-                  <Th>ステータス</Th>
-                  <Th>優先度</Th>
                   <Th>期限</Th>
-                  <Th>操作</Th>
+                  <Th>優先度</Th>
+                  <Th>ステータス</Th>
+                  <Th textAlign="right">Actions</Th>
                 </Tr>
               </Thead>
               <Tbody>
                 {tasks.length === 0 ? (
                   <Tr>
-                    <Td colSpan={6} textAlign="center">
+                    <Td colSpan={6} textAlign="center" color="gray.500">
                       タスクはありません
                     </Td>
                   </Tr>
                 ) : (
-                  tasks.map((task) => (
+                  sortedTasks.map((task) => (
                     <Tr key={task.id}>
                       <Td>{task.title}</Td>
                       <Td>{task.description}</Td>
-                      <Td>{task.status === "completed" ? "完了" : "未完了"}</Td>
+                      <Td>{formatDateTime(task.due_date, task.is_all_day)}</Td>
                       <Td>
                         <Badge
                           colorScheme={
@@ -296,12 +344,24 @@ export default function TaskList({
                         </Badge>
                       </Td>
                       <Td>
-                        {typeof task.due_date === "string" && task.due_date
-                          ? formatDateTime(task.due_date, task.is_all_day)
-                          : ""}
+                        {showCheckbox ? (
+                          <Checkbox
+                            isChecked={task.status === "completed"}
+                            onChange={(e) =>
+                              handleStatusChange(
+                                String(task.id),
+                                e.target.checked ? "completed" : "pending"
+                              )
+                            }
+                          />
+                        ) : task.status === "completed" ? (
+                          "完了"
+                        ) : (
+                          "未完了"
+                        )}
                       </Td>
-                      <Td>
-                        <HStack spacing={2}>
+                      <Td textAlign="right">
+                        {showEditButton && (
                           <IconButton
                             aria-label="編集"
                             icon={<EditIcon />}
@@ -309,7 +369,10 @@ export default function TaskList({
                             variant="ghost"
                             colorScheme="blue"
                             onClick={() => handleEdit(task)}
+                            mr={2}
                           />
+                        )}
+                        {showDeleteButton && (
                           <IconButton
                             aria-label="削除"
                             icon={<DeleteIcon />}
@@ -318,7 +381,7 @@ export default function TaskList({
                             colorScheme="red"
                             onClick={() => handleDelete(task.id)}
                           />
-                        </HStack>
+                        )}
                       </Td>
                     </Tr>
                   ))
