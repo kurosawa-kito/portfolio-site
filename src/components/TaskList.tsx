@@ -88,6 +88,13 @@ export default function TaskList({
   const subtitleBg = useColorModeValue("blue.50", "blue.900");
   const toast = useToast();
 
+  // タスクを完了状態に基づいてソート
+  const sortedTasks = [...tasks].sort((a, b) => {
+    if (a.status === "completed" && b.status !== "completed") return 1;
+    if (a.status !== "completed" && b.status === "completed") return -1;
+    return 0;
+  });
+
   const handleDelete = async (id: string | number) => {
     if (onDeleteTask) {
       onDeleteTask(id);
@@ -154,7 +161,7 @@ export default function TaskList({
               </CardBody>
             </Card>
           ) : (
-            tasks.map((task) => (
+            sortedTasks.map((task) => (
               <Card
                 key={task.id}
                 bg={bgColor}
@@ -272,7 +279,7 @@ export default function TaskList({
                     </Td>
                   </Tr>
                 ) : (
-                  tasks.map((task) => (
+                  sortedTasks.map((task) => (
                     <Tr key={task.id}>
                       <Td>{task.title}</Td>
                       <Td>{task.description}</Td>
