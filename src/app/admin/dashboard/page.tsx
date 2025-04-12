@@ -88,6 +88,7 @@ export default function AdminDashboard() {
   const [selectedUser, setSelectedUser] = useState<string>("");
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
   const toast = useToast();
   const { user, isLoggedIn, setShowTaskHeader } = useAuth();
   const router = useRouter();
@@ -95,15 +96,55 @@ export default function AdminDashboard() {
   const borderColor = useColorModeValue("gray.200", "gray.700");
   const subtitleBg = useColorModeValue("blue.50", "blue.900");
 
+  // 初期化状態の設定
+  useEffect(() => {
+    // セッションストレージから直接チェック（初期レンダリング時のみ）
+    const checkSession = () => {
+      try {
+        const userStr = sessionStorage.getItem("user");
+        if (userStr) {
+          const userData = JSON.parse(userStr);
+          if (userData.role === "admin") {
+            // 管理者権限があれば初期化完了とする
+            setIsInitialized(true);
+            return true;
+          }
+        }
+        return false;
+      } catch (e) {
+        return false;
+      }
+    };
+
+    // まだ初期化されておらず、ユーザー情報もない場合はセッションをチェック
+    if (!isInitialized && !user) {
+      const hasSession = checkSession();
+      if (!hasSession) {
+        // セッションもない場合は製品ページへリダイレクト
+        router.push("/products");
+      }
+    } else if (user) {
+      // ユーザー情報がある場合
+      setIsInitialized(true);
+      if (user.role !== "admin") {
+        // 管理者でない場合はリダイレクト
+        router.push("/member/tasks");
+      }
+    }
+  }, [user, isInitialized, router]);
+
   // ログインチェック
   useEffect(() => {
-    if (!isLoggedIn) {
-      router.push("/products");
-    } else {
-      // タスク管理ヘッダーを表示
-      setShowTaskHeader(true);
+    // 初期化完了後にのみログインチェックを行う
+    if (isInitialized) {
+      if (!isLoggedIn) {
+        router.push("/products");
+      } else {
+        // タスク管理ヘッダーを表示
+        setShowTaskHeader(true);
+      }
     }
-  }, [isLoggedIn, router, setShowTaskHeader]);
+  }, [isLoggedIn, router, setShowTaskHeader, isInitialized]);
 
   useEffect(() => {
     // ログインしていない場合は処理しない
