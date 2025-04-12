@@ -169,6 +169,20 @@ export default function AdminDashboard() {
       if (!selectedUser) return;
       setIsLoading(true);
       try {
+        const selectedUserData = users.find(u => String(u.id) === String(selectedUser));
+        if (!selectedUserData) {
+          console.log("選択されたユーザーID:", selectedUser);
+          console.log("利用可能なユーザー:", users.map(u => ({ id: u.id, username: u.username })));
+          toast({
+            title: "エラー",
+            description: "選択されたユーザーの情報が見つかりません",
+            status: "error",
+            duration: 5000,
+            isClosable: true,
+          });
+          setIsLoading(false);
+          return;
+        }
         // ユーザー情報をBase64エンコードして非ASCII文字の問題を回避
         const userStr = JSON.stringify(user);
         const userBase64 =
@@ -176,7 +190,8 @@ export default function AdminDashboard() {
             ? safeBase64Encode(userStr, user)
             : Buffer.from(userStr).toString("base64");
 
-        const res = await fetch(`/api/admin/tasks?userId=${selectedUser}`, {
+        // クエリパラメータは文字列として送信
+        const res = await fetch(`/api/admin/tasks?userId=${String(selectedUser)}`, {
           headers: {
             "x-user-base64": userBase64,
           },
@@ -223,7 +238,10 @@ export default function AdminDashboard() {
           : Buffer.from(userStr).toString("base64");
 
       // 選択されたユーザーの情報を取得
-      const selectedUserData = users.find(u => u.id === selectedUser);
+      const selectedUserData = users.find(u => String(u.id) === String(selectedUser));
+      
+      console.log("選択されたユーザーID:", selectedUser, "型:", typeof selectedUser);
+      console.log("ユーザーIDリスト:", users.map(u => ({id: u.id, type: typeof u.id, username: u.username})));
       
       if (!selectedUserData) {
         console.error("選択されたユーザーID:", selectedUser);
@@ -378,7 +396,7 @@ export default function AdminDashboard() {
                 maxW="300px"
               >
                 {users.map((user) => (
-                  <option key={user.id} value={user.id}>
+                  <option key={user.id} value={String(user.id)}>
                     {user.username} ({user.role})
                   </option>
                 ))}
