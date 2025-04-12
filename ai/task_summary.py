@@ -4,29 +4,33 @@ import sys
 import traceback
 from datetime import datetime
 
-# Gemini API をインポート
+# OpenAI API をインポート
 try:
-    import google.generativeai as genai
-    GEMINI_AVAILABLE = True
+    import openai
+    OPENAI_AVAILABLE = True
 except ImportError:
-    print("警告: google.generativeai モジュールが見つかりません。ローカル分析を使用します。", file=sys.stderr)
-    GEMINI_AVAILABLE = False
+    print("警告: openai モジュールが見つかりません。ローカル分析を使用します。", file=sys.stderr)
+    OPENAI_AVAILABLE = False
 
 # APIキーを設定
-API_KEY = os.getenv("GEMINI_API_KEY", "AIzaSyDOFONEB_t5Mf42k2MFmEy2ZxtI-tL4bBw")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 # APIを初期化
-if GEMINI_AVAILABLE:
+if OPENAI_AVAILABLE:
     try:
-        genai.configure(api_key=API_KEY)
-        print(f"Gemini APIを設定しました", file=sys.stderr)
+        if OPENAI_API_KEY:
+            openai.api_key = OPENAI_API_KEY
+            print(f"OpenAI APIを設定しました", file=sys.stderr)
+        else:
+            print("OpenAI APIキーが設定されていません", file=sys.stderr)
+            OPENAI_AVAILABLE = False
     except Exception as e:
-        print(f"Gemini API初期化エラー: {str(e)}", file=sys.stderr)
-        GEMINI_AVAILABLE = False
+        print(f"OpenAI API初期化エラー: {str(e)}", file=sys.stderr)
+        OPENAI_AVAILABLE = False
 
-def analyze_tasks_with_gemini(user_info, tasks):
+def analyze_tasks_with_openai(user_info, tasks):
     """
-    Gemini APIを使用してタスク分析を行う
+    OpenAI APIを使用してタスク分析を行う
     """
     try:
         # ユーザー名を取得
@@ -51,20 +55,25 @@ def analyze_tasks_with_gemini(user_info, tasks):
         # プロンプトの構築
         prompt = f"以下は{username}さんのタスクです。これらからこの人のタスク状況を分析して、チーム管理者にわかりやすく、あまり長くならないように視覚的に見やすい形で出力して。「{username}さんのタスク状況」という始まりから出力。\n\n{tasks_text}"
         
-        print("Gemini APIにリクエスト送信中...", file=sys.stderr)
-        
-        # モデルを初期化
-        model = genai.GenerativeModel('models/gemini-2.0-pro-exp')
+        print("OpenAI APIにリクエスト送信中...", file=sys.stderr)
         
         # テキスト生成を実行
-        response = model.generate_content(prompt)
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": "あなたはタスク分析の専門家です。ユーザーのタスク情報から状況を分析し、わかりやすく表示してください。"},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.7,
+            max_tokens=1000
+        )
         
-        print("Gemini APIからレスポンスを受信", file=sys.stderr)
-        return response.text
+        print("OpenAI APIからレスポンスを受信", file=sys.stderr)
+        return response.choices[0].message['content']
     
     except Exception as e:
         error_trace = traceback.format_exc()
-        error_msg = f"Gemini API エラー: {str(e)}\n{error_trace}"
+        error_msg = f"OpenAI API エラー: {str(e)}\n{error_trace}"
         print(error_msg, file=sys.stderr)
         # API失敗時はローカル分析にフォールバック
         print("ローカル分析にフォールバックします", file=sys.stderr)
@@ -184,7 +193,7 @@ def analyze_tasks_local(user_info, tasks):
 def analyze_tasks(user_info, tasks):
     """
     ユーザーとそのタスク情報に基づいて分析を行う
-    Gemini APIが利用可能ならそれを使い、失敗したらローカル分析にフォールバック
+    OpenAI APIが利用可能ならそれを使い、失敗したらローカル分析にフォールバック
     
     Args:
         user_info (dict): ユーザー情報を含む辞書
@@ -193,10 +202,10 @@ def analyze_tasks(user_info, tasks):
     Returns:
         str: 生成された分析テキスト
     """
-    # まずGemini APIで試す
-    if GEMINI_AVAILABLE:
-        print("Gemini APIを使用して分析を開始します", file=sys.stderr)
-        result = analyze_tasks_with_gemini(user_info, tasks)
+    # まずOpenAI APIで試す
+    if OPENAI_AVAILABLE:
+        print("OpenAI APIを使用して分析を開始します", file=sys.stderr)
+        result = analyze_tasks_with_openai(user_info, tasks)
         if result:
             return result
     
