@@ -222,6 +222,9 @@ export default function TasksPage() {
         "x-user-base64": userBase64,
       };
 
+      console.log("deleteHeaders", deleteHeaders);
+      console.log(sessionStorage.getItem("user"));
+
       const response = await fetch(`/api/tasks/${taskId}`, {
         method: "DELETE",
         headers: deleteHeaders,
