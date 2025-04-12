@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { validateUserBase64 } from '../../../src/utils/authUtils';
+import { validateUserBase64 } from '@/utils/authUtils';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import path from 'path';
