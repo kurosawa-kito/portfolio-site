@@ -132,8 +132,6 @@ export async function DELETE(
       user.id = parseInt(user.id);
     }
 
-    console.log("ユーザー情報:", user);
-
     // タスクの存在確認（権限チェックを行わない）
     const taskResult = await sql`
       SELECT * FROM tasks 
@@ -150,18 +148,48 @@ export async function DELETE(
       );
     }
 
-    // タスクを削除
-    const deletedTask = await sql`
-      DELETE FROM tasks 
-      WHERE id = ${taskId}
-      RETURNING *;
-    `;
+    if (
+      taskResult.rows[0].is_shared &&
+      taskResult.rows[0].status !== "completed"
+    ) {
+      // タスクを更新: is_shared, shared_at, assigned_to を変更
+      const updatedTask = await sql`
+        UPDATE tasks 
+        SET 
+          is_shared = ${false},
+          shared_at = ${null},
+          assigned_to = ${null},
+          updated_at = NOW()
+        WHERE id = ${taskId}
+        RETURNING *;
+      `;
 
-    console.log(`タスク ${taskId} を削除しました`);
-    return NextResponse.json(
-      { message: "タスクを削除しました", deletedTask: deletedTask.rows[0] },
-      { status: 200 }
-    );
+      console.log("更新されたタスク:", updatedTask.rows[0]);
+
+      return NextResponse.json(
+        {
+          message: "タスクの共有状態を更新しました",
+          updatedTask: updatedTask.rows[0],
+        },
+        { status: 200 }
+      );
+    } else {
+      // タスクを削除
+      const deletedTask = await sql`
+        DELETE FROM tasks 
+        WHERE id = ${taskId}
+        RETURNING *;
+      `;
+
+      console.log(`タスク ${taskId} を削除しました`);
+      return NextResponse.json(
+        {
+          message: "タスクを削除しました",
+          deletedTask: deletedTask.rows[0],
+        },
+        { status: 200 }
+      );
+    }
   } catch (error) {
     console.error("タスク削除エラー:", error);
     return NextResponse.json(
