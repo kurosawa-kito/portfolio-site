@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { useMemo } from "react";
+import { useState, useEffect, ChangeEvent } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -30,6 +30,60 @@ const formSchema = z.object({
   }),
 });
 
+// 最適化されたInputコンポーネント
+const OptimizedInput = ({ value, onChange, onBlur, ...props }: any) => {
+  const [localValue, setLocalValue] = useState(value);
+
+  useEffect(() => {
+    setLocalValue(value);
+  }, [value]);
+
+  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setLocalValue(e.target.value);
+  };
+
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    if (onBlur) onBlur(e);
+    if (onChange && localValue !== value) onChange(localValue);
+  };
+
+  return (
+    <Input
+      {...props}
+      value={localValue}
+      onChange={handleChange}
+      onBlur={handleBlur}
+    />
+  );
+};
+
+// 最適化されたTextareaコンポーネント
+const OptimizedTextarea = ({ value, onChange, onBlur, ...props }: any) => {
+  const [localValue, setLocalValue] = useState(value);
+
+  useEffect(() => {
+    setLocalValue(value);
+  }, [value]);
+
+  const handleChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
+    setLocalValue(e.target.value);
+  };
+
+  const handleBlur = (e: React.FocusEvent<HTMLTextAreaElement>) => {
+    if (onBlur) onBlur(e);
+    if (onChange && localValue !== value) onChange(localValue);
+  };
+
+  return (
+    <Textarea
+      {...props}
+      value={localValue}
+      onChange={handleChange}
+      onBlur={handleBlur}
+    />
+  );
+};
+
 export default function ContactPage() {
   // フォームの初期化
   const form = useForm<z.infer<typeof formSchema>>({
@@ -39,6 +93,7 @@ export default function ContactPage() {
       email: "",
       message: "",
     },
+    mode: "onBlur", // フォーカスアウト時にのみバリデーションを実行
   });
 
   // フォーム送信時の処理
@@ -63,17 +118,15 @@ export default function ContactPage() {
                 <FormItem>
                   <FormLabel>お名前</FormLabel>
                   <FormControl>
-                    {useMemo(
-                      () => (
-                        <Input placeholder="山田太郎" {...field} />
-                      ),
-                      [field.name, field.onChange]
-                    )}
+                    <OptimizedInput {...field} placeholder="山田太郎" />
                   </FormControl>
-                  <FormMessage />
+                  <FormMessage>
+                    {form.formState.errors.name?.message}
+                  </FormMessage>
                 </FormItem>
               )}
             />
+
             <FormField
               control={form.control}
               name="email"
@@ -81,17 +134,15 @@ export default function ContactPage() {
                 <FormItem>
                   <FormLabel>メールアドレス</FormLabel>
                   <FormControl>
-                    {useMemo(
-                      () => (
-                        <Input placeholder="taro@example.com" {...field} />
-                      ),
-                      [field.name, field.onChange]
-                    )}
+                    <OptimizedInput {...field} placeholder="taro@example.com" />
                   </FormControl>
-                  <FormMessage />
+                  <FormMessage>
+                    {form.formState.errors.email?.message}
+                  </FormMessage>
                 </FormItem>
               )}
             />
+
             <FormField
               control={form.control}
               name="message"
@@ -99,20 +150,18 @@ export default function ContactPage() {
                 <FormItem>
                   <FormLabel>メッセージ</FormLabel>
                   <FormControl>
-                    {useMemo(
-                      () => (
-                        <Textarea
-                          placeholder="ご質問やご相談を入力してください"
-                          {...field}
-                        />
-                      ),
-                      [field.name, field.onChange]
-                    )}
+                    <OptimizedTextarea
+                      {...field}
+                      placeholder="ご質問やご相談を入力してください"
+                    />
                   </FormControl>
-                  <FormMessage />
+                  <FormMessage>
+                    {form.formState.errors.message?.message}
+                  </FormMessage>
                 </FormItem>
               )}
             />
+
             <Button type="submit" className="w-full">
               送信する
             </Button>
