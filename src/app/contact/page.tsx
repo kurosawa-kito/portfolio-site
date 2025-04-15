@@ -3,6 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
+import { useMemo } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -62,7 +63,12 @@ export default function ContactPage() {
                 <FormItem>
                   <FormLabel>お名前</FormLabel>
                   <FormControl>
-                    <Input placeholder="山田太郎" {...field} />
+                    {useMemo(
+                      () => (
+                        <Input placeholder="山田太郎" {...field} />
+                      ),
+                      [field.name, field.onChange]
+                    )}
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -75,7 +81,12 @@ export default function ContactPage() {
                 <FormItem>
                   <FormLabel>メールアドレス</FormLabel>
                   <FormControl>
-                    <Input placeholder="taro@example.com" {...field} />
+                    {useMemo(
+                      () => (
+                        <Input placeholder="taro@example.com" {...field} />
+                      ),
+                      [field.name, field.onChange]
+                    )}
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -88,10 +99,15 @@ export default function ContactPage() {
                 <FormItem>
                   <FormLabel>メッセージ</FormLabel>
                   <FormControl>
-                    <Textarea
-                      placeholder="ご質問やご相談を入力してください"
-                      {...field}
-                    />
+                    {useMemo(
+                      () => (
+                        <Textarea
+                          placeholder="ご質問やご相談を入力してください"
+                          {...field}
+                        />
+                      ),
+                      [field.name, field.onChange]
+                    )}
                   </FormControl>
                   <FormMessage />
                 </FormItem>
