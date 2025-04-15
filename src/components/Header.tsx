@@ -96,6 +96,11 @@ export default function Header() {
               Products
             </Button>
           </Link>
+          <Link href="/contact" passHref>
+            <Button variant="ghost" colorScheme="blue">
+              お問い合わせ
+            </Button>
+          </Link>
         </HStack>
 
         {/* モバイルメニューボタン */}
@@ -144,6 +149,16 @@ export default function Header() {
                   onClick={onClose}
                 >
                   Products
+                </Button>
+              </Link>
+              <Link href="/contact" passHref>
+                <Button
+                  variant="ghost"
+                  colorScheme="blue"
+                  w="full"
+                  onClick={onClose}
+                >
+                  お問い合わせ
                 </Button>
               </Link>
             </VStack>
