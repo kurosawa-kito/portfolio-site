@@ -1,173 +1,135 @@
 "use client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import * as z from "zod";
-import { useState, useEffect, ChangeEvent } from "react";
-
-import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
   FormField,
   FormItem,
   FormLabel,
-  FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { cn } from "@/lib/utils";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm, type FieldErrors } from "react-hook-form";
+import { z } from "zod";
+import React from "react";
 
-// フォームスキーマの定義
-const formSchema = z.object({
-  name: z.string().min(2, {
-    message: "名前は2文字以上入力してください",
-  }),
-  email: z.string().email({
-    message: "有効なメールアドレスを入力してください",
-  }),
-  message: z.string().min(10, {
-    message: "メッセージは10文字以上入力してください",
-  }),
+const signupSchema = z.object({
+  loginid: z.string().min(1, "loginIdRequired"),
+  password: z.string().min(1, "passwordRequired"),
+  display_name: z.string().min(1, "displayNameRequired"),
+  email: z.string().email("emailInvalid"),
 });
 
-// 最適化されたInputコンポーネント
-const OptimizedInput = ({ value, onChange, onBlur, ...props }: any) => {
-  const [localValue, setLocalValue] = useState(value);
+type SignupFormValues = z.infer<typeof signupSchema>;
 
-  useEffect(() => {
-    setLocalValue(value);
-  }, [value]);
-
-  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
-    setLocalValue(e.target.value);
-  };
-
-  const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
-    if (onBlur) onBlur(e);
-    if (onChange && localValue !== value) onChange(localValue);
-  };
-
-  return (
-    <Input
-      {...props}
-      value={localValue}
-      onChange={handleChange}
-      onBlur={handleBlur}
-    />
-  );
+/** フォーカス時のボーダーを青色,エラー時赤色にする */
+const getInputClassNames = <T extends Record<string, string>>(
+  errors: FieldErrors<T>,
+  fieldName: string & keyof T
+): string => {
+  return `border border-[#757575] rounded-md focus:outline-none focus:ring-0 focus-visible:ring-transparent ${
+    errors[fieldName]
+      ? "border-2 custom-border-red"
+      : "focus:border-2 custom-focus-border-blue"
+  }`;
 };
 
-// 最適化されたTextareaコンポーネント
-const OptimizedTextarea = ({ value, onChange, onBlur, ...props }: any) => {
-  const [localValue, setLocalValue] = useState(value);
+// Memoized FormLabel to prevent unnecessary re-renders
+const MemoizedFormLabel = React.memo(({ children }) => (
+  <FormLabel>{children}</FormLabel>
+));
 
-  useEffect(() => {
-    setLocalValue(value);
-  }, [value]);
-
-  const handleChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
-    setLocalValue(e.target.value);
-  };
-
-  const handleBlur = (e: React.FocusEvent<HTMLTextAreaElement>) => {
-    if (onBlur) onBlur(e);
-    if (onChange && localValue !== value) onChange(localValue);
-  };
-
-  return (
-    <Textarea
-      {...props}
-      value={localValue}
-      onChange={handleChange}
-      onBlur={handleBlur}
-    />
-  );
-};
-
-export default function ContactPage() {
-  // フォームの初期化
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      name: "",
-      email: "",
-      message: "",
-    },
-    mode: "onBlur", // フォーカスアウト時にのみバリデーションを実行
+const ContactPage = () => {
+  const form = useForm<z.infer<typeof signupSchema>>({
+    resolver: zodResolver(signupSchema),
+    defaultValues: {},
   });
 
-  // フォーム送信時の処理
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    // フォームデータの処理（ここではコンソールに出力）
-    console.log(values);
-    alert("お問い合わせありがとうございます！");
-  }
+  const onSubmit = async (values: SignupFormValues) => {
+    console.log("Submitted:", values);
+  };
 
   return (
     <div className="container mx-auto p-4">
-      <h1 className="text-3xl font-bold mb-4">お問い合わせ</h1>
-      <p className="mb-8">下記フォームよりお気軽にお問い合わせください。</p>
+      <h1 className="text-3xl font-bold mb-4">サインアップ</h1>
+      <p className="mb-8">下記フォームでサインアップしてください。</p>
 
       <div className="max-w-md mx-auto bg-white p-6 rounded-lg shadow-md">
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="signup-form">
             <FormField
               control={form.control}
-              name="name"
+              name="display_name"
               render={({ field }) => (
-                <FormItem>
-                  <FormLabel>お名前</FormLabel>
+                <FormItem className="item">
+                  <MemoizedFormLabel>Display Name</MemoizedFormLabel>
                   <FormControl>
-                    <OptimizedInput {...field} placeholder="山田太郎" />
+                    <Input
+                      type="text"
+                      value={field.value || ""}
+                      onChange={(e) => field.onChange(e.target.value)}
+                      onBlur={field.onBlur}
+                      className={cn(
+                        getInputClassNames(
+                          form.formState.errors,
+                          "display_name"
+                        ),
+                        "display-name-input"
+                      )}
+                      placeholder="Enter display name"
+                      aria-label="表示名を入力してください"
+                    />
                   </FormControl>
-                  <FormMessage>
-                    {form.formState.errors.name?.message}
-                  </FormMessage>
+                  {form.formState.errors.display_name &&
+                    form.formState.touchedFields.display_name && (
+                      <strong className="error-message">
+                        {form.formState.errors.display_name.message}
+                      </strong>
+                    )}
                 </FormItem>
               )}
             />
-
             <FormField
               control={form.control}
               name="email"
               render={({ field }) => (
-                <FormItem>
-                  <FormLabel>メールアドレス</FormLabel>
+                <FormItem className="item">
+                  <MemoizedFormLabel>Email</MemoizedFormLabel>
                   <FormControl>
-                    <OptimizedInput {...field} placeholder="taro@example.com" />
-                  </FormControl>
-                  <FormMessage>
-                    {form.formState.errors.email?.message}
-                  </FormMessage>
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="message"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>メッセージ</FormLabel>
-                  <FormControl>
-                    <OptimizedTextarea
-                      {...field}
-                      placeholder="ご質問やご相談を入力してください"
+                    <Input
+                      type="email"
+                      value={field.value || ""}
+                      onChange={(e) => field.onChange(e.target.value)}
+                      onBlur={field.onBlur}
+                      className={cn(
+                        getInputClassNames(form.formState.errors, "email"),
+                        "email-input"
+                      )}
+                      placeholder="Enter email"
+                      aria-label="メールアドレスを入力してください"
                     />
                   </FormControl>
-                  <FormMessage>
-                    {form.formState.errors.message?.message}
-                  </FormMessage>
+                  {form.formState.errors.email &&
+                    form.formState.touchedFields.email && (
+                      <strong className="error-message">
+                        {form.formState.errors.email.message}
+                      </strong>
+                    )}
                 </FormItem>
               )}
             />
-
-            <Button type="submit" className="w-full">
-              送信する
-            </Button>
+            <button
+              type="submit"
+              className="w-full bg-blue-500 text-white p-2 rounded mt-4"
+            >
+              Submit
+            </button>
           </form>
         </Form>
       </div>
     </div>
   );
-}
+};
+
+export default ContactPage;
