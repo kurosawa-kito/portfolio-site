@@ -12,11 +12,21 @@ import {
   useColorModeValue,
   Divider,
   Container,
+  Switch,
+  FormControl,
+  FormLabel,
+  Button,
+  Spinner as ChakraSpinner,
 } from "@chakra-ui/react";
 import { useAuth } from "@/contexts/AuthContext";
 import PageTitle from "@/components/PageTitle";
 import TaskList from "@/components/TaskList";
 import { useRouter } from "next/navigation";
+import ReactMarkdown from "react-markdown";
+import rehypeRaw from "rehype-raw";
+import rehypeSanitize from "rehype-sanitize";
+import remarkGfm from "remark-gfm";
+import "github-markdown-css/github-markdown.css";
 
 type User = {
   id: string;
@@ -88,12 +98,81 @@ export default function AdminDashboard() {
   const [selectedUser, setSelectedUser] = useState<string>("");
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [viewMode, setViewMode] = useState<"card" | "ai">("card");
+  const [aiAnalysis, setAiAnalysis] = useState<string>("");
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const toast = useToast();
   const { user, isLoggedIn, setShowTaskHeader } = useAuth();
   const router = useRouter();
   const bgColor = useColorModeValue("white", "gray.800");
   const borderColor = useColorModeValue("gray.200", "gray.700");
   const subtitleBg = useColorModeValue("blue.50", "blue.900");
+
+  // マークダウンスタイルの定義
+  const markdownStyles = {
+    "&::-webkit-scrollbar": {
+      width: "8px",
+    },
+    "&::-webkit-scrollbar-track": {
+      backgroundColor: useColorModeValue("gray.100", "gray.700"),
+      borderRadius: "4px",
+    },
+    "&::-webkit-scrollbar-thumb": {
+      backgroundColor: useColorModeValue("gray.300", "gray.600"),
+      borderRadius: "4px",
+    },
+    "& h1, & h2, & h3, & h4, & h5, & h6": {
+      fontWeight: "bold",
+      borderBottom: useColorModeValue("1px solid #eee", "1px solid #333"),
+      paddingBottom: "5px",
+      marginTop: "15px",
+      marginBottom: "10px",
+    },
+    "& h1": { fontSize: "1.8em" },
+    "& h2": { fontSize: "1.5em" },
+    "& h3": { fontSize: "1.3em" },
+    "& strong": { fontWeight: "bold" },
+    "& em": { fontStyle: "italic" },
+    "& ul, & ol": {
+      paddingLeft: "20px",
+      marginBottom: "10px",
+    },
+    "& ul": { listStyleType: "disc" },
+    "& ol": { listStyleType: "decimal" },
+    "& blockquote": {
+      borderLeft: useColorModeValue("4px solid #ddd", "4px solid #555"),
+      paddingLeft: "15px",
+      marginLeft: "0",
+      color: useColorModeValue("gray.600", "gray.400"),
+    },
+    "& code": {
+      fontFamily: "monospace",
+      backgroundColor: useColorModeValue("gray.100", "gray.700"),
+      padding: "2px 4px",
+      borderRadius: "3px",
+    },
+    "& pre": {
+      fontFamily: "monospace",
+      backgroundColor: useColorModeValue("gray.100", "gray.700"),
+      padding: "10px",
+      borderRadius: "5px",
+      overflowX: "auto",
+      marginBottom: "10px",
+    },
+    "& table": {
+      borderCollapse: "collapse",
+      width: "100%",
+      marginBottom: "10px",
+    },
+    "& th, & td": {
+      border: useColorModeValue("1px solid #eee", "1px solid #555"),
+      padding: "8px 12px",
+      textAlign: "left",
+    },
+    "& th": {
+      backgroundColor: useColorModeValue("gray.100", "gray.700"),
+    },
+  };
 
   // ログインチェック
   useEffect(() => {
@@ -189,6 +268,57 @@ export default function AdminDashboard() {
     fetchTasks();
   }, [selectedUser, toast, isLoggedIn, user]);
 
+  // タスク分析を実行する関数
+  const analyzeTask = async (taskData: Task) => {
+    setIsAnalyzing(true);
+    setAiAnalysis(""); // 分析開始時に結果をクリア
+    try {
+      const response = await fetch("/api/ai/task-analysis", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ taskData: tasks }), // 全タスク配列を送信
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setAiAnalysis(data.analysis);
+      } else {
+        setAiAnalysis(
+          `エラー: ${data.message || "タスクの分析に失敗しました"}`
+        );
+        toast({
+          title: "分析エラー",
+          description: data.message || "タスクの分析に失敗しました",
+          status: "error",
+          duration: 5000,
+          isClosable: true,
+        });
+      }
+    } catch (error) {
+      setAiAnalysis("エラー: サーバーとの通信に失敗しました");
+      toast({
+        title: "エラー",
+        description: "サーバーとの通信に失敗しました",
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+      });
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
+  // タスクが選択されたときに自動的に分析する
+  useEffect(() => {
+    if (tasks.length > 0 && viewMode === "ai") {
+      // 全タスクを分析
+      analyzeTask(tasks[0]); // 引数は使われないが関数シグネチャ維持のため渡す
+    }
+  }, [tasks, viewMode]);
+
   // ログインしていない場合は何も表示しない
   if (!isLoggedIn) {
     return null;
@@ -210,53 +340,26 @@ export default function AdminDashboard() {
   }
 
   return (
-    <Container maxW="960px" py={4}>
+    <Container maxW="container.lg" pb={10}>
       <VStack spacing={6} align="stretch" width="100%">
         <PageTitle>管理者ダッシュボード</PageTitle>
 
         <Card bg={bgColor} borderWidth="1px" borderColor={borderColor}>
           <CardBody>
-            <VStack align="start" spacing={4}>
-              <Box
-                position="relative"
-                py={2}
-                mb={2}
-                px={3}
-                width="100%"
-                borderLeftWidth="4px"
-                borderLeftColor="blue.500"
-                bg={subtitleBg}
-                borderRadius="md"
-                boxShadow="sm"
-              >
-                <Text
-                  fontSize="lg"
-                  fontWeight="bold"
-                  bgGradient="linear(to-r, blue.500, purple.500)"
-                  bgClip="text"
-                  display="flex"
-                  alignItems="center"
-                >
-                  <Box as="span" mr={2}>
-                    👤
-                  </Box>
-                  メンバータスク確認
-                </Text>
-              </Box>
-              <Text mb={2}>ユーザーを選択してください：</Text>
-              <Select
-                value={selectedUser}
-                onChange={(e) => setSelectedUser(e.target.value)}
-                placeholder="ユーザーを選択"
-                maxW="300px"
-              >
-                {users.map((user) => (
-                  <option key={user.id} value={user.id}>
-                    {user.username} ({user.role})
-                  </option>
-                ))}
-              </Select>
-            </VStack>
+            <Text mb={4} fontWeight="bold">
+              ユーザー選択
+            </Text>
+            <Select
+              placeholder="ユーザーを選択"
+              value={selectedUser}
+              onChange={(e) => setSelectedUser(e.target.value)}
+            >
+              {users.map((user) => (
+                <option key={user.id} value={user.id}>
+                  {user.username}
+                </option>
+              ))}
+            </Select>
           </CardBody>
         </Card>
 
@@ -265,17 +368,165 @@ export default function AdminDashboard() {
             <Divider my={2} />
             <Card bg={bgColor} borderWidth="1px" borderColor={borderColor}>
               <CardBody>
-                <TaskList
-                  tasks={tasks}
-                  isLoading={isLoading}
-                  showEditButton={false}
-                  showDeleteButton={false}
-                  showCheckbox={false}
-                  showStatusBadge={true}
-                  subtitleSpacing={8}
-                  showSubtitle={true}
-                  viewType="card"
-                />
+                <FormControl display="flex" alignItems="center" mb={4}>
+                  <FormLabel htmlFor="view-mode" mb="0">
+                    表示モード:
+                  </FormLabel>
+                  <Text mr={2}>カード表示</Text>
+                  <Switch
+                    id="view-mode"
+                    isChecked={viewMode === "ai"}
+                    onChange={() =>
+                      setViewMode(viewMode === "card" ? "ai" : "card")
+                    }
+                  />
+                  <Text ml={2}>AI分析</Text>
+                </FormControl>
+
+                {viewMode === "card" ? (
+                  <TaskList
+                    tasks={tasks}
+                    isLoading={isLoading}
+                    showEditButton={false}
+                    showDeleteButton={false}
+                    showCheckbox={false}
+                    showStatusBadge={true}
+                    subtitleSpacing={8}
+                    showSubtitle={true}
+                    viewType="card"
+                  />
+                ) : (
+                  <Box
+                    p={6}
+                    borderWidth="1px"
+                    borderRadius="lg"
+                    borderColor={borderColor}
+                    bg={useColorModeValue("gray.50", "gray.900")}
+                    boxShadow="md"
+                  >
+                    <Text fontWeight="bold" mb={4} fontSize="lg">
+                      AI分析結果{" "}
+                      <span style={{ fontSize: "0.8em", color: "gray.500" }}>
+                        (Powered by Gemini)
+                      </span>
+                    </Text>
+                    {isAnalyzing ? (
+                      <Box
+                        display="flex"
+                        justifyContent="center"
+                        alignItems="center"
+                        p={10}
+                      >
+                        <ChakraSpinner
+                          size="xl"
+                          thickness="4px"
+                          speed="0.65s"
+                          color="blue.500"
+                        />
+                        <Text ml={4} color="gray.500">
+                          分析中...
+                        </Text>
+                      </Box>
+                    ) : (
+                      <>
+                        <Box
+                          mb={4}
+                          p={4}
+                          borderRadius="md"
+                          bg={useColorModeValue("white", "gray.800")}
+                          borderWidth="1px"
+                          borderColor={borderColor}
+                          boxShadow="sm"
+                          minHeight="150px"
+                          maxHeight="500px"
+                          overflowY="auto"
+                          sx={{
+                            // スクロールバーのスタイリング
+                            "&::-webkit-scrollbar": {
+                              width: "8px",
+                            },
+                            "&::-webkit-scrollbar-track": {
+                              backgroundColor: useColorModeValue(
+                                "gray.100",
+                                "gray.700"
+                              ),
+                              borderRadius: "4px",
+                            },
+                            "&::-webkit-scrollbar-thumb": {
+                              backgroundColor: useColorModeValue(
+                                "gray.300",
+                                "gray.600"
+                              ),
+                              borderRadius: "4px",
+                            },
+                            // ダークモード対応
+                            "&.markdown-body": {
+                              backgroundColor: "transparent",
+                              color: useColorModeValue("inherit", "inherit"),
+                            },
+                            // テーブルスタイルの追加
+                            "& table": {
+                              borderCollapse: "collapse",
+                              margin: "16px 0",
+                              width: "100%",
+                              fontFamily: "sans-serif",
+                            },
+                            "& th, & td": {
+                              border: useColorModeValue(
+                                "1px solid #ddd",
+                                "1px solid #555"
+                              ),
+                              padding: "8px 12px",
+                              textAlign: "left",
+                            },
+                            "& th": {
+                              fontWeight: "bold",
+                              backgroundColor: useColorModeValue(
+                                "gray.100",
+                                "gray.700"
+                              ),
+                            },
+                            "& tr:nth-of-type(even)": {
+                              backgroundColor: useColorModeValue(
+                                "gray.50",
+                                "gray.800"
+                              ),
+                            },
+                            "& tr:hover": {
+                              backgroundColor: useColorModeValue(
+                                "blue.50",
+                                "blue.900"
+                              ),
+                            },
+                          }}
+                          className="markdown-body"
+                        >
+                          {aiAnalysis ? (
+                            <ReactMarkdown
+                              remarkPlugins={[remarkGfm]}
+                              rehypePlugins={[rehypeRaw, rehypeSanitize]}
+                            >
+                              {aiAnalysis}
+                            </ReactMarkdown>
+                          ) : (
+                            "分析結果がありません。タスクを選択して分析ボタンをクリックしてください。"
+                          )}
+                        </Box>
+                        <Button
+                          colorScheme="blue"
+                          size="sm"
+                          onClick={() =>
+                            tasks.length > 0 && analyzeTask(tasks[0])
+                          }
+                          isDisabled={isAnalyzing || tasks.length === 0}
+                          leftIcon={<span>🔄</span>}
+                        >
+                          再分析
+                        </Button>
+                      </>
+                    )}
+                  </Box>
+                )}
               </CardBody>
             </Card>
           </>

@@ -111,8 +111,27 @@ export default function Login() {
                   <FormLabel>ログインID</FormLabel>
                   <Input
                     type="text"
-                    value={loginId}
+                    // value={loginId}
+                    // onChange={(e) => {
+                    //   setLoginId(e.target.value);
+                    //   validateLoginId(e.target.value);
+                    // }}
                     onChange={(e) => {
+                      if (e.target !== document.activeElement) {
+                        console.log(
+                          "Auto-fill detected for loginid:",
+                          e.target.value
+                        );
+                        setLoginId(e.target.value);
+                        validateLoginId(e.target.value);
+                      } else {
+                        console.log(
+                          "User input ignored for loginid:",
+                          e.target.value
+                        );
+                      }
+                    }}
+                    onBlur={(e) => {
                       setLoginId(e.target.value);
                       validateLoginId(e.target.value);
                     }}
