@@ -29,6 +29,19 @@ export async function PUT(
     const body = await request.json();
     const { title, description, due_date, priority, is_all_day } = body;
 
+    // 過去の日付のバリデーション
+    if (due_date) {
+      const currentDate = new Date(); // 現在時刻をそのまま使用
+      const taskDueDate = new Date(due_date);
+
+      if (taskDueDate < currentDate) {
+        return NextResponse.json(
+          { error: "現在時刻より後の日時を設定してください" },
+          { status: 400 }
+        );
+      }
+    }
+
     // ユーザー情報を取得
     let userStr = request.headers.get("x-user");
     const userBase64 = request.headers.get("x-user-base64");

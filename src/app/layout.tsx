@@ -11,7 +11,6 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { MuiPickersUtilsProvider } from "@material-ui/pickers";
 import DateFnsUtils from "@date-io/date-fns";
 import { createMuiTheme, ThemeProvider } from "@material-ui/core/styles";
-import { ja } from "date-fns/locale";
 import Head from "next/head";
 
 const inter = Inter({
@@ -89,7 +88,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       </Head>
       <body className="min-h-screen bg-white dark:bg-gray-900">
         <ThemeProvider theme={muiTheme}>
-          <MuiPickersUtilsProvider utils={DateFnsUtils} locale={ja}>
+          <MuiPickersUtilsProvider utils={DateFnsUtils}>
             <Providers>
               <AuthProvider>
                 <LayoutContent>{children}</LayoutContent>

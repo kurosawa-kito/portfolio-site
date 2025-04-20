@@ -130,7 +130,7 @@ export default function TaskModal({
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [dueDate, setDueDate] = useState("");
-  const [dueDateObj, setDueDateObj] = useState<Date | null>(null);
+  const [dueDateObj, setDueDateObj] = useState<Date | null>(new Date());
   const [priority, setPriority] = useState("medium");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isAllDay, setIsAllDay] = useState(false);
@@ -140,22 +140,54 @@ export default function TaskModal({
 
   // 編集時のデータを設定
   useEffect(() => {
-    if (mode === "edit" && task && isOpen) {
-      setTitle(task.title);
-      setDescription(task.description || "");
-      setPriority(task.priority);
-      setIsAllDay(task.is_all_day || false);
+    if (isOpen) {
+      if (mode === "edit" && task) {
+        // 編集モードの場合
+        setTitle(task.title);
+        setDescription(task.description || "");
+        setPriority(task.priority);
+        setIsAllDay(task.is_all_day || false);
 
-      // 日付の設定
-      if (task.due_date) {
-        setDueDate(task.due_date);
-        const dateObj = new Date(task.due_date);
-        if (!isNaN(dateObj.getTime())) {
-          setDueDateObj(dateObj);
+        // 日付の設定
+        if (task.due_date) {
+          setDueDate(task.due_date);
+          const dateObj = new Date(task.due_date);
+          if (!isNaN(dateObj.getTime())) {
+            setDueDateObj(dateObj);
+          }
+        } else {
+          // 日付がない場合は現在日時をデフォルトに
+          const now = new Date();
+          setDueDateObj(now);
+          setDueDate(formatDateToString(now, false));
         }
+      } else {
+        // 新規作成モードの場合
+        const now = new Date();
+        setTitle("");
+        setDescription("");
+        setPriority("medium");
+        setIsAllDay(false);
+        setDueDateObj(now);
+        setDueDate(formatDateToString(now, false));
       }
     }
-  }, [mode, task, isOpen]);
+  }, [isOpen, mode, task]);
+
+  // 日付を文字列に変換するヘルパー関数
+  const formatDateToString = (date: Date, isAllDayFormat: boolean): string => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    
+    if (isAllDayFormat) {
+      return `${year}-${month}-${day}T00:00:00`;
+    } else {
+      const hours = String(date.getHours()).padStart(2, "0");
+      const minutes = String(date.getMinutes()).padStart(2, "0");
+      return `${year}-${month}-${day}T${hours}:${minutes}:00`;
+    }
+  };
 
   // モーダルを閉じる際にフォームをリセット
   const handleClose = () => {
@@ -311,16 +343,40 @@ export default function TaskModal({
           onSuccess();
         }
       } else {
-        throw new Error("API request failed");
+        // エラーレスポンスをJSON形式で取得
+        const errorData = await response.json();
+        throw new Error(errorData.error || "API request failed", { 
+          cause: { status: response.status, data: errorData } 
+        });
       }
     } catch (error) {
       console.error("タスク操作エラー:", error);
+      
+      // エラーメッセージを取得
+      let errorMessage = mode === "edit"
+        ? "タスクの更新に失敗しました"
+        : "タスクの作成に失敗しました";
+      
+      // Error オブジェクトから具体的なエラーメッセージを取得
+      if (error instanceof Error) {
+        // messageが設定されていて、デフォルトメッセージでない場合はそれを使用
+        if (error.message && error.message !== "API request failed") {
+          errorMessage = error.message;
+        } 
+        // causeからエラーメッセージを取得（より具体的なAPIのエラーメッセージ）
+        else if (error.cause && typeof error.cause === 'object') {
+          if ('data' in error.cause) {
+            const errorCause = error.cause as { data?: { error?: string } };
+            if (errorCause.data?.error) {
+              errorMessage = errorCause.data.error;
+            }
+          }
+        }
+      }
+      
       toast({
         title: "エラー",
-        description:
-          mode === "edit"
-            ? "タスクの更新に失敗しました"
-            : "タスクの作成に失敗しました",
+        description: errorMessage,
         status: "error",
         duration: 3000,
         isClosable: true,
@@ -398,6 +454,7 @@ export default function TaskModal({
                       fullWidth
                       className={classes.picker}
                       autoOk
+                      disablePast
                       disableToolbar={false}
                       InputProps={{
                         endAdornment: (
@@ -438,6 +495,7 @@ export default function TaskModal({
                       fullWidth
                       className={classes.picker}
                       autoOk
+                      disablePast
                       disableToolbar={false}
                       InputProps={{
                         endAdornment: (

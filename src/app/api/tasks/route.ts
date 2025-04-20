@@ -135,6 +135,19 @@ export async function POST(request: NextRequest) {
     const { title, description, due_date, priority, project_id, is_all_day } =
       await request.json();
 
+    // 過去の日付のバリデーション
+    if (due_date) {
+      const currentDate = new Date(); // 現在時刻をそのまま使用
+      const taskDueDate = new Date(due_date);
+      
+      if (taskDueDate < currentDate) {
+        return NextResponse.json(
+          { error: "現在時刻より前の日時をタスクの期限として設定することはできません" },
+          { status: 400 }
+        );
+      }
+    }
+
     // ユーザー情報を取得（通常のx-userヘッダーとBase64エンコードされたx-user-base64ヘッダーの両方をサポート）
     let userStr = request.headers.get("x-user");
     const userBase64 = request.headers.get("x-user-base64");
