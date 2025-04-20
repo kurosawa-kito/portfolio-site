@@ -194,7 +194,10 @@ export default function TaskModal({
     setTitle("");
     setDescription("");
     setDueDate("");
-    setDueDateObj(null);
+    // 日付のデフォルト値として現在日時を保持
+    const now = new Date();
+    setDueDateObj(now);
+    setDueDate(formatDateToString(now, false));
     setPriority("medium");
     setIsAllDay(false);
     onClose();
