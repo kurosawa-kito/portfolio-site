@@ -1,3 +1,14 @@
+/**
+ * タスク作成・編集用モーダルコンポーネント
+ * 
+ * 機能:
+ * - 新規タスクの作成
+ * - 既存タスクの編集
+ * - 共有タスクの作成
+ * - 日時選択（終日イベントのサポート）
+ * - 入力バリデーション
+ * - エラーハンドリング
+ */
 "use client";
 
 import { useState, useEffect } from "react";
@@ -27,6 +38,14 @@ import { makeStyles, createStyles } from "@material-ui/core/styles";
 import { InputAdornment } from "@material-ui/core";
 import EventIcon from "@material-ui/icons/Event";
 
+/**
+ * マルチバイト文字をエンコードするための安全なbase64エンコード関数
+ * 日本語などの非ASCII文字を含むユーザー情報をAPIに安全に渡すために使用
+ * 
+ * @param str エンコードする文字列
+ * @param user ユーザー情報（エラー時のフォールバック用）
+ * @returns Base64エンコードされた文字列
+ */
 // マルチバイト文字をエンコードするための安全なbase64エンコード関数
 const safeBase64Encode = (str: string, user: any) => {
   try {
@@ -43,6 +62,10 @@ const safeBase64Encode = (str: string, user: any) => {
   }
 };
 
+/**
+ * DatePickerおよびDateTimePickerのカスタムスタイル
+ * Material-UIのデフォルトスタイルをChakra UIデザインに合わせて調整
+ */
 // DateTimePickerのスタイル
 const useStyles = makeStyles(() =>
   createStyles({
@@ -102,6 +125,9 @@ const useStyles = makeStyles(() =>
   })
 );
 
+/**
+ * タスクのデータ構造を定義するインターフェース
+ */
 interface Task {
   id: string | number;
   title: string;
@@ -112,14 +138,21 @@ interface Task {
   is_all_day?: boolean;
 }
 
+/**
+ * TaskModalコンポーネントのプロパティを定義するインターフェース
+ */
 interface TaskModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  mode: "create" | "shared" | "edit";
-  task?: Task;
-  onSuccess?: () => void;
+  isOpen: boolean;            // モーダルが開いているかどうか
+  onClose: () => void;        // モーダルを閉じる関数
+  mode: "create" | "shared" | "edit";  // モーダルの動作モード
+  task?: Task;                // 編集する場合のタスク情報
+  onSuccess?: () => void;     // 操作成功時のコールバック関数
 }
 
+/**
+ * タスク作成・編集用モーダルコンポーネント
+ * モードに応じて新規作成、共有タスク作成、または編集の機能を提供
+ */
 export default function TaskModal({
   isOpen,
   onClose,
@@ -127,17 +160,21 @@ export default function TaskModal({
   task,
   onSuccess,
 }: TaskModalProps) {
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [dueDate, setDueDate] = useState("");
-  const [dueDateObj, setDueDateObj] = useState<Date | null>(new Date());
-  const [priority, setPriority] = useState("medium");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isAllDay, setIsAllDay] = useState(false);
-  const { user } = useAuth();
-  const toast = useToast();
-  const classes = useStyles();
+  // 状態管理用のステート変数
+  const [title, setTitle] = useState("");                  // タスクタイトル
+  const [description, setDescription] = useState("");      // タスク説明
+  const [dueDate, setDueDate] = useState("");             // 期限日時（文字列形式）
+  const [dueDateObj, setDueDateObj] = useState<Date | null>(new Date());  // 期限日時（Dateオブジェクト）
+  const [priority, setPriority] = useState("medium");     // 優先度
+  const [isSubmitting, setIsSubmitting] = useState(false); // 送信中フラグ
+  const [isAllDay, setIsAllDay] = useState(false);        // 終日フラグ
+  const { user } = useAuth();                             // ユーザー情報
+  const toast = useToast();                               // トースト通知
+  const classes = useStyles();                            // カスタムスタイル
 
+  /**
+   * モーダルが開かれた時、または編集モードでタスクが変更された時にフォームデータを初期化
+   */
   // 編集時のデータを設定
   useEffect(() => {
     if (isOpen) {
@@ -174,6 +211,14 @@ export default function TaskModal({
     }
   }, [isOpen, mode, task]);
 
+  /**
+   * Date オブジェクトをAPIに送信するための文字列形式に変換
+   * 終日イベントの場合は時間部分を00:00:00に設定
+   * 
+   * @param date 変換するDateオブジェクト 
+   * @param isAllDayFormat 終日形式かどうか
+   * @returns 'YYYY-MM-DDThh:mm:ss' 形式の日時文字列
+   */
   // 日付を文字列に変換するヘルパー関数
   const formatDateToString = (date: Date, isAllDayFormat: boolean): string => {
     const year = date.getFullYear();
@@ -189,6 +234,10 @@ export default function TaskModal({
     }
   };
 
+  /**
+   * モーダルを閉じる際の処理
+   * フォームをリセットし、親コンポーネントのonClose関数を呼び出す
+   */
   // モーダルを閉じる際にフォームをリセット
   const handleClose = () => {
     setTitle("");
@@ -203,6 +252,12 @@ export default function TaskModal({
     onClose();
   };
 
+  /**
+   * 終日チェックボックスの変更時の処理
+   * 終日に変更した場合、時間部分をリセット
+   * 
+   * @param e チェックボックスのイベント
+   */
   // 終日チェックボックスの変更時の処理
   const handleAllDayChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setIsAllDay(e.target.checked);
@@ -223,6 +278,12 @@ export default function TaskModal({
     }
   };
 
+  /**
+   * 日付/時間ピッカーでの選択時の処理
+   * 選択された日時を適切な形式に変換してステートに保存
+   * 
+   * @param date 選択された日時
+   */
   // 日時選択時の処理
   const handleDateChange = (date: Date | null) => {
     try {
@@ -257,8 +318,13 @@ export default function TaskModal({
     }
   };
 
+  /**
+   * フォーム送信処理（タスクの作成または更新）
+   * バリデーション、API通信、エラーハンドリングを行う
+   */
   // タスクを作成/共有/編集
   const handleSubmit = async () => {
+    // 入力バリデーション
     if (!title.trim()) {
       toast({
         title: "エラー",
@@ -308,6 +374,7 @@ export default function TaskModal({
         "x-user-base64": userBase64,
       };
 
+      // APIリクエストを実行
       const response = await fetch(endpoint, {
         method: method,
         headers: requestHeaders,
@@ -321,6 +388,7 @@ export default function TaskModal({
       });
 
       if (response.ok) {
+        // 成功メッセージの設定
         let successMessage = "";
         if (mode === "create") {
           successMessage = "タスクが作成されました";
@@ -330,6 +398,7 @@ export default function TaskModal({
           successMessage = "タスクが更新されました";
         }
 
+        // 成功通知を表示
         toast({
           title: "成功",
           description: successMessage,
@@ -377,6 +446,7 @@ export default function TaskModal({
         }
       }
       
+      // エラー通知を表示
       toast({
         title: "エラー",
         description: errorMessage,
@@ -389,6 +459,11 @@ export default function TaskModal({
     }
   };
 
+  // モーダルUI関連の設定
+  
+  /**
+   * モーダルのタイトル（モードによって異なる）
+   */
   // モーダルのタイトル
   const modalTitle =
     mode === "create"
@@ -397,9 +472,15 @@ export default function TaskModal({
       ? "新しい共有タスクを作成"
       : "タスクを編集";
 
+  /**
+   * 送信ボタンのラベル（モードによって異なる）
+   */
   // ボタンのラベル
   const buttonLabel = mode === "edit" ? "更新する" : "作成する";
 
+  /**
+   * モーダルのレンダリング
+   */
   return (
     <Modal isOpen={isOpen} onClose={handleClose} size="lg">
       <ModalOverlay className="chakra-modal-overlay" style={{ zIndex: 1000 }} />
@@ -407,6 +488,7 @@ export default function TaskModal({
         <ModalHeader>{modalTitle}</ModalHeader>
         <ModalCloseButton />
         <ModalBody>
+          {/* タスクタイトル入力フォーム */}
           <FormControl isRequired mb={4}>
             <FormLabel>タイトル</FormLabel>
             <Input
@@ -416,6 +498,7 @@ export default function TaskModal({
             />
           </FormControl>
 
+          {/* タスク説明入力フォーム */}
           <FormControl mb={4}>
             <FormLabel>説明</FormLabel>
             <Textarea
@@ -427,6 +510,7 @@ export default function TaskModal({
           </FormControl>
 
           <HStack spacing={4} mb={4} alignItems="flex-start">
+            {/* 期限設定フォーム */}
             <FormControl isRequired>
               <VStack align="flex-start" spacing={2}>
                 <HStack
@@ -435,6 +519,7 @@ export default function TaskModal({
                   alignItems="center"
                 >
                   <FormLabel mb={0}>期限</FormLabel>
+                  {/* 終日チェックボックス */}
                   <Checkbox
                     isChecked={isAllDay}
                     onChange={handleAllDayChange}
@@ -444,6 +529,7 @@ export default function TaskModal({
                   </Checkbox>
                 </HStack>
                 <Box className={classes.popupOverlay} w="100%">
+                  {/* 終日の場合は日付のみ、それ以外は日時両方を選択できるピッカーを表示 */}
                   {isAllDay ? (
                     <DatePicker
                       value={dueDateObj}
@@ -530,6 +616,7 @@ export default function TaskModal({
               </VStack>
             </FormControl>
 
+            {/* 優先度選択フォーム */}
             <FormControl isRequired>
               <FormLabel>優先度</FormLabel>
               <Select
@@ -545,6 +632,7 @@ export default function TaskModal({
         </ModalBody>
 
         <ModalFooter>
+          {/* キャンセルボタン */}
           <Button
             variant="ghost"
             mr={3}
@@ -553,6 +641,7 @@ export default function TaskModal({
           >
             キャンセル
           </Button>
+          {/* 送信ボタン */}
           <Button
             colorScheme="blue"
             onClick={handleSubmit}
