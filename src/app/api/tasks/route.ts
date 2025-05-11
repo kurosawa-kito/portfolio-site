@@ -1,7 +1,21 @@
+/**
+ * タスク管理API
+ * 
+ * このファイルでは以下のAPI機能を提供します：
+ * - GET: ユーザーに割り当てられたタスク一覧の取得
+ * - POST: 新規タスクの作成
+ * - PATCH: タスクのステータス更新
+ * 
+ * 認証はヘッダーを通じて行われ、x-userまたはx-user-base64ヘッダーを使用します。
+ */
 import { NextRequest, NextResponse } from "next/server";
 import { User } from "@/types/user";
 import { sql } from "@vercel/postgres";
 
+/**
+ * タスクのインターフェース定義
+ * データベースから取得されるタスクの構造を表します
+ */
 // タスクのインターフェース定義
 interface Task {
   id: number;
@@ -21,6 +35,12 @@ interface Task {
   updated_at: string;
 }
 
+/**
+ * GET - ユーザーに割り当てられたタスク一覧を取得
+ * 
+ * @param request 
+ * @returns タスク一覧またはエラーレスポンス
+ */
 export async function GET(request: NextRequest) {
   try {
     console.log("タスク一覧取得API呼び出し");
@@ -64,11 +84,13 @@ export async function GET(request: NextRequest) {
       userStr ? `取得済み (${userStr.length}文字)` : "なし"
     );
 
+    // ユーザーヘッダーの存在チェック
     if (!userStr) {
       console.error("認証エラー: ユーザーヘッダーがありません");
       return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
     }
 
+    // ユーザー情報の解析と検証
     let user: User;
     try {
       user = JSON.parse(userStr) as User;
@@ -96,6 +118,7 @@ export async function GET(request: NextRequest) {
 
     // データベースからユーザーに割り当てられたタスクを取得
     try {
+      // タスク情報と共に、担当者と作成者の名前も取得するJOINクエリ
       const result = await sql`
         SELECT 
           t.*,
@@ -130,6 +153,20 @@ export async function GET(request: NextRequest) {
   }
 }
 
+/**
+ * POST - 新規タスクを作成
+ * 
+ * リクエストボディには以下のフィールドが必要：
+ * - title: タスクのタイトル
+ * - description: タスクの説明（任意）
+ * - due_date: 期限日時
+ * - priority: 優先度（low/medium/high）
+ * - project_id: プロジェクトID（任意）
+ * - is_all_day: 終日タスクかどうか
+ * 
+ * @param request 
+ * @returns 作成されたタスク情報またはエラーレスポンス
+ */
 export async function POST(request: NextRequest) {
   try {
     const { title, description, due_date, priority, project_id, is_all_day } =
@@ -180,13 +217,14 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // ユーザーヘッダーの存在チェック
     if (!userStr) {
       return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
     }
 
     const user = JSON.parse(userStr) as User;
 
-    // 新しいタスクを作成
+    // 新しいタスクをデータベースに挿入
     const result = await sql`
       INSERT INTO tasks (
         title,
@@ -225,6 +263,16 @@ export async function POST(request: NextRequest) {
   }
 }
 
+/**
+ * PATCH - タスクのステータスを更新
+ * 
+ * リクエストボディには以下のフィールドが必要：
+ * - id: 更新するタスクのID
+ * - status: 新しいステータス
+ * 
+ * @param request 
+ * @returns 更新結果またはエラーレスポンス
+ */
 export async function PATCH(request: NextRequest) {
   try {
     const { id, status } = await request.json();
@@ -261,31 +309,37 @@ export async function PATCH(request: NextRequest) {
       }
     }
 
+    // ユーザーヘッダーの存在チェック
     if (!userStr) {
       return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
     }
 
     const user = JSON.parse(userStr) as User;
 
-    // タスクを更新
-    const result = await sql`
-      UPDATE tasks
-      SET 
-        status = ${status},
-        updated_at = CURRENT_TIMESTAMP
-      WHERE id = ${id} AND assigned_to = ${user.id}
-      RETURNING *;
+    // タスクの存在確認と所有権チェック
+    const taskCheck = await sql`
+      SELECT * FROM tasks WHERE id = ${id} AND assigned_to = ${user.id};
     `;
 
-    if (result.rowCount === 0) {
+    if (taskCheck.rowCount === 0) {
       return NextResponse.json(
-        { error: "タスクが見つからないか、更新権限がありません" },
+        { error: "タスクが見つからないか、アクセス権限がありません" },
         { status: 404 }
       );
     }
 
-    const updatedTask = result.rows[0] as Task;
-    return NextResponse.json({ success: true, task: updatedTask });
+    // タスクステータスを更新
+    const result = await sql`
+      UPDATE tasks
+      SET status = ${status}, updated_at = NOW()
+      WHERE id = ${id} AND assigned_to = ${user.id}
+      RETURNING *;
+    `;
+
+    return NextResponse.json({ 
+      success: true, 
+      task: result.rows[0] 
+    });
   } catch (error) {
     console.error("タスク更新エラー:", error);
     return NextResponse.json(
