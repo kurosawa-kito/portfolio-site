@@ -1,11 +1,11 @@
 /**
  * タスク管理API
- * 
+ *
  * このファイルでは以下のAPI機能を提供します：
  * - GET: ユーザーに割り当てられたタスク一覧の取得
  * - POST: 新規タスクの作成
  * - PATCH: タスクのステータス更新
- * 
+ *
  * 認証はヘッダーを通じて行われ、x-userまたはx-user-base64ヘッダーを使用します。
  */
 import { NextRequest, NextResponse } from "next/server";
@@ -37,8 +37,8 @@ interface Task {
 
 /**
  * GET - ユーザーに割り当てられたタスク一覧を取得
- * 
- * @param request 
+ *
+ * @param request
  * @returns タスク一覧またはエラーレスポンス
  */
 export async function GET(request: NextRequest) {
@@ -155,7 +155,7 @@ export async function GET(request: NextRequest) {
 
 /**
  * POST - 新規タスクを作成
- * 
+ *
  * リクエストボディには以下のフィールドが必要：
  * - title: タスクのタイトル
  * - description: タスクの説明（任意）
@@ -163,8 +163,8 @@ export async function GET(request: NextRequest) {
  * - priority: 優先度（low/medium/high）
  * - project_id: プロジェクトID（任意）
  * - is_all_day: 終日タスクかどうか
- * 
- * @param request 
+ *
+ * @param request
  * @returns 作成されたタスク情報またはエラーレスポンス
  */
 export async function POST(request: NextRequest) {
@@ -265,12 +265,12 @@ export async function POST(request: NextRequest) {
 
 /**
  * PATCH - タスクのステータスを更新
- * 
+ *
  * リクエストボディには以下のフィールドが必要：
  * - id: 更新するタスクのID
  * - status: 新しいステータス
- * 
- * @param request 
+ *
+ * @param request
  * @returns 更新結果またはエラーレスポンス
  */
 export async function PATCH(request: NextRequest) {
@@ -336,9 +336,9 @@ export async function PATCH(request: NextRequest) {
       RETURNING *;
     `;
 
-    return NextResponse.json({ 
-      success: true, 
-      task: result.rows[0] 
+    return NextResponse.json({
+      success: true,
+      task: result.rows[0],
     });
   } catch (error) {
     console.error("タスク更新エラー:", error);

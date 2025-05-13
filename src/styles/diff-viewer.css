@@ -1,0 +1,71 @@
+/* 差分表示用のスタイル */
+
+/* 変更行のスタイル */
+[data-diff-type="added"] {
+  animation: highlight-added 2s ease-in-out;
+}
+
+[data-diff-type="removed"] {
+  animation: highlight-removed 2s ease-in-out;
+}
+
+[data-diff-type="modified"] {
+  animation: highlight-modified 2s ease-in-out;
+}
+
+/* アニメーション定義 */
+@keyframes highlight-added {
+  0% { background-color: rgba(72, 187, 120, 0.6); }
+  100% { background-color: rgba(72, 187, 120, 0.1); }
+}
+
+@keyframes highlight-removed {
+  0% { background-color: rgba(245, 101, 101, 0.6); }
+  100% { background-color: rgba(245, 101, 101, 0.1); }
+}
+
+@keyframes highlight-modified {
+  0% { background-color: rgba(236, 201, 75, 0.6); }
+  100% { background-color: rgba(236, 201, 75, 0.1); }
+}
+
+/* スクロールバーのスタイル */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* 表のスタイル */
+.diff-table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.diff-table th {
+  position: sticky;
+  top: 0;
+  background-color: white;
+  z-index: 10;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* キーボードナビゲーション時の現在の行ハイライト */
+.current-diff {
+  box-shadow: 0 0 0 2px #3182ce;
+  position: relative;
+  z-index: 5;
+} 
