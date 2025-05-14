@@ -83,6 +83,40 @@ export default function ExcelDiffPage() {
       );
       setDiffResults([diffResult]);
 
+      // 差分比較履歴をデータベースに保存
+      const comparisonRecord = {
+        id: crypto.randomUUID(), // uuid の代わりに組み込みの randomUUID を使用
+        name: `${originalFile.name} vs ${modifiedFile.name}`,
+        path: JSON.stringify({
+          originalId: originalFile.id,
+          modifiedId: modifiedFile.id,
+          sheetName: selectedSheet,
+        }),
+        size: JSON.stringify(diffResult).length,
+      };
+
+      console.log("比較記録を作成:", comparisonRecord);
+
+      // APIを呼び出して履歴を保存
+      try {
+        const response = await fetch("/api/excel-diff/history", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(comparisonRecord),
+        });
+
+        if (response.ok) {
+          console.log("比較履歴の保存に成功しました");
+        } else {
+          const errorData = await response.json();
+          console.error("履歴の保存に失敗しました", errorData);
+        }
+      } catch (apiError) {
+        console.error("API呼び出しエラー:", apiError);
+      }
+
       toast({
         title: "比較完了",
         description: "差分の比較が完了しました",
