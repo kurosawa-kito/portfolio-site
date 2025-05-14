@@ -106,36 +106,31 @@ export default function ExcelDiffPage() {
           },
           body: JSON.stringify(comparisonRecord),
         });
-
-        if (response.ok) {
-          console.log("比較履歴の保存に成功しました");
-        } else {
+      
+        if (!response.ok) {
           const errorData = await response.json();
           console.error("履歴の保存に失敗しました", errorData);
+          toast({
+            title: "履歴保存エラー",
+            description: errorData.error || "履歴の保存に失敗しました",
+            status: "error",
+            duration: 5000,
+            isClosable: true,
+          });
+          return;
         }
+      
+        console.log("比較履歴の保存に成功しました");
       } catch (apiError) {
         console.error("API呼び出しエラー:", apiError);
+        toast({
+          title: "ネットワークエラー",
+          description: "サーバーとの通信に失敗しました",
+          status: "error",
+          duration: 5000,
+          isClosable: true,
+        });
       }
-
-      toast({
-        title: "比較完了",
-        description: "差分の比較が完了しました",
-        status: "success",
-        duration: 3000,
-        isClosable: true,
-      });
-    } catch (error) {
-      console.error("差分比較に失敗しました", error);
-      toast({
-        title: "エラー",
-        description: "差分比較に失敗しました",
-        status: "error",
-        duration: 3000,
-        isClosable: true,
-      });
-    } finally {
-      setIsComparing(false);
-    }
   };
 
   // シートの選択変更
