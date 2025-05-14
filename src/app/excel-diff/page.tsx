@@ -1,54 +1,54 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
-import { 
-  Box, 
-  Container, 
-  Heading, 
-  Text, 
-  VStack, 
-  HStack, 
-  Grid, 
-  GridItem, 
-  Button, 
-  Tabs, 
-  TabList, 
-  TabPanels, 
-  Tab, 
+import React, { useState, useEffect } from "react";
+import {
+  Box,
+  Container,
+  Heading,
+  Text,
+  VStack,
+  HStack,
+  Grid,
+  GridItem,
+  Button,
+  Tabs,
+  TabList,
+  TabPanels,
+  Tab,
   TabPanel,
   Select,
   Divider,
-  useToast
-} from '@chakra-ui/react';
-import FileUploader from '@/components/excel-diff/FileUploader';
-import DiffViewer from '@/components/excel-diff/DiffViewer';
-import FileHistory from '@/components/excel-diff/FileHistory';
-import DiffNavigation from '@/components/excel-diff/DiffNavigation';
-import FolderUploader from '@/components/excel-diff/FolderUploader';
-import { useExcelDiffStore } from '@/contexts/DiffContext';
-import { compareExcelFiles } from '@/lib/excel-diff/diff';
-import { getCommonSheetNames } from '@/lib/excel-diff/parser';
+  useToast,
+} from "@chakra-ui/react";
+import FileUploader from "@/components/excel-diff/FileUploader";
+import DiffViewer from "@/components/excel-diff/DiffViewer";
+import FileHistory from "@/components/excel-diff/FileHistory";
+import DiffNavigation from "@/components/excel-diff/DiffNavigation";
+import FolderUploader from "@/components/excel-diff/FolderUploader";
+import { useExcelDiffStore } from "@/contexts/DiffContext";
+import { compareExcelFiles } from "@/lib/excel-diff/diff";
+import { getCommonSheetNames } from "@/lib/excel-diff/parser";
 
 export default function ExcelDiffPage() {
   const [isComparing, setIsComparing] = useState(false);
   const [commonSheets, setCommonSheets] = useState<string[]>([]);
   const toast = useToast();
-  
-  const { 
-    originalFile, 
-    modifiedFile, 
+
+  const {
+    originalFile,
+    modifiedFile,
     selectedSheet,
     setSelectedSheet,
     setDiffResults,
-    clearFiles
+    clearFiles,
   } = useExcelDiffStore();
-  
+
   // 両方のファイルがアップロードされたら共通のシート名を取得
   useEffect(() => {
     if (originalFile && modifiedFile) {
       const sheetNames = getCommonSheetNames(originalFile, modifiedFile);
       setCommonSheets(sheetNames);
-      
+
       // 最初のシートを選択
       if (sheetNames.length > 0 && !selectedSheet) {
         setSelectedSheet(sheetNames[0]);
@@ -58,40 +58,44 @@ export default function ExcelDiffPage() {
       setSelectedSheet(null);
     }
   }, [originalFile, modifiedFile, selectedSheet, setSelectedSheet]);
-  
+
   // 差分比較を実行
   const handleCompare = async () => {
     if (!originalFile || !modifiedFile || !selectedSheet) {
       toast({
-        title: 'エラー',
-        description: 'ファイルとシートを選択してください',
-        status: 'error',
+        title: "エラー",
+        description: "ファイルとシートを選択してください",
+        status: "error",
         duration: 3000,
         isClosable: true,
       });
       return;
     }
-    
+
     try {
       setIsComparing(true);
-      
+
       // 差分比較を実行
-      const diffResult = compareExcelFiles(originalFile, modifiedFile, selectedSheet);
+      const diffResult = compareExcelFiles(
+        originalFile,
+        modifiedFile,
+        selectedSheet
+      );
       setDiffResults([diffResult]);
-      
+
       toast({
-        title: '比較完了',
-        description: '差分の比較が完了しました',
-        status: 'success',
+        title: "比較完了",
+        description: "差分の比較が完了しました",
+        status: "success",
         duration: 3000,
         isClosable: true,
       });
     } catch (error) {
-      console.error('差分比較に失敗しました', error);
+      console.error("差分比較に失敗しました", error);
       toast({
-        title: 'エラー',
-        description: '差分比較に失敗しました',
-        status: 'error',
+        title: "エラー",
+        description: "差分比較に失敗しました",
+        status: "error",
         duration: 3000,
         isClosable: true,
       });
@@ -99,24 +103,24 @@ export default function ExcelDiffPage() {
       setIsComparing(false);
     }
   };
-  
+
   // シートの選択変更
   const handleSheetChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setSelectedSheet(e.target.value);
   };
-  
+
   // すべてクリア
   const handleClear = () => {
     clearFiles();
     setSelectedSheet(null);
     setCommonSheets([]);
   };
-  
+
   // フォルダアップロード完了時の処理
   const handleFolderUploadComplete = () => {
     // 必要に応じて状態を更新
   };
-  
+
   return (
     <Container maxW="container.xl" py={8}>
       <VStack spacing={8} align="stretch">
@@ -128,20 +132,17 @@ export default function ExcelDiffPage() {
             2つのExcelファイルを比較して差分を視覚的に表示します
           </Text>
         </Box>
-        
+
         <Grid templateColumns="repeat(2, 1fr)" gap={6}>
           <GridItem>
-            <FileUploader 
-              type="original"
-              label="元のファイル（比較元）"
-            />
+            <FileUploader type="original" label="元のファイル（比較元）" />
             <HStack mt={2} justify="flex-end">
               <FileHistory type="original" onSelect={() => {}} />
             </HStack>
           </GridItem>
-          
+
           <GridItem>
-            <FileUploader 
+            <FileUploader
               type="modified"
               label="変更後のファイル（比較対象）"
             />
@@ -150,21 +151,21 @@ export default function ExcelDiffPage() {
             </HStack>
           </GridItem>
         </Grid>
-        
+
         <Divider />
-        
+
         <HStack spacing={4} justify="space-between">
           <Box>
             <HStack spacing={4}>
               <Text fontWeight="medium">シート選択：</Text>
               <Select
                 placeholder="シートを選択..."
-                value={selectedSheet || ''}
+                value={selectedSheet || ""}
                 onChange={handleSheetChange}
                 width="200px"
                 isDisabled={commonSheets.length === 0}
               >
-                {commonSheets.map(sheet => (
+                {commonSheets.map((sheet) => (
                   <option key={sheet} value={sheet}>
                     {sheet}
                   </option>
@@ -172,14 +173,10 @@ export default function ExcelDiffPage() {
               </Select>
             </HStack>
           </Box>
-          
+
           <HStack spacing={4}>
             <FolderUploader onComplete={handleFolderUploadComplete} />
-            <Button
-              colorScheme="red"
-              variant="outline"
-              onClick={handleClear}
-            >
+            <Button colorScheme="red" variant="outline" onClick={handleClear}>
               すべてクリア
             </Button>
             <Button
@@ -193,11 +190,11 @@ export default function ExcelDiffPage() {
             </Button>
           </HStack>
         </HStack>
-        
+
         <Divider />
-        
+
         <DiffNavigation />
-        
+
         {selectedSheet && (
           <Box borderWidth="1px" borderRadius="lg" overflow="hidden">
             <DiffViewer sheetName={selectedSheet} />
@@ -206,4 +203,4 @@ export default function ExcelDiffPage() {
       </VStack>
     </Container>
   );
-} 
+}
