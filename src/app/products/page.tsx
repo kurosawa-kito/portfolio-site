@@ -9,14 +9,11 @@ import {
   Box,
   Card,
   CardBody,
-  List,
-  ListItem,
-  ListIcon,
   useColorModeValue,
-  Divider,
+  SimpleGrid,
   Badge,
+  HStack,
 } from "@chakra-ui/react";
-import { CheckIcon } from "@chakra-ui/icons";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEffect } from "react";
@@ -32,128 +29,154 @@ export default function Products() {
   }, [setShowTaskHeader]);
 
   return (
-    <Container maxW="container.md" py={8}>
+    <Container maxW="container.lg" py={8}>
       <VStack spacing={8} align="stretch">
-        <Heading
-          size="lg"
-          bgGradient="linear(to-r, blue.500, purple.500)"
-          bgClip="text"
-          textAlign="center"
-        >
-          タスク管理ツール
-        </Heading>
+        <Box textAlign="center">
+          <Heading
+            size="xl"
+            bgGradient="linear(to-r, blue.500, purple.500)"
+            bgClip="text"
+            mb={4}
+          >
+            Products
+          </Heading>
+          <Text fontSize="lg" color="gray.600">
+            私が開発したプロダクトをご覧ください
+          </Text>
+        </Box>
 
-        <Card bg={bgColor} borderWidth="1px" borderColor={borderColor}>
-          <CardBody>
-            <VStack spacing={6} align="stretch">
-              <Text fontSize="lg" textAlign="center">
-                シンプルで使いやすいタスク管理ツールです。
-                チームの作業効率を向上させ、プロジェクトの進行をスムーズにします。
-              </Text>
+        <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={6}>
+          {/* タスク管理ツール */}
+          <Card
+            bg={bgColor}
+            borderWidth="1px"
+            borderColor={borderColor}
+            _hover={{
+              transform: "translateY(-2px)",
+              boxShadow: "lg",
+              transition: "all 0.2s",
+            }}
+          >
+            <CardBody>
+              <VStack spacing={4} align="stretch">
+                <HStack justify="space-between" align="center">
+                  <Heading size="md" color="blue.500">
+                    タスク管理ツール
+                  </Heading>
+                  <Badge colorScheme="green">運用中</Badge>
+                </HStack>
 
-              <Divider />
+                <Text color="gray.600">
+                  チームで使えるシンプルなタスク管理ツール。
+                  優先度設定、期限管理、管理者機能などを搭載。
+                </Text>
 
-              <Box>
-                <Heading size="md" mb={4}>
-                  主な機能
-                </Heading>
-                <List spacing={3}>
-                  <ListItem>
-                    <ListIcon as={CheckIcon} color="green.500" />
-                    タスクの作成、編集、削除
-                  </ListItem>
-                  <ListItem>
-                    <ListIcon as={CheckIcon} color="green.500" />
-                    優先度の設定（高、中、低）
-                  </ListItem>
-                  <ListItem>
-                    <ListIcon as={CheckIcon} color="green.500" />
-                    期限の設定と管理
-                  </ListItem>
-                  <ListItem>
-                    <ListIcon as={CheckIcon} color="green.500" />
-                    タスクの完了状態の管理
-                  </ListItem>
-                  <ListItem>
-                    <ListIcon as={CheckIcon} color="green.500" />
-                    管理者向けの詳細な管理機能
-                  </ListItem>
-                </List>
-              </Box>
-
-              <Divider />
-
-              <Box>
-                <Heading size="md" mb={4}>
-                  テストユーザー情報
-                </Heading>
-                <VStack spacing={4} align="stretch">
-                  <Card variant="outline" bg="gray.50">
-                    <CardBody>
-                      <VStack align="start" spacing={2}>
-                        <Badge colorScheme="purple">管理者ユーザー</Badge>
-                        <Text>
-                          <strong>ユーザー名:</strong> admin
-                          <br />
-                          <strong>パスワード:</strong> admin123
-                        </Text>
-                        <Text fontSize="sm" color="gray.600">
-                          管理者ユーザーは全ての機能にアクセスできます。
-                        </Text>
-                      </VStack>
-                    </CardBody>
-                  </Card>
-
-                  <Card variant="outline" bg="gray.50">
-                    <CardBody>
-                      <VStack align="start" spacing={2}>
-                        <Badge colorScheme="blue">一般ユーザー</Badge>
-                        <Text>
-                          <strong>ユーザー名:</strong> user
-                          <br />
-                          <strong>パスワード:</strong> user123
-                        </Text>
-                        <Text fontSize="sm" color="gray.600">
-                          一般ユーザーは基本的なタスク管理機能を使用できます。
-                        </Text>
-                      </VStack>
-                    </CardBody>
-                  </Card>
+                <VStack spacing={2} align="stretch">
+                  <Text fontSize="sm" fontWeight="semibold">
+                    技術スタック:
+                  </Text>
+                  <HStack wrap="wrap" spacing={2}>
+                    <Badge colorScheme="blue">Next.js</Badge>
+                    <Badge colorScheme="purple">TypeScript</Badge>
+                    <Badge colorScheme="teal">Chakra UI</Badge>
+                    <Badge colorScheme="orange">PostgreSQL</Badge>
+                  </HStack>
                 </VStack>
-              </Box>
 
-              <Box textAlign="center" pt={4}>
-                {isLoggedIn ? (
-                  <Link href={"/member/tasks"} passHref>
-                    <Button
-                      colorScheme="blue"
-                      size="lg"
-                      _hover={{
-                        transform: "translateY(-1px)",
-                        boxShadow: "md",
-                      }}
-                    >
-                      タスク管理ツールを使う
-                    </Button>
-                  </Link>
-                ) : (
-                  <Link href="/login" passHref>
-                    <Button
-                      colorScheme="blue"
-                      size="lg"
-                      _hover={{
-                        transform: "translateY(-1px)",
-                        boxShadow: "md",
-                      }}
-                    >
-                      タスク管理ツールを使う
-                    </Button>
-                  </Link>
-                )}
-              </Box>
-            </VStack>
-          </CardBody>
-        </Card>
+                <Link href="/products/task-management" passHref>
+                  <Button
+                    colorScheme="blue"
+                    w="full"
+                    _hover={{
+                      transform: "translateY(-1px)",
+                    }}
+                  >
+                    詳細を見る
+                  </Button>
+                </Link>
+              </VStack>
+            </CardBody>
+          </Card>
+
+          {/* eBay自動化ツール */}
+          <Card
+            bg={bgColor}
+            borderWidth="1px"
+            borderColor={borderColor}
+            _hover={{
+              transform: "translateY(-2px)",
+              boxShadow: "lg",
+              transition: "all 0.2s",
+            }}
+          >
+            <CardBody>
+              <VStack spacing={4} align="stretch">
+                <HStack justify="space-between" align="center">
+                  <Heading size="md" color="orange.500">
+                    eBay自動化ツール
+                  </Heading>
+                  <Badge colorScheme="yellow">開発中</Badge>
+                </HStack>
+
+                <Text color="gray.600">
+                  eBay出品・在庫管理を自動化。
+                  一括出品、価格監視、在庫同期などの機能を提供。
+                </Text>
+
+                <VStack spacing={2} align="stretch">
+                  <Text fontSize="sm" fontWeight="semibold">
+                    技術スタック:
+                  </Text>
+                  <HStack wrap="wrap" spacing={2}>
+                    <Badge colorScheme="orange">React</Badge>
+                    <Badge colorScheme="purple">TypeScript</Badge>
+                    <Badge colorScheme="green">Node.js</Badge>
+                    <Badge colorScheme="red">eBay API</Badge>
+                  </HStack>
+                </VStack>
+
+                <Link href="/products/ebay-automation/login" passHref>
+                  <Button
+                    colorScheme="orange"
+                    w="full"
+                    _hover={{
+                      transform: "translateY(-1px)",
+                    }}
+                  >
+                    ログインして利用
+                  </Button>
+                </Link>
+              </VStack>
+            </CardBody>
+          </Card>
+
+          {/* 他のプロダクト用のプレースホルダー */}
+          <Card
+            bg={bgColor}
+            borderWidth="1px"
+            borderColor={borderColor}
+            opacity={0.7}
+          >
+            <CardBody>
+              <VStack spacing={4} align="stretch">
+                <HStack justify="space-between" align="center">
+                  <Heading size="md" color="gray.500">
+                    Coming Soon...
+                  </Heading>
+                  <Badge colorScheme="gray">計画中</Badge>
+                </HStack>
+
+                <Text color="gray.500">
+                  新しいプロダクトを開発中です。 お楽しみに！
+                </Text>
+
+                <Button colorScheme="gray" variant="outline" w="full" disabled>
+                  準備中
+                </Button>
+              </VStack>
+            </CardBody>
+          </Card>
+        </SimpleGrid>
       </VStack>
     </Container>
   );

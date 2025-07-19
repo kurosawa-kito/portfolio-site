@@ -16,8 +16,12 @@ import {
   VStack,
   HStack,
   Text,
+  Menu,
+  MenuButton,
+  MenuList,
+  MenuItem,
 } from "@chakra-ui/react";
-import { HamburgerIcon } from "@chakra-ui/icons";
+import { HamburgerIcon, ChevronDownIcon } from "@chakra-ui/icons";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePathname } from "next/navigation";
@@ -91,11 +95,27 @@ export default function Header() {
               Projects
             </Button>
           </Link>
-          <Link href="/products" passHref>
-            <Button variant="ghost" colorScheme="blue">
+          <Menu>
+            <MenuButton
+              as={Button}
+              variant="ghost"
+              colorScheme="blue"
+              rightIcon={<ChevronDownIcon />}
+            >
               Products
-            </Button>
-          </Link>
+            </MenuButton>
+            <MenuList>
+              <Link href="/products" passHref>
+                <MenuItem>Products概要</MenuItem>
+              </Link>
+              <Link href="/products/task-management" passHref>
+                <MenuItem>タスク管理ツール</MenuItem>
+              </Link>
+              <Link href="/products/ebay-automation/login" passHref>
+                <MenuItem>eBay自動化ツール</MenuItem>
+              </Link>
+            </MenuList>
+          </Menu>
         </HStack>
 
         {/* モバイルメニューボタン */}
@@ -136,16 +156,44 @@ export default function Header() {
                   Projects
                 </Button>
               </Link>
-              <Link href="/products" passHref>
-                <Button
-                  variant="ghost"
-                  colorScheme="blue"
-                  w="full"
-                  onClick={onClose}
-                >
-                  Products
-                </Button>
-              </Link>
+              <Text fontWeight="semibold" color="gray.600" fontSize="sm">
+                Products
+              </Text>
+              <VStack spacing={2} align="stretch" pl={4}>
+                <Link href="/products" passHref>
+                  <Button
+                    variant="ghost"
+                    colorScheme="blue"
+                    w="full"
+                    size="sm"
+                    onClick={onClose}
+                  >
+                    Products概要
+                  </Button>
+                </Link>
+                <Link href="/products/task-management" passHref>
+                  <Button
+                    variant="ghost"
+                    colorScheme="blue"
+                    w="full"
+                    size="sm"
+                    onClick={onClose}
+                  >
+                    タスク管理ツール
+                  </Button>
+                </Link>
+                <Link href="/products/ebay-automation" passHref>
+                  <Button
+                    variant="ghost"
+                    colorScheme="blue"
+                    w="full"
+                    size="sm"
+                    onClick={onClose}
+                  >
+                    eBay自動化ツール
+                  </Button>
+                </Link>
+              </VStack>
             </VStack>
           </DrawerBody>
         </DrawerContent>
