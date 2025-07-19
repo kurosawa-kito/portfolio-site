@@ -32,6 +32,10 @@ export async function GET() {
     });
   } catch (error) {
     console.error("eBay session check error:", error);
-    return NextResponse.json({ success: false, isAuthenticated: false });
+    let message = "セッション確認に失敗しました";
+    if (typeof error === "object" && error !== null && "message" in error && typeof error.message === "string") {
+      message = error.message;
+    }
+    return NextResponse.json({ success: false, isAuthenticated: false, error: message });
   }
 }

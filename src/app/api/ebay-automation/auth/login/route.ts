@@ -49,14 +49,24 @@ export async function POST(request) {
     });
 
     return response;
-  } catch (error: any) {
+  } catch (error) {
     console.error("eBay login error:", error);
+    let message = "ログインに失敗しました";
+    let stack = undefined;
+    if (typeof error === "object" && error !== null) {
+      if ("message" in error && typeof error.message === "string") {
+        message = error.message;
+      }
+      if ("stack" in error && typeof error.stack === "string") {
+        stack = error.stack;
+      }
+    }
     console.error("Error details:", {
-      message: error.message,
-      stack: error.stack,
+      message,
+      stack,
     });
     return NextResponse.json(
-      { success: false, error: error.message || "ログインに失敗しました" },
+      { success: false, error: message },
       { status: 401 }
     );
   }

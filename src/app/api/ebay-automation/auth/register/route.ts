@@ -49,18 +49,33 @@ export async function POST(request) {
         subscriptionPlan: user.subscriptionPlan,
       },
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error("eBay registration error:", error);
 
+    let code = undefined;
+    let detail = undefined;
+    let message = "アカウント作成に失敗しました";
+    if (typeof error === "object" && error !== null) {
+      if ("code" in error && typeof error.code === "string") {
+        code = error.code;
+      }
+      if ("detail" in error && typeof error.detail === "string") {
+        detail = error.detail;
+      }
+      if ("message" in error && typeof error.message === "string") {
+        message = error.message;
+      }
+    }
+
     // 重複エラーの処理
-    if (error.code === "23505") {
-      if (error.detail?.includes("username")) {
+    if (code === "23505") {
+      if (detail?.includes("username")) {
         return NextResponse.json(
           { success: false, error: "このユーザー名は既に使用されています" },
           { status: 409 }
         );
       }
-      if (error.detail?.includes("email")) {
+      if (detail?.includes("email")) {
         return NextResponse.json(
           { success: false, error: "このメールアドレスは既に登録されています" },
           { status: 409 }
@@ -71,7 +86,7 @@ export async function POST(request) {
     return NextResponse.json(
       {
         success: false,
-        error: error.message || "アカウント作成に失敗しました",
+        error: message,
       },
       { status: 500 }
     );
