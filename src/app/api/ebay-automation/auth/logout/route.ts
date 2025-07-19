@@ -1,10 +1,10 @@
 // eBay自動化ツール専用ログアウトAPI
 
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import EbayAuthService from "@/lib/ebay-auth";
 
-export async function POST(request: NextRequest) {
+export async function POST(request) {
   try {
     const cookieStore = cookies();
     const sessionToken = cookieStore.get("ebay-session")?.value;

@@ -1,9 +1,9 @@
 // eBay自動化ツール専用ログインAPI
 
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import EbayAuthService from "@/lib/ebay-auth";
 
-export async function POST(request: NextRequest) {
+export async function POST(request) {
   try {
     const { email, username, password } = await request.json();
 

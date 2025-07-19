@@ -1,6 +1,6 @@
 // eBay自動化ツール専用セッション確認API
 
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import EbayAuthService from "@/lib/ebay-auth";
 
