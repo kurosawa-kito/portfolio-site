@@ -25,7 +25,7 @@ interface EbayAuthContextType {
 }
 
 const EbayAuthContext = createContext<EbayAuthContextType | undefined>(
-  undefined
+  undefined,
 );
 
 export function EbayAuthProvider({ children }: { children: ReactNode }) {

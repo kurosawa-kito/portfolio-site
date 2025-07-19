@@ -16,11 +16,11 @@ async function initializeEbayDatabase() {
     console.log("🔍 環境変数チェック:");
     console.log(
       "- EBAY_DATABASE_URL:",
-      process.env.EBAY_DATABASE_URL ? "設定済み" : "未設定"
+      process.env.EBAY_DATABASE_URL ? "設定済み" : "未設定",
     );
     console.log(
       "- DATABASE_URL:",
-      process.env.DATABASE_URL ? "設定済み" : "未設定"
+      process.env.DATABASE_URL ? "設定済み" : "未設定",
     );
     console.log("- NODE_ENV:", process.env.NODE_ENV || "development");
 
@@ -106,7 +106,7 @@ async function createTestUsers() {
         ON CONFLICT (email) DO NOTHING
         RETURNING id
       `,
-        [user.username, user.email, user.password, user.fullName]
+        [user.username, user.email, user.password, user.fullName],
       );
 
       if (result.rows.length > 0) {
@@ -119,7 +119,7 @@ async function createTestUsers() {
           VALUES ($1)
           ON CONFLICT DO NOTHING
         `,
-          [userId]
+          [userId],
         );
 
         console.log(`✅ テストユーザー作成: ${user.username} (${user.email})`);
@@ -129,7 +129,7 @@ async function createTestUsers() {
     } catch (error: any) {
       console.error(
         `❌ テストユーザー作成エラー (${user.username}):`,
-        error.message
+        error.message,
       );
     }
   }

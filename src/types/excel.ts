@@ -35,7 +35,7 @@ export interface DiffResult {
 
 export interface RowDiff {
   index: number;
-  type: 'added' | 'removed' | 'modified' | 'unchanged';
+  type: "added" | "removed" | "modified" | "unchanged";
   cellDiffs: CellDiff[];
   original?: ExcelRow;
   modified?: ExcelRow;
@@ -43,7 +43,7 @@ export interface RowDiff {
 
 export interface CellDiff {
   index: number;
-  type: 'added' | 'removed' | 'modified' | 'unchanged';
+  type: "added" | "removed" | "modified" | "unchanged";
   originalValue?: CellValue;
   modifiedValue?: CellValue;
 }
@@ -64,4 +64,4 @@ export interface FileUploadState {
   history: HistoryFile[];
   currentDiffIndex: number;
   totalDiffs: number;
-} 
+}

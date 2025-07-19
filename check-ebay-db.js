@@ -24,7 +24,7 @@ async function checkEbayTables() {
 
     // ユーザー一覧を取得
     const usersResult = await pool.query(
-      "SELECT id, username, email, full_name FROM ebay_users"
+      "SELECT id, username, email, full_name FROM ebay_users",
     );
     console.log("\n👥 作成されたテストユーザー:");
     usersResult.rows.forEach((user) => {

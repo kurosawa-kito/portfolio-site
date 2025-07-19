@@ -53,7 +53,7 @@ class EbayDatabase {
   }
 
   public async transaction<T>(
-    callback: (client: any) => Promise<T>
+    callback: (client: any) => Promise<T>,
   ): Promise<T> {
     const client = await this.pool.connect();
 

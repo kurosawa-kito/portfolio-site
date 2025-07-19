@@ -39,7 +39,7 @@ export default function Header() {
     if (isLoggedIn) {
       const taskRelatedPaths = ["/member/tasks", "/admin/dashboard", "/shared"];
       const isTaskRelatedPath = taskRelatedPaths.some((path) =>
-        pathname?.startsWith(path)
+        pathname?.startsWith(path),
       );
 
       if (!isTaskRelatedPath) {

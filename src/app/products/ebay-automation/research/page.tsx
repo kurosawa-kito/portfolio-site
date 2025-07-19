@@ -141,7 +141,7 @@ export default function MercariResearch() {
     }
 
     const selectedProducts = results.filter((item) =>
-      selectedItems.has(item.id)
+      selectedItems.has(item.id),
     );
 
     // TODO: eBay出品API呼び出しを実装
@@ -298,7 +298,7 @@ export default function MercariResearch() {
                               <Text fontWeight="semibold" color="green.500">
                                 ¥
                                 {calculateEbayPrice(
-                                  item.price
+                                  item.price,
                                 ).toLocaleString()}
                               </Text>
                             </HStack>

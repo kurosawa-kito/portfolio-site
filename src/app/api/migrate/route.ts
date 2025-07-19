@@ -8,7 +8,7 @@ export async function POST() {
   // デフォルトでマイグレーション処理をスキップ（明示的に許可された場合のみ実行）
   if (process.env.EXPLICITLY_ALLOW_MIGRATION !== "true") {
     console.log(
-      "マイグレーション処理をスキップします。理由: 明示的に許可されていません"
+      "マイグレーション処理をスキップします。理由: 明示的に許可されていません",
     );
     return Response.json({
       success: false,
@@ -119,7 +119,7 @@ export async function POST() {
         message: "マイグレーション中にエラーが発生しました",
         error: error instanceof Error ? error.message : "不明なエラー",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

@@ -20,21 +20,21 @@ export async function POST(request: NextRequest) {
           success: false,
           message: "ユーザー名、ログインID、パスワードは必須です",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     if (username.length < 3) {
       return NextResponse.json(
         { success: false, message: "ユーザー名は3文字以上必要です" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     if (login_id.length < 3) {
       return NextResponse.json(
         { success: false, message: "ログインIDは3文字以上必要です" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -42,14 +42,14 @@ export async function POST(request: NextRequest) {
     if (!isAlphanumeric(login_id)) {
       return NextResponse.json(
         { success: false, message: "ログインIDは英数字のみ使用できます" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     if (password.length < 6) {
       return NextResponse.json(
         { success: false, message: "パスワードは6文字以上必要です" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
           message:
             "パスワードは英大文字、英小文字、数字のうち少なくとも2種類を組み合わせる必要があります",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -83,7 +83,7 @@ export async function POST(request: NextRequest) {
     if (checkUsername.rows.length > 0) {
       return NextResponse.json(
         { success: false, message: "このユーザー名は既に使用されています" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -94,7 +94,7 @@ export async function POST(request: NextRequest) {
     if (checkLoginId.rows.length > 0) {
       return NextResponse.json(
         { success: false, message: "このログインIDは既に使用されています" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -129,7 +129,7 @@ export async function POST(request: NextRequest) {
             message: "このユーザー名またはログインIDは既に使用されています",
             details: error.message,
           },
-          { status: 400 }
+          { status: 400 },
         );
       }
 
@@ -140,7 +140,7 @@ export async function POST(request: NextRequest) {
             message: "データベースへの接続に失敗しました",
             details: error.message,
           },
-          { status: 500 }
+          { status: 500 },
         );
       }
     }
@@ -151,7 +151,7 @@ export async function POST(request: NextRequest) {
         message: "ユーザー登録に失敗しました",
         details: error instanceof Error ? error.message : "不明なエラー",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

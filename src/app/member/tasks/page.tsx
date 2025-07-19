@@ -40,7 +40,7 @@ const safeBase64Encode = (str: string, user: any) => {
     return btoa(
       encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (_, p1) => {
         return String.fromCharCode(parseInt(p1, 16));
-      })
+      }),
     );
   } catch (e) {
     console.error("Base64エンコードエラー:", e);
@@ -54,7 +54,7 @@ export default function TasksPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [deletingTaskId, setDeletingTaskId] = useState<string | number | null>(
-    null
+    null,
   );
   const { user, isLoggedIn, isInitialized, setShowTaskHeader } = useAuth();
   const toast = useToast();
@@ -115,7 +115,7 @@ export default function TasksPage() {
         setTasks(data);
       } else {
         throw new Error(
-          `タスクの取得に失敗しました: ${response.status} ${response.statusText}`
+          `タスクの取得に失敗しました: ${response.status} ${response.statusText}`,
         );
       }
     } catch (error) {
@@ -133,7 +133,7 @@ export default function TasksPage() {
 
   const handleStatusChange = async (taskId: string, newStatus: string) => {
     const originalTask = tasks.find(
-      (task) => String(task.id) === String(taskId)
+      (task) => String(task.id) === String(taskId),
     );
     const originalStatus = originalTask?.status;
 
@@ -141,8 +141,8 @@ export default function TasksPage() {
       prevTasks.map((task) =>
         String(task.id) === String(taskId)
           ? { ...task, status: newStatus }
-          : task
-      )
+          : task,
+      ),
     );
 
     try {
@@ -178,8 +178,8 @@ export default function TasksPage() {
         prevTasks.map((task) =>
           String(task.id) === String(taskId)
             ? { ...task, status: originalStatus || "pending" }
-            : task
-        )
+            : task,
+        ),
       );
       toast({
         title: "エラー",
@@ -256,7 +256,7 @@ export default function TasksPage() {
           window.history.replaceState(
             {},
             document.title,
-            window.location.pathname
+            window.location.pathname,
           );
         }
         await fetchTasks();

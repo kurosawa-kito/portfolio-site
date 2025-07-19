@@ -69,7 +69,7 @@ class EbayAuthService {
   // ユーザーログイン
   static async loginUser(
     username: string,
-    password: string
+    password: string,
   ): Promise<{ user: EbayUser; sessionToken: string }> {
     const query = `
       SELECT id, username, email, password_hash, full_name, subscription_plan, is_active, created_at
@@ -94,7 +94,7 @@ class EbayAuthService {
     // 最終ログイン時刻を更新
     await ebayDb.query(
       "UPDATE ebay_users SET last_login = CURRENT_TIMESTAMP WHERE id = $1",
-      [user.id]
+      [user.id],
     );
 
     // セッション作成
@@ -118,7 +118,7 @@ class EbayAuthService {
   static async createSession(userId: number): Promise<string> {
     const sessionToken = jwt.sign(
       { userId, type: "ebay-session" },
-      this.JWT_SECRET
+      this.JWT_SECRET,
     );
     const expiresAt = new Date(Date.now() + this.SESSION_DURATION);
 
@@ -155,7 +155,7 @@ class EbayAuthService {
       // セッションの最終アクセス時刻を更新
       await ebayDb.query(
         "UPDATE ebay_sessions SET last_accessed = CURRENT_TIMESTAMP WHERE session_token = $1",
-        [sessionToken]
+        [sessionToken],
       );
 
       return {
@@ -193,7 +193,7 @@ class EbayAuthService {
   // 期限切れセッションクリーンアップ
   static async cleanupExpiredSessions(): Promise<void> {
     await ebayDb.query(
-      "DELETE FROM ebay_sessions WHERE expires_at < CURRENT_TIMESTAMP"
+      "DELETE FROM ebay_sessions WHERE expires_at < CURRENT_TIMESTAMP",
     );
   }
 }

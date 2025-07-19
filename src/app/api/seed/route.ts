@@ -36,7 +36,7 @@ export async function POST() {
     console.error("シードデータの作成中にエラーが発生しました:", error);
     return Response.json(
       { success: false, message: "シードデータの作成中にエラーが発生しました" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

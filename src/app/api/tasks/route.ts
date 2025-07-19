@@ -74,14 +74,14 @@ export async function GET(request: NextRequest) {
         console.error("Base64デコードエラー:", e);
         return NextResponse.json(
           { error: "ユーザー情報のデコードに失敗しました" },
-          { status: 400 }
+          { status: 400 },
         );
       }
     }
 
     console.log(
       "ユーザーヘッダー:",
-      userStr ? `取得済み (${userStr.length}文字)` : "なし"
+      userStr ? `取得済み (${userStr.length}文字)` : "なし",
     );
 
     // ユーザーヘッダーの存在チェック
@@ -100,7 +100,7 @@ export async function GET(request: NextRequest) {
         console.error("不正なユーザーデータ:", user);
         return NextResponse.json(
           { error: "不正なユーザーデータ" },
-          { status: 401 }
+          { status: 401 },
         );
       }
 
@@ -112,7 +112,7 @@ export async function GET(request: NextRequest) {
       console.error("ユーザーヘッダーの解析エラー:", e);
       return NextResponse.json(
         { error: "不正なユーザーデータ形式" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -133,7 +133,7 @@ export async function GET(request: NextRequest) {
 
       const tasks = result.rows as Task[];
       console.log(
-        `ユーザー ${user.id} に割り当てられたタスク: ${tasks.length}件`
+        `ユーザー ${user.id} に割り当てられたタスク: ${tasks.length}件`,
       );
 
       return NextResponse.json(tasks);
@@ -141,14 +141,14 @@ export async function GET(request: NextRequest) {
       console.error("データベースエラー:", dbError);
       return NextResponse.json(
         { error: "データベースからのタスク取得に失敗しました" },
-        { status: 500 }
+        { status: 500 },
       );
     }
   } catch (error) {
     console.error("タスク取得エラー:", error);
     return NextResponse.json(
       { error: "タスクの取得に失敗しました" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -180,7 +180,7 @@ export async function POST(request: NextRequest) {
       if (taskDueDate < currentDate) {
         return NextResponse.json(
           { error: "現在時刻より後の日時を設定してください" },
-          { status: 400 }
+          { status: 400 },
         );
       }
     }
@@ -212,7 +212,7 @@ export async function POST(request: NextRequest) {
         console.error("Base64デコードエラー:", e);
         return NextResponse.json(
           { error: "ユーザー情報のデコードに失敗しました" },
-          { status: 400 }
+          { status: 400 },
         );
       }
     }
@@ -258,7 +258,7 @@ export async function POST(request: NextRequest) {
     console.error("タスク作成エラー:", error);
     return NextResponse.json(
       { error: "タスクの作成に失敗しました" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -304,7 +304,7 @@ export async function PATCH(request: NextRequest) {
         console.error("Base64デコードエラー:", e);
         return NextResponse.json(
           { error: "ユーザー情報のデコードに失敗しました" },
-          { status: 400 }
+          { status: 400 },
         );
       }
     }
@@ -324,7 +324,7 @@ export async function PATCH(request: NextRequest) {
     if (taskCheck.rowCount === 0) {
       return NextResponse.json(
         { error: "タスクが見つからないか、アクセス権限がありません" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -344,7 +344,7 @@ export async function PATCH(request: NextRequest) {
     console.error("タスク更新エラー:", error);
     return NextResponse.json(
       { error: "タスクの更新に失敗しました" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

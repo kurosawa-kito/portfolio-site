@@ -231,8 +231,8 @@ export default function ListingHistory() {
                   {selectedPeriod === "30days"
                     ? "過去30日"
                     : selectedPeriod === "90days"
-                    ? "過去90日"
-                    : "全期間"}
+                      ? "過去90日"
+                      : "全期間"}
                 </MenuButton>
                 <MenuList>
                   <MenuItem onClick={() => setSelectedPeriod("30days")}>

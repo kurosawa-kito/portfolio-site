@@ -15,18 +15,30 @@
 
 /* アニメーション定義 */
 @keyframes highlight-added {
-  0% { background-color: rgba(72, 187, 120, 0.6); }
-  100% { background-color: rgba(72, 187, 120, 0.1); }
+  0% {
+    background-color: rgba(72, 187, 120, 0.6);
+  }
+  100% {
+    background-color: rgba(72, 187, 120, 0.1);
+  }
 }
 
 @keyframes highlight-removed {
-  0% { background-color: rgba(245, 101, 101, 0.6); }
-  100% { background-color: rgba(245, 101, 101, 0.1); }
+  0% {
+    background-color: rgba(245, 101, 101, 0.6);
+  }
+  100% {
+    background-color: rgba(245, 101, 101, 0.1);
+  }
 }
 
 @keyframes highlight-modified {
-  0% { background-color: rgba(236, 201, 75, 0.6); }
-  100% { background-color: rgba(236, 201, 75, 0.1); }
+  0% {
+    background-color: rgba(236, 201, 75, 0.6);
+  }
+  100% {
+    background-color: rgba(236, 201, 75, 0.1);
+  }
 }
 
 /* スクロールバーのスタイル */
@@ -68,4 +80,4 @@
   box-shadow: 0 0 0 2px #3182ce;
   position: relative;
   z-index: 5;
-} 
+}

@@ -16,7 +16,7 @@ const safeBase64Encode = (str: string, user: any) => {
     return btoa(
       encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (_, p1) => {
         return String.fromCharCode(parseInt(p1, 16));
-      })
+      }),
     );
   } catch (e) {
     console.error("Base64エンコードエラー:", e);
@@ -130,7 +130,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         "/admin/users",
       ];
       const isTaskRelatedPath = taskRelatedPaths.some((path) =>
-        pathname?.startsWith(path)
+        pathname?.startsWith(path),
       );
       setShowTaskHeader(isTaskRelatedPath);
     }

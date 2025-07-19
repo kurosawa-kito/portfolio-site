@@ -58,7 +58,7 @@ export async function GET(request: NextRequest) {
         console.error("Base64デコードエラー:", e);
         return NextResponse.json(
           { error: "ユーザー情報のデコードに失敗しました" },
-          { status: 400 }
+          { status: 400 },
         );
       }
     }
@@ -75,7 +75,7 @@ export async function GET(request: NextRequest) {
     console.error("共有ノート取得エラー:", error);
     return NextResponse.json(
       { error: "共有ノートの取得に失敗しました" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -112,7 +112,7 @@ export async function POST(request: NextRequest) {
         console.error("Base64デコードエラー:", e);
         return NextResponse.json(
           { error: "ユーザー情報のデコードに失敗しました" },
-          { status: 400 }
+          { status: 400 },
         );
       }
     }
@@ -140,7 +140,7 @@ export async function POST(request: NextRequest) {
     console.error("共有ノート追加エラー:", error);
     return NextResponse.json(
       { error: "共有ノートの追加に失敗しました" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -154,7 +154,7 @@ export async function DELETE(request: NextRequest) {
     if (!id) {
       return NextResponse.json(
         { error: "ノートIDが指定されていません" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -185,7 +185,7 @@ export async function DELETE(request: NextRequest) {
         console.error("Base64デコードエラー:", e);
         return NextResponse.json(
           { error: "ユーザー情報のデコードに失敗しました" },
-          { status: 400 }
+          { status: 400 },
         );
       }
     }
@@ -201,7 +201,7 @@ export async function DELETE(request: NextRequest) {
     if (noteIndex === -1) {
       return NextResponse.json(
         { error: "指定されたノートが見つかりません" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -211,7 +211,7 @@ export async function DELETE(request: NextRequest) {
     if (note.created_by !== String(user.id) && user.role !== "admin") {
       return NextResponse.json(
         { error: "このノートを削除する権限がありません" },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
@@ -223,7 +223,7 @@ export async function DELETE(request: NextRequest) {
     console.error("共有ノート削除エラー:", error);
     return NextResponse.json(
       { error: "共有ノートの削除に失敗しました" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

@@ -1,5 +1,5 @@
 require("dotenv").config();
-import { sql } from '@vercel/postgres';
+import { sql } from "@vercel/postgres";
 
 async function migrate() {
   try {
@@ -40,7 +40,7 @@ async function migrate() {
         updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       );
     `;
-    
+
     // Excelファイルテーブルの作成
     await sql`
       CREATE TABLE IF NOT EXISTS excel_files (
@@ -52,14 +52,14 @@ async function migrate() {
         updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       );
     `;
-    
+
     console.log("全てのマイグレーションが正常に完了しました");
   } catch (error) {
     console.error("マイグレーション中にエラーが発生しました:", error);
   }
 }
 
-migrate().catch(err => {
-  console.error('Failed to create tables:', err);
+migrate().catch((err) => {
+  console.error("Failed to create tables:", err);
   process.exit(1);
 });

@@ -178,15 +178,15 @@ export default function EbaySettings() {
                     apiStatus === "connected"
                       ? "green"
                       : apiStatus === "disconnected"
-                      ? "red"
-                      : "yellow"
+                        ? "red"
+                        : "yellow"
                   }
                 >
                   {apiStatus === "connected"
                     ? "接続済み"
                     : apiStatus === "disconnected"
-                    ? "未接続"
-                    : "確認中"}
+                      ? "未接続"
+                      : "確認中"}
                 </Badge>
               </HStack>
 

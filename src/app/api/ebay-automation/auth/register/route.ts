@@ -10,7 +10,7 @@ export async function POST(request) {
     if (!username || !email || !password) {
       return NextResponse.json(
         { success: false, error: "必須項目を入力してください" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -18,7 +18,7 @@ export async function POST(request) {
     if (password.length < 8) {
       return NextResponse.json(
         { success: false, error: "パスワードは8文字以上である必要があります" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -27,7 +27,7 @@ export async function POST(request) {
     if (!emailRegex.test(email)) {
       return NextResponse.json(
         { success: false, error: "有効なメールアドレスを入力してください" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -72,13 +72,13 @@ export async function POST(request) {
       if (detail?.includes("username")) {
         return NextResponse.json(
           { success: false, error: "このユーザー名は既に使用されています" },
-          { status: 409 }
+          { status: 409 },
         );
       }
       if (detail?.includes("email")) {
         return NextResponse.json(
           { success: false, error: "このメールアドレスは既に登録されています" },
-          { status: 409 }
+          { status: 409 },
         );
       }
     }
@@ -88,7 +88,7 @@ export async function POST(request) {
         success: false,
         error: message,
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

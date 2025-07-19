@@ -52,7 +52,7 @@ const safeBase64Encode = (str: string, user: any) => {
     return btoa(
       encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (_, p1) => {
         return String.fromCharCode(parseInt(p1, 16));
-      })
+      }),
     );
   } catch (e) {
     console.error("Base64エンコードエラー:", e);
@@ -176,7 +176,7 @@ export default function UserManagement() {
           headers: {
             "x-user-base64": userBase64,
           },
-        }
+        },
       );
 
       const data = await response.json();
@@ -238,7 +238,7 @@ export default function UserManagement() {
           headers: {
             "x-user-base64": userBase64,
           },
-        }
+        },
       );
 
       const data = await response.json();

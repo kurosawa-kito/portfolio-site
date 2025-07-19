@@ -33,7 +33,7 @@ export async function GET(req: NextRequest) {
     console.error("履歴の取得に失敗しました", error);
     return NextResponse.json(
       { error: "履歴の取得に失敗しました" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -48,7 +48,7 @@ export async function POST(req: NextRequest) {
     if (!name || !path || !size) {
       return NextResponse.json(
         { error: "必須項目が不足しています" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -63,13 +63,13 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(
       { id, message: "履歴を追加しました" },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (error) {
     console.error("履歴の追加に失敗しました", error);
     return NextResponse.json(
       { error: "履歴の追加に失敗しました" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -82,7 +82,7 @@ export async function DELETE(req: NextRequest) {
     if (!id) {
       return NextResponse.json(
         { error: "IDが指定されていません" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -93,13 +93,13 @@ export async function DELETE(req: NextRequest) {
 
     return NextResponse.json(
       { message: "履歴を削除しました" },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     console.error("履歴の削除に失敗しました", error);
     return NextResponse.json(
       { error: "履歴の削除に失敗しました" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

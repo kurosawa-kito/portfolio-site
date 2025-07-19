@@ -53,7 +53,7 @@ const safeBase64Encode = (str: string, user: any) => {
     return btoa(
       encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (_, p1) => {
         return String.fromCharCode(parseInt(p1, 16));
-      })
+      }),
     );
   } catch (e) {
     console.error("Base64エンコードエラー:", e);
@@ -122,7 +122,7 @@ const useStyles = makeStyles(() =>
       zIndex: 9999,
       position: "relative",
     },
-  })
+  }),
 );
 
 /**
@@ -470,8 +470,8 @@ export default function TaskModal({
     mode === "create"
       ? "新しいタスクを作成"
       : mode === "shared"
-      ? "新しい共有タスクを作成"
-      : "タスクを編集";
+        ? "新しい共有タスクを作成"
+        : "タスクを編集";
 
   /**
    * 送信ボタンのラベル（モードによって異なる）

@@ -5,7 +5,7 @@ import { sharedTasks } from "../../tasks/route";
 // 共有タスクの削除APIエンドポイント
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: { id: string } },
 ) {
   try {
     const taskId = params.id;
@@ -38,7 +38,7 @@ export async function DELETE(
     if (taskIndex === -1) {
       return NextResponse.json(
         { error: "指定されたタスクが見つかりません", taskId },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -50,13 +50,13 @@ export async function DELETE(
 
     return NextResponse.json(
       { message: "共有タスクを削除しました", deletedTask },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     console.error("共有タスク削除エラー:", error);
     return NextResponse.json(
       { error: "共有タスクの削除に失敗しました" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

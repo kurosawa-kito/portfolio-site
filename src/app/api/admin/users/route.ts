@@ -52,7 +52,7 @@ export async function GET(request: NextRequest) {
         console.error("Base64デコードエラー:", e);
         return NextResponse.json(
           { error: "ユーザー情報のデコードに失敗しました" },
-          { status: 400 }
+          { status: 400 },
         );
       }
     }
@@ -72,7 +72,7 @@ export async function GET(request: NextRequest) {
     if (requestingUser.role !== "admin") {
       return NextResponse.json(
         { error: "この操作には管理者権限が必要です" },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
@@ -85,7 +85,7 @@ export async function GET(request: NextRequest) {
       if (!userId) {
         return NextResponse.json(
           { success: false, message: "ユーザーIDが指定されていません" },
-          { status: 400 }
+          { status: 400 },
         );
       }
 
@@ -102,7 +102,7 @@ export async function GET(request: NextRequest) {
       if (userResult.rows.length === 0) {
         return NextResponse.json(
           { success: false, message: "ユーザーが見つかりません" },
-          { status: 404 }
+          { status: 404 },
         );
       }
 
@@ -112,7 +112,7 @@ export async function GET(request: NextRequest) {
       if (userIdNum === requestingUserId) {
         return NextResponse.json(
           { success: false, message: "自分自身を削除することはできません" },
-          { status: 400 }
+          { status: 400 },
         );
       }
 
@@ -128,7 +128,7 @@ export async function GET(request: NextRequest) {
         if (adminCount <= 1) {
           return NextResponse.json(
             { success: false, message: "少なくとも1人の管理者が必要です" },
-            { status: 400 }
+            { status: 400 },
           );
         }
       }
@@ -142,7 +142,7 @@ export async function GET(request: NextRequest) {
       // タスクが存在する場合は必ず処理選択モーダルを表示
       if (userTasks.length > 0) {
         const pendingTasks = userTasks.filter(
-          (task) => task.status === "pending"
+          (task) => task.status === "pending",
         );
         return NextResponse.json({
           success: false,
@@ -178,7 +178,7 @@ export async function GET(request: NextRequest) {
     console.error("ユーザー情報取得エラー:", error);
     return NextResponse.json(
       { success: false, message: "ユーザー情報の取得に失敗しました" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -213,7 +213,7 @@ export async function PUT(request: NextRequest) {
         console.error("Base64デコードエラー:", e);
         return NextResponse.json(
           { error: "ユーザー情報のデコードに失敗しました" },
-          { status: 400 }
+          { status: 400 },
         );
       }
     }
@@ -233,7 +233,7 @@ export async function PUT(request: NextRequest) {
     if (requestingUser.role !== "admin") {
       return NextResponse.json(
         { error: "この操作には管理者権限が必要です" },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
@@ -253,7 +253,7 @@ export async function PUT(request: NextRequest) {
     if (userResult.rows.length === 0) {
       return NextResponse.json(
         { success: false, message: "ユーザーが見つかりません" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -263,7 +263,7 @@ export async function PUT(request: NextRequest) {
     if (targetUser.id === requestingUserId) {
       return NextResponse.json(
         { success: false, message: "自分自身の権限は変更できません" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -279,7 +279,7 @@ export async function PUT(request: NextRequest) {
       if (adminCount <= 1) {
         return NextResponse.json(
           { success: false, message: "少なくとも1人の管理者が必要です" },
-          { status: 400 }
+          { status: 400 },
         );
       }
     }
@@ -303,7 +303,7 @@ export async function PUT(request: NextRequest) {
     console.error("ユーザー権限更新エラー:", error);
     return NextResponse.json(
       { success: false, message: "ユーザー権限の更新に失敗しました" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -338,7 +338,7 @@ export async function DELETE(request: NextRequest) {
         console.error("Base64デコードエラー:", e);
         return NextResponse.json(
           { error: "ユーザー情報のデコードに失敗しました" },
-          { status: 400 }
+          { status: 400 },
         );
       }
     }
@@ -358,7 +358,7 @@ export async function DELETE(request: NextRequest) {
     if (requestingUser.role !== "admin") {
       return NextResponse.json(
         { error: "この操作には管理者権限が必要です" },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
@@ -369,7 +369,7 @@ export async function DELETE(request: NextRequest) {
     if (!userId) {
       return NextResponse.json(
         { success: false, message: "ユーザーIDが指定されていません" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -386,7 +386,7 @@ export async function DELETE(request: NextRequest) {
     if (userResult.rows.length === 0) {
       return NextResponse.json(
         { success: false, message: "ユーザーが見つかりません" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -396,7 +396,7 @@ export async function DELETE(request: NextRequest) {
     if (userIdNum === requestingUserId) {
       return NextResponse.json(
         { success: false, message: "自分自身を削除することはできません" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -412,7 +412,7 @@ export async function DELETE(request: NextRequest) {
       if (adminCount <= 1) {
         return NextResponse.json(
           { success: false, message: "少なくとも1人の管理者が必要です" },
-          { status: 400 }
+          { status: 400 },
         );
       }
     }
@@ -429,7 +429,7 @@ export async function DELETE(request: NextRequest) {
       // タスクが存在する場合は必ず処理選択モーダルを表示
       if (userTasks.length > 0) {
         const pendingTasks = userTasks.filter(
-          (task) => task.status === "pending"
+          (task) => task.status === "pending",
         );
         return NextResponse.json({
           success: false,
@@ -454,7 +454,7 @@ export async function DELETE(request: NextRequest) {
     // 共有タスクに追加
     if (action === "shareAll") {
       const pendingTasks = userTasks.filter(
-        (task) => task.status === "pending"
+        (task) => task.status === "pending",
       );
 
       // 未完了タスクを共有タスクに追加
@@ -522,7 +522,7 @@ export async function DELETE(request: NextRequest) {
     console.error("ユーザー削除エラー:", error);
     return NextResponse.json(
       { success: false, message: "ユーザーの削除に失敗しました" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

@@ -32,7 +32,7 @@ const safeBase64Encode = (str: string, user: any) => {
     return btoa(
       encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (_, p1) => {
         return String.fromCharCode(parseInt(p1, 16));
-      })
+      }),
     );
   } catch (e) {
     console.error("Base64エンコードエラー:", e);
@@ -186,7 +186,7 @@ export default function SharedBoard() {
         console.error(
           "共有タスク一覧取得エラー:",
           tasksResponse.status,
-          tasksResponse.statusText
+          tasksResponse.statusText,
         );
       }
     } catch (error) {
@@ -380,8 +380,8 @@ export default function SharedBoard() {
             prevTasks.map((task) =>
               task.id === taskId
                 ? { ...task, assigned_to: user.id.toString() }
-                : task
-            )
+                : task,
+            ),
           );
 
           // 追加済みタスクIDリストを更新
@@ -501,7 +501,7 @@ export default function SharedBoard() {
         throw new Error(
           `共有タスクの削除に失敗しました: ${response.status} ${
             errorData.error || ""
-          }`
+          }`,
         );
       }
 
@@ -748,16 +748,16 @@ export default function SharedBoard() {
                       task.priority === "high"
                         ? "red.50"
                         : task.priority === "medium"
-                        ? "orange.50"
-                        : "green.50"
+                          ? "orange.50"
+                          : "green.50"
                     }
                     _dark={{
                       bg:
                         task.priority === "high"
                           ? "red.900"
                           : task.priority === "medium"
-                          ? "orange.900"
-                          : "green.900",
+                            ? "orange.900"
+                            : "green.900",
                       opacity: 0.7,
                     }}
                     position="relative"
@@ -769,8 +769,8 @@ export default function SharedBoard() {
                           {task.priority === "high"
                             ? "高"
                             : task.priority === "medium"
-                            ? "中"
-                            : "低"}
+                              ? "中"
+                              : "低"}
                         </Badge>
                         {(task.created_by === user?.id.toString() ||
                           user?.role === "admin") && (

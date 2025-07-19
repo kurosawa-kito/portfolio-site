@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import React from 'react';
-import { ChakraProvider, Box } from '@chakra-ui/react';
+import React from "react";
+import { ChakraProvider, Box } from "@chakra-ui/react";
 
 export default function ExcelDiffLayout({
   children,
@@ -15,4 +15,4 @@ export default function ExcelDiffLayout({
       </Box>
     </ChakraProvider>
   );
-} 
+}

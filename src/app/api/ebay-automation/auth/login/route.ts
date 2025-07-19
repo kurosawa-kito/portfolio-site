@@ -19,13 +19,13 @@ export async function POST(request) {
       });
       return NextResponse.json(
         { success: false, error: "ユーザー名とパスワードを入力してください" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     const { user, sessionToken } = await EbayAuthService.loginUser(
       loginId,
-      password
+      password,
     );
 
     // セッショントークンをHTTPOnlyクッキーに設定
@@ -67,7 +67,7 @@ export async function POST(request) {
     });
     return NextResponse.json(
       { success: false, error: message },
-      { status: 401 }
+      { status: 401 },
     );
   }
 }

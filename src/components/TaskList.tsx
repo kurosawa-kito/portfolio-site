@@ -103,7 +103,7 @@ export default function TaskList({
         onDeleteTask(id);
       }
     },
-    [onDeleteTask]
+    [onDeleteTask],
   );
 
   const handleEdit = useCallback(
@@ -112,7 +112,7 @@ export default function TaskList({
         onEditTask(task);
       }
     },
-    [onEditTask]
+    [onEditTask],
   );
 
   const handleStatusChange = useCallback(
@@ -121,7 +121,7 @@ export default function TaskList({
         onStatusChange(id, status);
       }
     },
-    [onStatusChange]
+    [onStatusChange],
   );
 
   if (isLoading) {

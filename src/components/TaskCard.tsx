@@ -95,7 +95,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
                 onChange={(e) =>
                   handleStatusChange(
                     String(task.id),
-                    e.target.checked ? "completed" : "pending"
+                    e.target.checked ? "completed" : "pending",
                   )
                 }
                 size="md"

@@ -56,7 +56,7 @@ const safeBase64Encode = (str: string, user: any) => {
     return btoa(
       encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (_, p1) => {
         return String.fromCharCode(parseInt(p1, 16));
-      })
+      }),
     );
   } catch (e) {
     console.error("Base64エンコードエラー:", e);
@@ -287,7 +287,7 @@ export default function AdminDashboard() {
         setAiAnalysis(data.analysis);
       } else {
         setAiAnalysis(
-          `エラー: ${data.message || "タスクの分析に失敗しました"}`
+          `エラー: ${data.message || "タスクの分析に失敗しました"}`,
         );
         toast({
           title: "分析エラー",
@@ -448,14 +448,14 @@ export default function AdminDashboard() {
                             "&::-webkit-scrollbar-track": {
                               backgroundColor: useColorModeValue(
                                 "gray.100",
-                                "gray.700"
+                                "gray.700",
                               ),
                               borderRadius: "4px",
                             },
                             "&::-webkit-scrollbar-thumb": {
                               backgroundColor: useColorModeValue(
                                 "gray.300",
-                                "gray.600"
+                                "gray.600",
                               ),
                               borderRadius: "4px",
                             },
@@ -474,7 +474,7 @@ export default function AdminDashboard() {
                             "& th, & td": {
                               border: useColorModeValue(
                                 "1px solid #ddd",
-                                "1px solid #555"
+                                "1px solid #555",
                               ),
                               padding: "8px 12px",
                               textAlign: "left",
@@ -483,19 +483,19 @@ export default function AdminDashboard() {
                               fontWeight: "bold",
                               backgroundColor: useColorModeValue(
                                 "gray.100",
-                                "gray.700"
+                                "gray.700",
                               ),
                             },
                             "& tr:nth-of-type(even)": {
                               backgroundColor: useColorModeValue(
                                 "gray.50",
-                                "gray.800"
+                                "gray.800",
                               ),
                             },
                             "& tr:hover": {
                               backgroundColor: useColorModeValue(
                                 "blue.50",
-                                "blue.900"
+                                "blue.900",
                               ),
                             },
                           }}

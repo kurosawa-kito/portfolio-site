@@ -23,14 +23,14 @@ export async function POST(request: NextRequest) {
       console.log("バリデーションエラー: ログインIDが英数字のみではありません");
       return NextResponse.json(
         { success: false, message: "ログインIDは英数字のみ使用できます" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     // データベースからユーザーを検索
     console.log(
       "データベースへのクエリ実行: " +
-        `SELECT id, username, password, role FROM users WHERE login_id = '${login_id}'`
+        `SELECT id, username, password, role FROM users WHERE login_id = '${login_id}'`,
     );
 
     const result = await sql`
@@ -40,12 +40,12 @@ export async function POST(request: NextRequest) {
     `;
 
     console.log(
-      `クエリ結果: ${result.rows.length}件のレコードが見つかりました`
+      `クエリ結果: ${result.rows.length}件のレコードが見つかりました`,
     );
 
     if (result.rows.length > 0) {
       console.log(
-        `ユーザー見つかりました: username=${result.rows[0].username}, id=${result.rows[0].id}`
+        `ユーザー見つかりました: username=${result.rows[0].username}, id=${result.rows[0].id}`,
       );
       console.log(`DB内のパスワードハッシュ: ${result.rows[0].password}`);
 
@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
         ) {
           isPasswordMatch = await bcrypt.compare(
             password,
-            result.rows[0].password
+            result.rows[0].password,
           );
         } else {
           // 移行期間中の互換性のため、プレーンテキストでの比較も許可（一時的な対応）
@@ -97,7 +97,7 @@ export async function POST(request: NextRequest) {
         success: false,
         message: "ログインIDまたはパスワードが正しくありません",
       },
-      { status: 401 }
+      { status: 401 },
     );
   } catch (error: any) {
     console.error("Login error:", error);
@@ -107,7 +107,7 @@ export async function POST(request: NextRequest) {
         message: "サーバーエラーが発生しました",
         error: error.toString(),
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

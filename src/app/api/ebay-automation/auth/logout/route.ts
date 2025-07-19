@@ -31,12 +31,17 @@ export async function POST(request) {
   } catch (error) {
     console.error("eBay logout error:", error);
     let message = "ログアウトに失敗しました";
-    if (typeof error === "object" && error !== null && "message" in error && typeof error.message === "string") {
+    if (
+      typeof error === "object" &&
+      error !== null &&
+      "message" in error &&
+      typeof error.message === "string"
+    ) {
       message = error.message;
     }
     return NextResponse.json(
       { success: false, error: message },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

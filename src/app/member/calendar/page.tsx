@@ -6,7 +6,7 @@ import { Container, Row, Col } from "react-bootstrap";
 
 export default function Calendar() {
   const [selectedDate, setSelectedDate] = useState(
-    new Date().toISOString().split("T")[0]
+    new Date().toISOString().split("T")[0],
   );
   const [todo, setTodo] = useState("");
   const [done, setDone] = useState("");

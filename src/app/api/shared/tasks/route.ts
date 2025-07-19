@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
       } catch (e) {
         return NextResponse.json(
           { error: "ユーザー情報のデコードに失敗しました" },
-          { status: 400 }
+          { status: 400 },
         );
       }
     }
@@ -62,7 +62,7 @@ export async function GET(request: NextRequest) {
       } else {
         return NextResponse.json(
           { error: "指定されたタスクが見つかりません" },
-          { status: 404 }
+          { status: 404 },
         );
       }
     }
@@ -90,7 +90,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     return NextResponse.json(
       { error: "共有タスクの取得に失敗しました" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -128,7 +128,7 @@ export async function POST(request: NextRequest) {
       } catch (e) {
         return NextResponse.json(
           { error: "ユーザー情報のデコードに失敗しました" },
-          { status: 400 }
+          { status: 400 },
         );
       }
     }
@@ -144,7 +144,7 @@ export async function POST(request: NextRequest) {
     if (user.role !== "admin") {
       return NextResponse.json(
         { error: "共有タスクの作成は管理者のみ可能です" },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
@@ -184,7 +184,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     return NextResponse.json(
       { error: "共有タスクの作成に失敗しました" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -225,7 +225,7 @@ export async function PUT(request: NextRequest) {
       } catch (e) {
         return NextResponse.json(
           { error: "ユーザー情報のデコードに失敗しました" },
-          { status: 400 }
+          { status: 400 },
         );
       }
     }
@@ -246,7 +246,7 @@ export async function PUT(request: NextRequest) {
     if (taskResult.rows.length === 0) {
       return NextResponse.json(
         { error: "指定されたタスクが見つかりません" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -256,7 +256,7 @@ export async function PUT(request: NextRequest) {
     if (user.role !== "admin" && task.created_by !== userId) {
       return NextResponse.json(
         { error: "このタスクを更新する権限がありません" },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
@@ -278,7 +278,7 @@ export async function PUT(request: NextRequest) {
   } catch (error) {
     return NextResponse.json(
       { error: "共有タスクの更新に失敗しました" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -321,7 +321,7 @@ export async function DELETE(request: NextRequest) {
       } catch (e) {
         return NextResponse.json(
           { error: "ユーザー情報のデコードに失敗しました" },
-          { status: 400 }
+          { status: 400 },
         );
       }
     }
@@ -342,7 +342,7 @@ export async function DELETE(request: NextRequest) {
     if (taskResult.rows.length === 0) {
       return NextResponse.json(
         { error: "指定されたタスクが見つかりません" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -352,7 +352,7 @@ export async function DELETE(request: NextRequest) {
     if (user.role !== "admin" && task.created_by !== userId) {
       return NextResponse.json(
         { error: "このタスクを削除する権限がありません" },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
@@ -367,12 +367,12 @@ export async function DELETE(request: NextRequest) {
 
     return NextResponse.json(
       { message: "タスクを削除しました", deletedTask },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     return NextResponse.json(
       { error: "共有タスクの削除に失敗しました" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -409,7 +409,7 @@ export async function PATCH(request: NextRequest) {
       } catch (e) {
         return NextResponse.json(
           { error: "ユーザー情報のデコードに失敗しました" },
-          { status: 400 }
+          { status: 400 },
         );
       }
     }
@@ -442,7 +442,7 @@ export async function PATCH(request: NextRequest) {
       if (!taskId) {
         return NextResponse.json(
           { error: "タスクIDが指定されていません" },
-          { status: 400 }
+          { status: 400 },
         );
       }
 
@@ -461,7 +461,7 @@ export async function PATCH(request: NextRequest) {
   } catch (error) {
     return NextResponse.json(
       { error: "共有タスクの操作に失敗しました" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

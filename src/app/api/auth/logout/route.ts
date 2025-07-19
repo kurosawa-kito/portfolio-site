@@ -11,7 +11,7 @@ export async function POST() {
     console.error("Logout error:", error);
     return NextResponse.json(
       { success: false, message: "Server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

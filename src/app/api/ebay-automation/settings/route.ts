@@ -29,7 +29,7 @@ export async function GET() {
     if (!auth.isAuthenticated || !auth.user) {
       return NextResponse.json(
         { success: false, error: "eBayツールへのログインが必要です" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -56,7 +56,7 @@ export async function GET() {
     console.error("Settings GET error:", error);
     return NextResponse.json(
       { success: false, error: "設定の読み込みに失敗しました" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
     if (!auth.isAuthenticated || !auth.user) {
       return NextResponse.json(
         { success: false, error: "eBayツールへのログインが必要です" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -83,7 +83,7 @@ export async function POST(request: NextRequest) {
     console.error("Settings POST error:", error);
     return NextResponse.json(
       { success: false, error: "設定の保存に失敗しました" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

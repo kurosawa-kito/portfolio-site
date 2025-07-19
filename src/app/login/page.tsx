@@ -120,14 +120,14 @@ export default function Login() {
                       if (e.target !== document.activeElement) {
                         console.log(
                           "Auto-fill detected for loginid:",
-                          e.target.value
+                          e.target.value,
                         );
                         setLoginId(e.target.value);
                         validateLoginId(e.target.value);
                       } else {
                         console.log(
                           "User input ignored for loginid:",
-                          e.target.value
+                          e.target.value,
                         );
                       }
                     }}

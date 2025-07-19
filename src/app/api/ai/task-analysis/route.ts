@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
           success: false,
           message: "タスクデータが提供されていません",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
           success: false,
           message: "Gemini APIキーが設定されていません",
         },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -152,8 +152,8 @@ export async function POST(request: NextRequest) {
         console.error("Gemini APIエラー:", errorData);
         throw new Error(
           `Gemini APIリクエスト失敗: ${response.status} ${JSON.stringify(
-            errorData
-          )}`
+            errorData,
+          )}`,
         );
       }
 
@@ -189,7 +189,7 @@ export async function POST(request: NextRequest) {
           "Gemini APIへのアクセス中にエラーが発生しました：" + error.message,
         error: error.toString(),
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

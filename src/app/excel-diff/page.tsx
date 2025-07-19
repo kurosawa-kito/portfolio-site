@@ -79,7 +79,7 @@ export default function ExcelDiffPage() {
       const diffResult = compareExcelFiles(
         originalFile,
         modifiedFile,
-        selectedSheet
+        selectedSheet,
       );
       setDiffResults([diffResult]);
 

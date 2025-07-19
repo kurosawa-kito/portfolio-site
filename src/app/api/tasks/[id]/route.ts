@@ -22,7 +22,7 @@ interface Task {
 // タスクの更新APIエンドポイント
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: { id: string } },
 ) {
   try {
     const taskId = parseInt(params.id);
@@ -37,7 +37,7 @@ export async function PUT(
       if (taskDueDate < currentDate) {
         return NextResponse.json(
           { error: "現在時刻より後の日時を設定してください" },
-          { status: 400 }
+          { status: 400 },
         );
       }
     }
@@ -81,7 +81,7 @@ export async function PUT(
     if (taskResult.rows.length === 0) {
       return NextResponse.json(
         { error: "タスクが見つからないか、更新権限がありません" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -104,7 +104,7 @@ export async function PUT(
     console.error("タスク更新エラー:", error);
     return NextResponse.json(
       { error: "タスクの更新に失敗しました" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -112,7 +112,7 @@ export async function PUT(
 // タスクを削除するAPI
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: { id: string } },
 ) {
   try {
     const taskId = parseInt(params.id);
@@ -157,7 +157,7 @@ export async function DELETE(
       console.log(`タスク ${taskId} が見つかりません`);
       return NextResponse.json(
         { error: "タスクが見つかりません" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -183,7 +183,7 @@ export async function DELETE(
           message: "タスクの共有状態を更新しました",
           updatedTask: updatedTask.rows[0],
         },
-        { status: 200 }
+        { status: 200 },
       );
     } else {
       // タスクを削除
@@ -199,14 +199,14 @@ export async function DELETE(
           message: "タスクを削除しました",
           deletedTask: deletedTask.rows[0],
         },
-        { status: 200 }
+        { status: 200 },
       );
     }
   } catch (error) {
     console.error("タスク削除エラー:", error);
     return NextResponse.json(
       { error: "タスクの削除に失敗しました" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

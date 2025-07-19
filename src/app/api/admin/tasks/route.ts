@@ -49,7 +49,7 @@ export async function GET(request: NextRequest) {
       } catch (e) {
         return NextResponse.json(
           { error: "ユーザー情報のデコードに失敗しました" },
-          { status: 400 }
+          { status: 400 },
         );
       }
     }
@@ -64,7 +64,7 @@ export async function GET(request: NextRequest) {
     if (requestingUser.role !== "admin") {
       return NextResponse.json(
         { error: "この操作には管理者権限が必要です" },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
@@ -75,7 +75,7 @@ export async function GET(request: NextRequest) {
     if (!userId) {
       return NextResponse.json(
         { success: false, message: "ユーザーIDが指定されていません" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -104,7 +104,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     return NextResponse.json(
       { success: false, message: "タスク情報の取得に失敗しました" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

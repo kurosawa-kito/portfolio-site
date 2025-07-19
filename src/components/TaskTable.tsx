@@ -135,7 +135,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
                         onChange={(e) =>
                           handleStatusChange(
                             String(task.id),
-                            e.target.checked ? "completed" : "pending"
+                            e.target.checked ? "completed" : "pending",
                           )
                         }
                       />

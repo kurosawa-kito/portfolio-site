@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
     if (!auth.isAuthenticated || !auth.user) {
       return NextResponse.json(
         { success: false, error: "eBayツールへのログインが必要です" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
     console.error("Research API error:", error);
     return NextResponse.json(
       { success: false, error: "リサーチに失敗しました" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
