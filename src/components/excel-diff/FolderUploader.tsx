@@ -20,7 +20,7 @@ import {
   ModalCloseButton,
   useDisclosure,
 } from "@chakra-ui/react";
-import { FolderIcon, CheckCircleIcon, WarningIcon } from "@chakra-ui/icons";
+import { CheckCircleIcon, WarningIcon } from "@chakra-ui/icons";
 import { parseExcelFile } from "@/lib/excel-diff/parser";
 import { useExcelDiffStore } from "@/contexts/DiffContext";
 import { v4 as uuidv4 } from "uuid";
@@ -171,23 +171,29 @@ const FolderUploader: React.FC<FolderUploaderProps> = ({ onComplete }) => {
   return (
     <>
       <Button
-        onClick={handleFolderSelect}
+        leftIcon={
+          <Icon viewBox="0 0 20 20" boxSize={5}>
+            <path
+              fill="currentColor"
+              d="M2 4a2 2 0 012-2h4.586A2 2 0 0110 2.586l1.414 1.414A2 2 0 0113.414 5H16a2 2 0 012 2v7a2 2 0 01-2 2H4a2 2 0 01-2-2V4zm2 0v10h12V7h-2.586a2 2 0 01-1.414-.586L10 4.586A2 2 0 008.586 4H4z"
+            />
+          </Icon>
+        }
         colorScheme="blue"
         variant="outline"
+        onClick={handleFolderSelect}
         isLoading={isUploading}
         loadingText="アップロード中"
       >
-        フォルダをアップロード
+        フォルダを選択
       </Button>
-
       <input
         type="file"
-        ref={directoryInputRef}
         style={{ display: "none" }}
-        // @ts-ignore webkitdirectory属性を使用
-        webkitdirectory="true"
-        directory="true"
+        ref={directoryInputRef}
+        multiple
         onChange={handleFolderUpload}
+        {...({ webkitdirectory: "true" } as any)}
       />
 
       <Modal

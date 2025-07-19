@@ -61,9 +61,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // ファイルデータをバイト配列に変換
+    // ファイルデータをBase64文字列に変換
     const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
+    const base64 = Buffer.from(bytes).toString("base64");
 
     // UUIDの生成
     const id = uuidv4();
@@ -71,7 +71,7 @@ export async function POST(req: NextRequest) {
     // データベースに保存
     await sql`
       INSERT INTO excel_files (id, name, file_data)
-      VALUES (${id}, ${file.name}, ${buffer})
+      VALUES (${id}, ${file.name}, ${base64})
     `;
 
     return NextResponse.json(

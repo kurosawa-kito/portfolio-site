@@ -21,10 +21,11 @@ export async function parseExcelFile(file: File): Promise<ExcelFile> {
 
         const sheets: ExcelSheet[] = workbook.SheetNames.map((sheetName) => {
           const worksheet = workbook.Sheets[sheetName];
-          const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
 
-          const rows: ExcelRow[] = jsonData.map((row: any[], rowIndex) => {
-            const cells: ExcelCell[] = row.map((cellValue, cellIndex) => {
+          const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 }) as unknown[];
+
+          const rows: ExcelRow[] = jsonData.map((row, rowIndex) => {
+            const cells: ExcelCell[] = (row as any[]).map((cellValue, cellIndex) => {
               return {
                 value: formatCellValue(cellValue),
               };

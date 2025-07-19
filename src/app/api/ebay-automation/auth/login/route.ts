@@ -3,8 +3,14 @@
 import { NextResponse } from "next/server";
 import EbayAuthService from "@/lib/ebay-auth";
 
-export async function POST(request) {
+export async function POST(request: unknown) {
   try {
+    if (!(request instanceof Request)) {
+      return NextResponse.json(
+        { success: false, error: "不正なリクエストです" },
+        { status: 400 }
+      );
+    }
     const { email, username, password } = await request.json();
 
     // emailまたはusernameのどちらかが必要
