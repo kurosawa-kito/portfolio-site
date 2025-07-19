@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import EbayAuthService from "@/lib/ebay-auth";
 
-export async function POST(request) {
+export async function POST(request: unknown) {
   try {
     const cookieStore = cookies();
     const sessionToken = cookieStore.get("ebay-session")?.value;
@@ -41,7 +41,7 @@ export async function POST(request) {
     }
     return NextResponse.json(
       { success: false, error: message },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }
