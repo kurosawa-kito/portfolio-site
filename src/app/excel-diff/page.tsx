@@ -106,7 +106,7 @@ export default function ExcelDiffPage() {
           },
           body: JSON.stringify(comparisonRecord),
         });
-      
+
         if (!response.ok) {
           const errorData = await response.json();
           console.error("履歴の保存に失敗しました", errorData);
@@ -119,7 +119,7 @@ export default function ExcelDiffPage() {
           });
           return;
         }
-      
+
         console.log("比較履歴の保存に成功しました");
       } catch (apiError) {
         console.error("API呼び出しエラー:", apiError);
@@ -131,6 +131,9 @@ export default function ExcelDiffPage() {
           isClosable: true,
         });
       }
+    } finally {
+      setIsComparing(false);
+    }
   };
 
   // シートの選択変更
