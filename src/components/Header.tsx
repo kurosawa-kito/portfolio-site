@@ -86,11 +86,6 @@ export default function Header() {
               About
             </Button>
           </Link>
-          <Link href="/projects" passHref>
-            <Button variant="ghost" colorScheme="blue">
-              Projects
-            </Button>
-          </Link>
           <Link href="/products" passHref>
             <Button variant="ghost" colorScheme="blue">
               Products
@@ -124,16 +119,6 @@ export default function Header() {
                   onClick={onClose}
                 >
                   About
-                </Button>
-              </Link>
-              <Link href="/projects" passHref>
-                <Button
-                  variant="ghost"
-                  colorScheme="blue"
-                  w="full"
-                  onClick={onClose}
-                >
-                  Projects
                 </Button>
               </Link>
               <Link href="/products" passHref>

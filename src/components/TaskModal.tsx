@@ -1,6 +1,6 @@
 /**
  * タスク作成・編集用モーダルコンポーネント
- * 
+ *
  * 機能:
  * - 新規タスクの作成
  * - 既存タスクの編集
@@ -41,7 +41,7 @@ import EventIcon from "@material-ui/icons/Event";
 /**
  * マルチバイト文字をエンコードするための安全なbase64エンコード関数
  * 日本語などの非ASCII文字を含むユーザー情報をAPIに安全に渡すために使用
- * 
+ *
  * @param str エンコードする文字列
  * @param user ユーザー情報（エラー時のフォールバック用）
  * @returns Base64エンコードされた文字列
@@ -142,11 +142,11 @@ interface Task {
  * TaskModalコンポーネントのプロパティを定義するインターフェース
  */
 interface TaskModalProps {
-  isOpen: boolean;            // モーダルが開いているかどうか
-  onClose: () => void;        // モーダルを閉じる関数
-  mode: "create" | "shared" | "edit";  // モーダルの動作モード
-  task?: Task;                // 編集する場合のタスク情報
-  onSuccess?: () => void;     // 操作成功時のコールバック関数
+  isOpen: boolean; // モーダルが開いているかどうか
+  onClose: () => void; // モーダルを閉じる関数
+  mode: "create" | "shared" | "edit"; // モーダルの動作モード
+  task?: Task; // 編集する場合のタスク情報
+  onSuccess?: () => void; // 操作成功時のコールバック関数
 }
 
 /**
@@ -161,16 +161,16 @@ export default function TaskModal({
   onSuccess,
 }: TaskModalProps) {
   // 状態管理用のステート変数
-  const [title, setTitle] = useState("");                  // タスクタイトル
-  const [description, setDescription] = useState("");      // タスク説明
-  const [dueDate, setDueDate] = useState("");             // 期限日時（文字列形式）
-  const [dueDateObj, setDueDateObj] = useState<Date | null>(new Date());  // 期限日時（Dateオブジェクト）
-  const [priority, setPriority] = useState("medium");     // 優先度
+  const [title, setTitle] = useState(""); // タスクタイトル
+  const [description, setDescription] = useState(""); // タスク説明
+  const [dueDate, setDueDate] = useState(""); // 期限日時（文字列形式）
+  const [dueDateObj, setDueDateObj] = useState<Date | null>(new Date()); // 期限日時（Dateオブジェクト）
+  const [priority, setPriority] = useState("medium"); // 優先度
   const [isSubmitting, setIsSubmitting] = useState(false); // 送信中フラグ
-  const [isAllDay, setIsAllDay] = useState(false);        // 終日フラグ
-  const { user } = useAuth();                             // ユーザー情報
-  const toast = useToast();                               // トースト通知
-  const classes = useStyles();                            // カスタムスタイル
+  const [isAllDay, setIsAllDay] = useState(false); // 終日フラグ
+  const { user } = useAuth(); // ユーザー情報
+  const toast = useToast(); // トースト通知
+  const classes = useStyles(); // カスタムスタイル
 
   /**
    * モーダルが開かれた時、または編集モードでタスクが変更された時にフォームデータを初期化
@@ -214,8 +214,8 @@ export default function TaskModal({
   /**
    * Date オブジェクトをAPIに送信するための文字列形式に変換
    * 終日イベントの場合は時間部分を00:00:00に設定
-   * 
-   * @param date 変換するDateオブジェクト 
+   *
+   * @param date 変換するDateオブジェクト
    * @param isAllDayFormat 終日形式かどうか
    * @returns 'YYYY-MM-DDThh:mm:ss' 形式の日時文字列
    */
@@ -224,7 +224,7 @@ export default function TaskModal({
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, "0");
     const day = String(date.getDate()).padStart(2, "0");
-    
+
     if (isAllDayFormat) {
       return `${year}-${month}-${day}T00:00:00`;
     } else {
@@ -255,7 +255,7 @@ export default function TaskModal({
   /**
    * 終日チェックボックスの変更時の処理
    * 終日に変更した場合、時間部分をリセット
-   * 
+   *
    * @param e チェックボックスのイベント
    */
   // 終日チェックボックスの変更時の処理
@@ -281,7 +281,7 @@ export default function TaskModal({
   /**
    * 日付/時間ピッカーでの選択時の処理
    * 選択された日時を適切な形式に変換してステートに保存
-   * 
+   *
    * @param date 選択された日時
    */
   // 日時選択時の処理
@@ -417,27 +417,28 @@ export default function TaskModal({
       } else {
         // エラーレスポンスをJSON形式で取得
         const errorData = await response.json();
-        throw new Error(errorData.error || "API request failed", { 
-          cause: { status: response.status, data: errorData } 
+        throw new Error(errorData.error || "API request failed", {
+          cause: { status: response.status, data: errorData },
         });
       }
     } catch (error) {
       console.error("タスク操作エラー:", error);
-      
+
       // エラーメッセージを取得
-      let errorMessage = mode === "edit"
-        ? "タスクの更新に失敗しました"
-        : "タスクの作成に失敗しました";
-      
+      let errorMessage =
+        mode === "edit"
+          ? "タスクの更新に失敗しました"
+          : "タスクの作成に失敗しました";
+
       // Error オブジェクトから具体的なエラーメッセージを取得
       if (error instanceof Error) {
         // messageが設定されていて、デフォルトメッセージでない場合はそれを使用
         if (error.message && error.message !== "API request failed") {
           errorMessage = error.message;
-        } 
+        }
         // causeからエラーメッセージを取得（より具体的なAPIのエラーメッセージ）
-        else if (error.cause && typeof error.cause === 'object') {
-          if ('data' in error.cause) {
+        else if (error.cause && typeof error.cause === "object") {
+          if ("data" in error.cause) {
             const errorCause = error.cause as { data?: { error?: string } };
             if (errorCause.data?.error) {
               errorMessage = errorCause.data.error;
@@ -445,7 +446,7 @@ export default function TaskModal({
           }
         }
       }
-      
+
       // エラー通知を表示
       toast({
         title: "エラー",
@@ -460,7 +461,7 @@ export default function TaskModal({
   };
 
   // モーダルUI関連の設定
-  
+
   /**
    * モーダルのタイトル（モードによって異なる）
    */
@@ -469,8 +470,8 @@ export default function TaskModal({
     mode === "create"
       ? "新しいタスクを作成"
       : mode === "shared"
-      ? "新しい共有タスクを作成"
-      : "タスクを編集";
+        ? "新しい共有タスクを作成"
+        : "タスクを編集";
 
   /**
    * 送信ボタンのラベル（モードによって異なる）

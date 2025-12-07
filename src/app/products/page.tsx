@@ -99,48 +99,35 @@ export default function Products() {
                 </Heading>
                 <List spacing={3}>
                   <ListItem>
-                    <Text><strong>1.</strong> 冷蔵庫にある食材を入力、または写真をアップロード</Text>
+                    <Text>
+                      <strong>1.</strong>{" "}
+                      冷蔵庫にある食材を入力、または写真をアップロード
+                    </Text>
                   </ListItem>
                   <ListItem>
-                    <Text><strong>2.</strong> 「レシピを提案」ボタンをクリック</Text>
+                    <Text>
+                      <strong>2.</strong> 「レシピを提案」ボタンをクリック
+                    </Text>
                   </ListItem>
                   <ListItem>
-                    <Text><strong>3.</strong> AIが食材に合ったレシピを複数提案</Text>
+                    <Text>
+                      <strong>3.</strong> AIが食材に合ったレシピを複数提案
+                    </Text>
                   </ListItem>
                   <ListItem>
-                    <Text><strong>4.</strong> 気に入ったレシピをお気に入りに保存</Text>
+                    <Text>
+                      <strong>4.</strong> 気に入ったレシピをお気に入りに保存
+                    </Text>
                   </ListItem>
                 </List>
               </Box>
 
-              <Divider />
-
-              <Box>
-                <Heading size="md" mb={4}>
-                  技術スタック
-                </Heading>
-                <VStack align="start" spacing={2}>
-                  <Box>
-                    <Badge colorScheme="blue" mr={2}>フロントエンド</Badge>
-                    <Text as="span" fontSize="sm">Next.js 15, React, TypeScript, Tailwind CSS</Text>
-                  </Box>
-                  <Box>
-                    <Badge colorScheme="green" mr={2}>バックエンド</Badge>
-                    <Text as="span" fontSize="sm">Next.js API Routes, Prisma ORM</Text>
-                  </Box>
-                  <Box>
-                    <Badge colorScheme="purple" mr={2}>AI/ML</Badge>
-                    <Text as="span" fontSize="sm">OpenAI API (GPT-4), Google Cloud Vision API</Text>
-                  </Box>
-                  <Box>
-                    <Badge colorScheme="orange" mr={2}>データベース</Badge>
-                    <Text as="span" fontSize="sm">PostgreSQL (Vercel Postgres)</Text>
-                  </Box>
-                </VStack>
-              </Box>
-
               <Box textAlign="center" pt={4}>
-                <Link href="https://recipai-lyart.vercel.app" passHref target="_blank">
+                <Link
+                  href="https://recipai-lyart.vercel.app"
+                  passHref
+                  target="_blank"
+                >
                   <Button
                     colorScheme="orange"
                     size="lg"
