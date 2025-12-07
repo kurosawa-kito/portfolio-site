@@ -56,7 +56,11 @@ export default function Home() {
             h="120px"
           />
           <CardBody p={8} mt={-16}>
-            <Flex direction={{ base: "column", md: "row" }} align="center" gap={6}>
+            <Flex
+              direction={{ base: "column", md: "row" }}
+              align="center"
+              gap={6}
+            >
               <Avatar
                 size="2xl"
                 name="Kurosawa"
@@ -163,8 +167,12 @@ export default function Home() {
             >
               <Box bgGradient="linear(to-r, green.400, teal.400)" h="4px" />
               <CardBody p={6} textAlign="center">
-                <Text fontSize="3xl" mb={2}>📄</Text>
-                <Heading size="md" mb={2}>職務経歴書</Heading>
+                <Text fontSize="3xl" mb={2}>
+                  📄
+                </Text>
+                <Heading size="md" mb={2}>
+                  職務経歴書
+                </Heading>
                 <Text fontSize="sm" color="gray.500">
                   詳しい経歴・スキルはこちら
                 </Text>
@@ -186,8 +194,12 @@ export default function Home() {
             >
               <Box bgGradient="linear(to-r, blue.400, purple.400)" h="4px" />
               <CardBody p={6} textAlign="center">
-                <Text fontSize="3xl" mb={2}>💼</Text>
-                <Heading size="md" mb={2}>プロダクト</Heading>
+                <Text fontSize="3xl" mb={2}>
+                  💼
+                </Text>
+                <Heading size="md" mb={2}>
+                  プロダクト
+                </Heading>
                 <Text fontSize="sm" color="gray.500">
                   開発したアプリを試す
                 </Text>
