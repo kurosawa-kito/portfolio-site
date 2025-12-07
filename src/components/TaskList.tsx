@@ -69,7 +69,7 @@ const formatDateTime = (dateString: string, isAllDay?: boolean): string => {
   }
 };
 
-export default function TaskList({
+export const TaskList = ({
   tasks,
   onStatusChange,
   showSubtitle = true,
@@ -82,7 +82,7 @@ export default function TaskList({
   showCheckbox = true,
   showStatusBadge = false,
   subtitleSpacing = 2,
-}: TaskListProps) {
+}: TaskListProps) => {
   const bgColor = useColorModeValue("white", "gray.800");
   const borderColor = useColorModeValue("gray.200", "gray.700");
   const toast = useToast();

@@ -37,7 +37,7 @@ import {
 import { DeleteIcon, EditIcon } from "@chakra-ui/icons";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
-import PageTitle from "@/components/PageTitle";
+import { PageTitle } from "@/components/PageTitle";
 
 type UserData = {
   id: string;

@@ -19,8 +19,8 @@ import {
   Spinner as ChakraSpinner,
 } from "@chakra-ui/react";
 import { useAuth } from "@/contexts/AuthContext";
-import PageTitle from "@/components/PageTitle";
-import TaskList from "@/components/TaskList";
+import { PageTitle } from "@/components/PageTitle";
+import { TaskList } from "@/components/TaskList";
 import { useRouter } from "next/navigation";
 import ReactMarkdown from "react-markdown";
 import rehypeRaw from "rehype-raw";

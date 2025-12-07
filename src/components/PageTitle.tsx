@@ -4,7 +4,7 @@ interface PageTitleProps {
   children: React.ReactNode;
 }
 
-export default function PageTitle({ children }: PageTitleProps) {
+export const PageTitle = ({ children }: PageTitleProps) => {
   return (
     <Box w="100%">
       <Heading
