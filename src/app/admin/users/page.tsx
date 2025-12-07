@@ -35,9 +35,9 @@ import {
   VStack,
 } from "@chakra-ui/react";
 import { DeleteIcon, EditIcon } from "@chakra-ui/icons";
-import { useAuth } from "@/contexts/AuthProvider";
+import { useAuth } from "../../../contexts/AuthProvider";
 import { useRouter } from "next/navigation";
-import { PageHeader } from "@/components/PageHeader";
+import { PageHeader } from "../../../components/PageHeader";
 
 type UserData = {
   id: string;

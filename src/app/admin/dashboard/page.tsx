@@ -18,9 +18,9 @@ import {
   Button,
   Spinner as ChakraSpinner,
 } from "@chakra-ui/react";
-import { useAuth } from "@/contexts/AuthProvider";
-import { PageHeader } from "@/components/PageHeader";
-import { TasksDisplay } from "@/components/TasksDisplay";
+import { useAuth } from "../../../contexts/AuthProvider";
+import { PageHeader } from "../../../components/PageHeader";
+import { TasksDisplay } from "../../../components/TasksDisplay";
 import { useRouter } from "next/navigation";
 import ReactMarkdown from "react-markdown";
 import rehypeRaw from "rehype-raw";

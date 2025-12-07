@@ -20,9 +20,9 @@ import {
   Flex,
 } from "@chakra-ui/react";
 import { DeleteIcon, AddIcon, EditIcon } from "@chakra-ui/icons";
-import { useAuth } from "@/contexts/AuthProvider";
-import { PageHeader } from "@/components/PageHeader";
-import TaskModal from "@/components/TaskModal";
+import { useAuth } from "../../contexts/AuthProvider";
+import { PageHeader } from "../../components/PageHeader";
+import TaskModal from "../../components/TaskModal";
 import { useRouter } from "next/navigation";
 
 // マルチバイト文字をエンコードするための安全なbase64エンコード関数

@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@chakra-ui/react";
-import { useAuth } from "@/contexts/AuthProvider";
+import { useAuth } from "../contexts/AuthProvider";
 import { useRouter } from "next/navigation";
 
 export default function LogoutButton() {

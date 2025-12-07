@@ -18,7 +18,7 @@ import {
 } from "@chakra-ui/react";
 import { CheckIcon } from "@chakra-ui/icons";
 import Link from "next/link";
-import { useAuth } from "@/contexts/AuthProvider";
+import { useAuth } from "../../contexts/AuthProvider";
 import { useEffect } from "react";
 
 export default function Products() {

@@ -13,10 +13,10 @@ import {
   Spinner,
 } from "@chakra-ui/react";
 import { AddIcon } from "@chakra-ui/icons";
-import { useAuth } from "@/contexts/AuthProvider";
-import { TasksDisplay } from "@/components/TasksDisplay";
-import { PageHeader } from "@/components/PageHeader";
-import TaskModal from "@/components/TaskModal";
+import { useAuth } from "../../../contexts/AuthProvider";
+import { TasksDisplay } from "../../../components/TasksDisplay";
+import { PageHeader } from "../../../components/PageHeader";
+import TaskModal from "../../../components/TaskModal";
 import { useRouter } from "next/navigation";
 
 interface Task {
