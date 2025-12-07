@@ -32,7 +32,7 @@ import {
   Checkbox,
   VStack,
 } from "@chakra-ui/react";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/AuthProvider";
 import { DateTimePicker, DatePicker } from "@material-ui/pickers";
 import { makeStyles, createStyles } from "@material-ui/core/styles";
 import { InputAdornment } from "@material-ui/core";

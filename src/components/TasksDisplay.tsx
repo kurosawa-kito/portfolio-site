@@ -23,7 +23,7 @@ interface Task {
   is_all_day?: boolean;
 }
 
-interface TaskListProps {
+interface TasksDisplayProps {
   tasks: Task[];
   onStatusChange?: (id: string | number, status: string) => void;
   showSubtitle?: boolean;
@@ -69,7 +69,7 @@ const formatDateTime = (dateString: string, isAllDay?: boolean): string => {
   }
 };
 
-export const TaskList = ({
+export const TasksDisplay = ({
   tasks,
   onStatusChange,
   showSubtitle = true,
@@ -82,7 +82,7 @@ export const TaskList = ({
   showCheckbox = true,
   showStatusBadge = false,
   subtitleSpacing = 2,
-}: TaskListProps) => {
+}: TasksDisplayProps) => {
   const bgColor = useColorModeValue("white", "gray.800");
   const borderColor = useColorModeValue("gray.200", "gray.700");
   const toast = useToast();

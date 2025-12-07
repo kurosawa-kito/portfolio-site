@@ -18,9 +18,9 @@ import {
   Button,
   Spinner as ChakraSpinner,
 } from "@chakra-ui/react";
-import { useAuth } from "@/contexts/AuthContext";
-import { PageTitle } from "@/components/PageTitle";
-import { TaskList } from "@/components/TaskList";
+import { useAuth } from "@/contexts/AuthProvider";
+import { PageHeader } from "@/components/PageHeader";
+import { TasksDisplay } from "@/components/TasksDisplay";
 import { useRouter } from "next/navigation";
 import ReactMarkdown from "react-markdown";
 import rehypeRaw from "rehype-raw";
@@ -328,7 +328,7 @@ export default function AdminDashboard() {
     return (
       <div className="container mx-auto p-4">
         <VStack spacing={6} align="stretch" width="100%">
-          <PageTitle>管理者ダッシュボード</PageTitle>
+          <PageHeader>管理者ダッシュボード</PageHeader>
           <Card bg={bgColor} borderWidth="1px" borderColor={borderColor}>
             <CardBody>
               <Text>このページにアクセスする権限がありません。</Text>
@@ -342,7 +342,7 @@ export default function AdminDashboard() {
   return (
     <Container maxW="container.lg" pb={10}>
       <VStack spacing={6} align="stretch" width="100%">
-        <PageTitle>管理者ダッシュボード</PageTitle>
+        <PageHeader>管理者ダッシュボード</PageHeader>
 
         <Card bg={bgColor} borderWidth="1px" borderColor={borderColor}>
           <CardBody>
@@ -384,7 +384,7 @@ export default function AdminDashboard() {
                 </FormControl>
 
                 {viewMode === "card" ? (
-                  <TaskList
+                  <TasksDisplay
                     tasks={tasks}
                     isLoading={isLoading}
                     showEditButton={false}

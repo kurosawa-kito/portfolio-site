@@ -13,9 +13,9 @@ import {
   Spinner,
 } from "@chakra-ui/react";
 import { AddIcon } from "@chakra-ui/icons";
-import { useAuth } from "@/contexts/AuthContext";
-import TaskList from "@/components/TaskList";
-import PageTitle from "@/components/PageTitle";
+import { useAuth } from "@/contexts/AuthProvider";
+import TasksDisplay from "@/components/TasksDisplay";
+import PageTitle from "@/components/PageHeader";
 import TaskModal from "@/components/TaskModal";
 import { useRouter } from "next/navigation";
 
@@ -284,7 +284,7 @@ export default function TasksPage() {
   return (
     <Container maxW="4xl" py={4}>
       <VStack spacing={6} align="stretch">
-        <PageTitle>タスク管理</PageTitle>
+        <PageHeader>タスク管理</PageHeader>
 
         <Flex justify="space-between" align="center">
           <Box
@@ -327,7 +327,7 @@ export default function TasksPage() {
           </Button>
         </Flex>
 
-        <TaskList
+        <TasksDisplay
           tasks={tasks}
           isLoading={isLoading}
           onStatusChange={(id, status) =>

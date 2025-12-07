@@ -20,8 +20,8 @@ import {
   Flex,
 } from "@chakra-ui/react";
 import { DeleteIcon, AddIcon, EditIcon } from "@chakra-ui/icons";
-import { useAuth } from "@/contexts/AuthContext";
-import PageTitle from "@/components/PageTitle";
+import { useAuth } from "@/contexts/AuthProvider";
+import PageTitle from "@/components/PageHeader";
 import TaskModal from "@/components/TaskModal";
 import { useRouter } from "next/navigation";
 
@@ -548,7 +548,7 @@ export default function SharedBoard() {
   return (
     <Container maxW="4xl" py={4}>
       <VStack spacing={6} align="stretch">
-        <PageTitle>共有ボード</PageTitle>
+        <PageHeader>共有ボード</PageHeader>
 
         {/* 共有ノート投稿セクション */}
         <Card bg={bgColor} borderWidth="1px" borderColor={borderColor}>

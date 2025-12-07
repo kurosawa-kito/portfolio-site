@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { Flex, Text, Box } from "@chakra-ui/react";
 import LogoutButton from "./LogoutButton";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/AuthProvider";
 import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { useColorModeValue } from "@chakra-ui/react";

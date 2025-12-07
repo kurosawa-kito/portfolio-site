@@ -35,9 +35,9 @@ import {
   VStack,
 } from "@chakra-ui/react";
 import { DeleteIcon, EditIcon } from "@chakra-ui/icons";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/AuthProvider";
 import { useRouter } from "next/navigation";
-import { PageTitle } from "@/components/PageTitle";
+import { PageHeader } from "@/components/PageHeader";
 
 type UserData = {
   id: string;
@@ -366,7 +366,7 @@ export default function UserManagement() {
   return (
     <Container maxW="960px" py={4}>
       <VStack spacing={6} align="stretch" width="100%">
-        <PageTitle>ユーザー管理</PageTitle>
+        <PageHeader>ユーザー管理</PageHeader>
         <Card bg={bgColor} borderWidth="1px" borderColor={borderColor}>
           <CardBody>
             {user.role !== "admin" ? (

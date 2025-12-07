@@ -7,7 +7,7 @@ import { Inter } from "next/font/google";
 import { Providers } from "./providers";
 import "../styles/globals.css";
 import TaskHeader from "@/components/TaskHeader";
-import { AuthProvider } from "@/contexts/AuthContext";
+import { AuthProvider } from "@/contexts/AuthProvider";
 import { MuiPickersUtilsProvider } from "@material-ui/pickers";
 import DateFnsUtils from "@date-io/date-fns";
 import { createMuiTheme, ThemeProvider } from "@material-ui/core/styles";

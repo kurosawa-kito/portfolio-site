@@ -1,10 +1,10 @@
 import { Heading, Box } from "@chakra-ui/react";
 
-interface PageTitleProps {
+interface PageHeaderProps {
   children: React.ReactNode;
 }
 
-export const PageTitle = ({ children }: PageTitleProps) => {
+export const PageHeader = ({ children }: PageHeaderProps) => {
   return (
     <Box w="100%">
       <Heading
