@@ -35,6 +35,132 @@ export default function Products() {
     <Container maxW="container.md" py={8}>
       <VStack spacing={8} align="stretch">
         <Heading
+          size="xl"
+          bgGradient="linear(to-r, blue.500, purple.500)"
+          bgClip="text"
+          textAlign="center"
+        >
+          プロダクト一覧
+        </Heading>
+
+        {/* RECIPAI セクション */}
+        <Heading
+          size="lg"
+          bgGradient="linear(to-r, orange.400, red.500)"
+          bgClip="text"
+          textAlign="center"
+        >
+          RECIPAI - AIレシピ提案アプリ
+        </Heading>
+
+        <Card bg={bgColor} borderWidth="1px" borderColor={borderColor}>
+          <CardBody>
+            <VStack spacing={6} align="stretch">
+              <Text fontSize="lg" textAlign="center">
+                冷蔵庫にある食材を入力するだけで、AIが最適なレシピを提案します。
+                写真から食材を自動認識する機能も搭載しています。
+              </Text>
+
+              <Divider />
+
+              <Box>
+                <Heading size="md" mb={4}>
+                  主な機能
+                </Heading>
+                <List spacing={3}>
+                  <ListItem>
+                    <ListIcon as={CheckIcon} color="green.500" />
+                    食材からAIがレシピを自動生成
+                  </ListItem>
+                  <ListItem>
+                    <ListIcon as={CheckIcon} color="green.500" />
+                    写真から食材を自動認識（Google Cloud Vision API）
+                  </ListItem>
+                  <ListItem>
+                    <ListIcon as={CheckIcon} color="green.500" />
+                    お気に入りレシピの保存機能
+                  </ListItem>
+                  <ListItem>
+                    <ListIcon as={CheckIcon} color="green.500" />
+                    レシピ履歴の管理
+                  </ListItem>
+                  <ListItem>
+                    <ListIcon as={CheckIcon} color="green.500" />
+                    レスポンシブ対応のモバイルフレンドリーUI
+                  </ListItem>
+                </List>
+              </Box>
+
+              <Divider />
+
+              <Box>
+                <Heading size="md" mb={4}>
+                  使い方
+                </Heading>
+                <List spacing={3}>
+                  <ListItem>
+                    <Text><strong>1.</strong> 冷蔵庫にある食材を入力、または写真をアップロード</Text>
+                  </ListItem>
+                  <ListItem>
+                    <Text><strong>2.</strong> 「レシピを提案」ボタンをクリック</Text>
+                  </ListItem>
+                  <ListItem>
+                    <Text><strong>3.</strong> AIが食材に合ったレシピを複数提案</Text>
+                  </ListItem>
+                  <ListItem>
+                    <Text><strong>4.</strong> 気に入ったレシピをお気に入りに保存</Text>
+                  </ListItem>
+                </List>
+              </Box>
+
+              <Divider />
+
+              <Box>
+                <Heading size="md" mb={4}>
+                  技術スタック
+                </Heading>
+                <VStack align="start" spacing={2}>
+                  <Box>
+                    <Badge colorScheme="blue" mr={2}>フロントエンド</Badge>
+                    <Text as="span" fontSize="sm">Next.js 15, React, TypeScript, Tailwind CSS</Text>
+                  </Box>
+                  <Box>
+                    <Badge colorScheme="green" mr={2}>バックエンド</Badge>
+                    <Text as="span" fontSize="sm">Next.js API Routes, Prisma ORM</Text>
+                  </Box>
+                  <Box>
+                    <Badge colorScheme="purple" mr={2}>AI/ML</Badge>
+                    <Text as="span" fontSize="sm">OpenAI API (GPT-4), Google Cloud Vision API</Text>
+                  </Box>
+                  <Box>
+                    <Badge colorScheme="orange" mr={2}>データベース</Badge>
+                    <Text as="span" fontSize="sm">PostgreSQL (Vercel Postgres)</Text>
+                  </Box>
+                </VStack>
+              </Box>
+
+              <Box textAlign="center" pt={4}>
+                <Link href="https://recipai-lyart.vercel.app" passHref target="_blank">
+                  <Button
+                    colorScheme="orange"
+                    size="lg"
+                    _hover={{
+                      transform: "translateY(-1px)",
+                      boxShadow: "md",
+                    }}
+                  >
+                    RECIPAIを試す →
+                  </Button>
+                </Link>
+              </Box>
+            </VStack>
+          </CardBody>
+        </Card>
+
+        <Divider my={4} />
+
+        {/* タスク管理ツール セクション */}
+        <Heading
           size="lg"
           bgGradient="linear(to-r, blue.500, purple.500)"
           bgClip="text"
