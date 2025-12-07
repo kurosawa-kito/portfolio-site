@@ -21,7 +21,7 @@ import {
 } from "@chakra-ui/react";
 import { DeleteIcon, AddIcon, EditIcon } from "@chakra-ui/icons";
 import { useAuth } from "@/contexts/AuthProvider";
-import PageTitle from "@/components/PageHeader";
+import { PageHeader } from "@/components/PageHeader";
 import TaskModal from "@/components/TaskModal";
 import { useRouter } from "next/navigation";
 
@@ -748,16 +748,16 @@ export default function SharedBoard() {
                       task.priority === "high"
                         ? "red.50"
                         : task.priority === "medium"
-                        ? "orange.50"
-                        : "green.50"
+                          ? "orange.50"
+                          : "green.50"
                     }
                     _dark={{
                       bg:
                         task.priority === "high"
                           ? "red.900"
                           : task.priority === "medium"
-                          ? "orange.900"
-                          : "green.900",
+                            ? "orange.900"
+                            : "green.900",
                       opacity: 0.7,
                     }}
                     position="relative"
@@ -769,8 +769,8 @@ export default function SharedBoard() {
                           {task.priority === "high"
                             ? "高"
                             : task.priority === "medium"
-                            ? "中"
-                            : "低"}
+                              ? "中"
+                              : "低"}
                         </Badge>
                         {(task.created_by === user?.id.toString() ||
                           user?.role === "admin") && (
