@@ -124,7 +124,7 @@ export default function Products() {
 
               <Box textAlign="center" pt={4}>
                 <Link
-                  href="https://recipai-lyart.vercel.app"
+                  href="https://recipai-phi.vercel.app"
                   passHref
                   target="_blank"
                 >
