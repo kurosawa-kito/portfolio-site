@@ -81,9 +81,9 @@ export default function Header() {
 
         {/* デスクトップメニュー */}
         <HStack spacing={8} display={{ base: "none", md: "flex" }}>
-          <Link href="/about" passHref>
+          <Link href="/resume" passHref>
             <Button variant="ghost" colorScheme="blue">
-              About
+              職務経歴書
             </Button>
           </Link>
           <Link href="/products" passHref>

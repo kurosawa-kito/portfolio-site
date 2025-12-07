@@ -1,103 +1,277 @@
-import Image from "next/image";
+"use client";
+
+import {
+  Container,
+  Heading,
+  Text,
+  VStack,
+  Box,
+  Card,
+  CardBody,
+  useColorModeValue,
+  Badge,
+  HStack,
+  Icon,
+  SimpleGrid,
+  Button,
+  Avatar,
+  Flex,
+  Wrap,
+  WrapItem,
+} from "@chakra-ui/react";
+import { ExternalLinkIcon } from "@chakra-ui/icons";
+import Link from "next/link";
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[16px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const bgColor = useColorModeValue("white", "gray.800");
+  const borderColor = useColorModeValue("gray.200", "gray.700");
+  const cardBg = useColorModeValue("gray.50", "gray.700");
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-[16px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
+  const techStacks = [
+    { name: "PHP", color: "purple" },
+    { name: "Java", color: "red" },
+    { name: "JavaScript", color: "yellow" },
+    { name: "TypeScript", color: "blue" },
+    { name: "Next.js", color: "gray" },
+    { name: "React", color: "cyan" },
+    { name: "PostgreSQL", color: "blue" },
+    { name: "SQL Server", color: "red" },
+    { name: "Oracle", color: "orange" },
+  ];
+
+  return (
+    <Container maxW="container.lg" py={8}>
+      <VStack spacing={8} align="stretch">
+        {/* ヒーローセクション */}
+        <Card
+          bg={bgColor}
+          borderWidth="1px"
+          borderColor={borderColor}
+          borderRadius="2xl"
+          overflow="hidden"
+          boxShadow="xl"
         >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
+          <Box
+            bgGradient="linear(to-r, blue.500, purple.600, pink.500)"
+            h="120px"
           />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
+          <CardBody p={8} mt={-16}>
+            <Flex direction={{ base: "column", md: "row" }} align="center" gap={6}>
+              <Avatar
+                size="2xl"
+                name="Kurosawa"
+                bg="blue.500"
+                color="white"
+                border="4px solid white"
+                boxShadow="lg"
+              />
+              <VStack align={{ base: "center", md: "start" }} spacing={2}>
+                <Heading
+                  size="xl"
+                  bgGradient="linear(to-r, blue.500, purple.500)"
+                  bgClip="text"
+                >
+                  Kurosawa
+                </Heading>
+                <Text color="gray.500" fontSize="lg" fontWeight="medium">
+                  フルスタックエンジニア
+                </Text>
+                <HStack spacing={3} mt={2}>
+                  <Link href="https://github.com/kurosawa-kito" target="_blank">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      colorScheme="gray"
+                      leftIcon={<ExternalLinkIcon />}
+                    >
+                      GitHub
+                    </Button>
+                  </Link>
+                </HStack>
+              </VStack>
+            </Flex>
+          </CardBody>
+        </Card>
+
+        {/* 自己紹介 */}
+        <Card
+          bg={bgColor}
+          borderWidth="1px"
+          borderColor={borderColor}
+          borderRadius="xl"
+          overflow="hidden"
+          boxShadow="lg"
         >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
+          <Box bgGradient="linear(to-r, blue.400, cyan.400)" h="4px" />
+          <CardBody p={6}>
+            <Heading size="md" mb={4}>
+              👋 はじめまして
+            </Heading>
+            <Text lineHeight="tall" color="gray.600">
+              金融業界でシステム開発に従事しているフルスタックエンジニアです。
+              要件定義から設計、開発、運用保守まで幅広く経験しています。
+              業務外でもモダンな技術に積極的に触れ、個人プロジェクトを通じて実践的なスキルを磨いています。
+            </Text>
+          </CardBody>
+        </Card>
+
+        {/* 技術スタック */}
+        <Card
+          bg={bgColor}
+          borderWidth="1px"
+          borderColor={borderColor}
+          borderRadius="xl"
+          overflow="hidden"
+          boxShadow="lg"
         >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+          <Box bgGradient="linear(to-r, purple.400, pink.400)" h="4px" />
+          <CardBody p={6}>
+            <Heading size="md" mb={4}>
+              🛠️ 技術スタック
+            </Heading>
+            <Wrap spacing={3}>
+              {techStacks.map((tech) => (
+                <WrapItem key={tech.name}>
+                  <Badge
+                    colorScheme={tech.color}
+                    px={3}
+                    py={1}
+                    borderRadius="full"
+                    fontSize="sm"
+                  >
+                    {tech.name}
+                  </Badge>
+                </WrapItem>
+              ))}
+            </Wrap>
+          </CardBody>
+        </Card>
+
+        {/* プロジェクト紹介 */}
+        <Card
+          bg={bgColor}
+          borderWidth="1px"
+          borderColor={borderColor}
+          borderRadius="xl"
+          overflow="hidden"
+          boxShadow="lg"
+        >
+          <Box bgGradient="linear(to-r, orange.400, red.400)" h="4px" />
+          <CardBody p={6}>
+            <Heading size="md" mb={4}>
+              🚀 個人プロジェクト
+            </Heading>
+            <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+              {/* RECIPAI */}
+              <Box
+                p={5}
+                bg={cardBg}
+                borderRadius="lg"
+                borderWidth="1px"
+                borderColor={borderColor}
+                _hover={{ transform: "translateY(-2px)", boxShadow: "md" }}
+                transition="all 0.2s"
+              >
+                <HStack mb={2}>
+                  <Text fontSize="2xl">🍳</Text>
+                  <Heading size="sm">RECIPAI</Heading>
+                </HStack>
+                <Text fontSize="sm" color="gray.600" mb={3}>
+                  冷蔵庫の写真からAIがレシピを提案するWebアプリケーション
+                </Text>
+                <HStack flexWrap="wrap" spacing={1} mb={3}>
+                  <Badge size="sm" colorScheme="blue">Next.js 15</Badge>
+                  <Badge size="sm" colorScheme="purple">OpenAI</Badge>
+                  <Badge size="sm" colorScheme="green">Prisma</Badge>
+                </HStack>
+                <Link href="https://recipai-lyart.vercel.app" target="_blank">
+                  <Button size="sm" colorScheme="orange" variant="outline" rightIcon={<ExternalLinkIcon />}>
+                    サイトを見る
+                  </Button>
+                </Link>
+              </Box>
+
+              {/* Portfolio Site */}
+              <Box
+                p={5}
+                bg={cardBg}
+                borderRadius="lg"
+                borderWidth="1px"
+                borderColor={borderColor}
+                _hover={{ transform: "translateY(-2px)", boxShadow: "md" }}
+                transition="all 0.2s"
+              >
+                <HStack mb={2}>
+                  <Text fontSize="2xl">📋</Text>
+                  <Heading size="sm">タスク管理ツール</Heading>
+                </HStack>
+                <Text fontSize="sm" color="gray.600" mb={3}>
+                  チーム向けタスク管理アプリケーション（このサイト内）
+                </Text>
+                <HStack flexWrap="wrap" spacing={1} mb={3}>
+                  <Badge size="sm" colorScheme="blue">Next.js 14</Badge>
+                  <Badge size="sm" colorScheme="teal">ChakraUI</Badge>
+                  <Badge size="sm" colorScheme="green">PostgreSQL</Badge>
+                </HStack>
+                <Link href="/products">
+                  <Button size="sm" colorScheme="blue" variant="outline" rightIcon={<ExternalLinkIcon />}>
+                    詳細を見る
+                  </Button>
+                </Link>
+              </Box>
+            </SimpleGrid>
+          </CardBody>
+        </Card>
+
+        {/* リンク */}
+        <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+          <Link href="/resume">
+            <Card
+              bg={bgColor}
+              borderWidth="1px"
+              borderColor={borderColor}
+              borderRadius="xl"
+              overflow="hidden"
+              boxShadow="lg"
+              _hover={{ transform: "translateY(-2px)", boxShadow: "xl" }}
+              transition="all 0.2s"
+              cursor="pointer"
+            >
+              <Box bgGradient="linear(to-r, green.400, teal.400)" h="4px" />
+              <CardBody p={6} textAlign="center">
+                <Text fontSize="3xl" mb={2}>📄</Text>
+                <Heading size="md" mb={2}>職務経歴書</Heading>
+                <Text fontSize="sm" color="gray.500">
+                  詳しい経歴・スキルはこちら
+                </Text>
+              </CardBody>
+            </Card>
+          </Link>
+
+          <Link href="/products">
+            <Card
+              bg={bgColor}
+              borderWidth="1px"
+              borderColor={borderColor}
+              borderRadius="xl"
+              overflow="hidden"
+              boxShadow="lg"
+              _hover={{ transform: "translateY(-2px)", boxShadow: "xl" }}
+              transition="all 0.2s"
+              cursor="pointer"
+            >
+              <Box bgGradient="linear(to-r, blue.400, purple.400)" h="4px" />
+              <CardBody p={6} textAlign="center">
+                <Text fontSize="3xl" mb={2}>💼</Text>
+                <Heading size="md" mb={2}>プロダクト</Heading>
+                <Text fontSize="sm" color="gray.500">
+                  開発したアプリを試す
+                </Text>
+              </CardBody>
+            </Card>
+          </Link>
+        </SimpleGrid>
+      </VStack>
+    </Container>
   );
 }
