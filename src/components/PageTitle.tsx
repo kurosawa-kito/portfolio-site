@@ -18,4 +18,4 @@ export const PageTitle = ({ children }: PageTitleProps) => {
       </Heading>
     </Box>
   );
-}
+};
