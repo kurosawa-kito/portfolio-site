@@ -38,31 +38,30 @@ export default function Home() {
       years--;
     }
     const months = (monthDiff + 12) % 12;
-    
+
     // 年数.月数の小数値を計算
     const totalMonths = years * 12 + months;
     const decimalYears = totalMonths / 12;
-    
+
     // 0.5単位で繰り上げ（0.3→0.5, 0.8→1.0）
     const roundedYears = Math.ceil(decimalYears * 2) / 2;
-    
+
     if (roundedYears < 1) {
       return `${Math.round(decimalYears * 12)}ヶ月`;
     }
-    
+
     return `${roundedYears}年`;
   }, []);
 
   const techStacks = [
-    { name: "PHP", color: "purple" },
-    { name: "Java", color: "red" },
-    { name: "JavaScript", color: "yellow" },
     { name: "TypeScript", color: "blue" },
-    { name: "Next.js", color: "gray" },
+    { name: "PHP", color: "purple" },
     { name: "React", color: "cyan" },
-    { name: "PostgreSQL", color: "blue" },
-    { name: "SQL Server", color: "red" },
-    { name: "Oracle", color: "orange" },
+    { name: "Laravel", color: "red" },
+    { name: "Next.js", color: "gray" },
+    { name: "Python", color: "blue" },
+    { name: "MySQL", color: "yellow" },
+    { name: "AWS", color: "orange" },
   ];
 
   return (
@@ -138,7 +137,7 @@ export default function Home() {
               👋 はじめまして
             </Heading>
             <Text lineHeight="tall" color="gray.600">
-              金融業界でシステム開発に従事しているエンジニアです。業務では、小さな改善も後に大きな変化となることを信じ、日々の業務改善やシステムの効率化に取り組んでいます。顧客との要件調整や技術的な課題解決を通じて、価値あるシステムの実現に貢献しています。
+              現職ではWebアプリケーションの設計・開発に従事しています。業務では「小さな変化でも積み重なれば大きな力を持つ」ことを信じ、日々システムの改善やユーザー体験の向上に取り組んでいます。
             </Text>
           </CardBody>
         </Card>
