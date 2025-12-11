@@ -81,6 +81,11 @@ export default function Header() {
 
         {/* デスクトップメニュー */}
         <HStack spacing={8} display={{ base: "none", md: "flex" }}>
+          <Link href="/" passHref>
+            <Button variant="ghost" colorScheme="blue">
+              ホーム
+            </Button>
+          </Link>
           <Link href="/resume" passHref>
             <Button variant="ghost" colorScheme="blue">
               職務経歴書
@@ -88,7 +93,7 @@ export default function Header() {
           </Link>
           <Link href="/products" passHref>
             <Button variant="ghost" colorScheme="blue">
-              Products
+              プロダクト
             </Button>
           </Link>
         </HStack>
@@ -111,14 +116,24 @@ export default function Header() {
           <DrawerHeader borderBottomWidth="1px">メニュー</DrawerHeader>
           <DrawerBody>
             <VStack spacing={4} align="stretch">
-              <Link href="/about" passHref>
+              <Link href="/" passHref>
                 <Button
                   variant="ghost"
                   colorScheme="blue"
                   w="full"
                   onClick={onClose}
                 >
-                  About
+                  ホーム
+                </Button>
+              </Link>
+              <Link href="/resume" passHref>
+                <Button
+                  variant="ghost"
+                  colorScheme="blue"
+                  w="full"
+                  onClick={onClose}
+                >
+                  職務経歴書
                 </Button>
               </Link>
               <Link href="/products" passHref>
@@ -128,7 +143,7 @@ export default function Header() {
                   w="full"
                   onClick={onClose}
                 >
-                  Products
+                  プロダクト
                 </Button>
               </Link>
             </VStack>

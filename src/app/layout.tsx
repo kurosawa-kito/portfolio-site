@@ -58,7 +58,7 @@ function LayoutContent({ children }: { children: ReactNode }) {
     <div className="flex flex-col min-h-screen">
       <Header />
       <TaskHeader />
-      <main className="flex-grow pt-[120px]">{children}</main>
+      <main className="flex-grow pt-[60px] md:pt-[80px]">{children}</main>
       <Footer />
     </div>
   );

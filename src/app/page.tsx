@@ -78,43 +78,53 @@ export default function Home() {
         >
           <Box
             bgGradient="linear(to-r, blue.500, purple.600, pink.500)"
-            h="120px"
-          />
-          <CardBody p={8} mt={-16}>
+            h="180px"
+            display="flex"
+            alignItems="center"
+            justifyContent="center"
+            px={8}
+          >
             <Flex
               direction={{ base: "column", md: "row" }}
               align="center"
-              gap={6}
+              gap={{ base: 3, md: 6 }}
             >
               <Avatar
-                size="2xl"
+                size={{ base: "lg", md: "2xl" }}
                 name="Kurosawa"
-                bg="blue.500"
+                bg="whiteAlpha.300"
                 color="white"
-                border="4px solid white"
+                border={{ base: "3px solid white", md: "4px solid white" }}
                 boxShadow="lg"
               />
               <VStack align={{ base: "center", md: "start" }} spacing={2}>
-                <Heading size="xl" color="white">
+                <Heading
+                  size="xl"
+                  color="white"
+                  fontWeight="bold"
+                  textShadow="0 2px 10px rgba(0,0,0,0.2)"
+                >
                   Kiito Kurosawa
                 </Heading>
-                <Text color="gray.500" fontSize="lg" fontWeight="medium">
+                <Text color="whiteAlpha.900" fontSize="lg" fontWeight="medium">
                   エンジニア ({yearsOfExperience})
                 </Text>
-                <HStack spacing={3} mt={2}>
-                  <Link href="https://github.com/kurosawa-kito" target="_blank">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      colorScheme="gray"
-                      leftIcon={<ExternalLinkIcon />}
-                    >
-                      GitHub
-                    </Button>
-                  </Link>
-                </HStack>
               </VStack>
             </Flex>
+          </Box>
+          <CardBody p={6}>
+            <HStack spacing={3} justify="center">
+              <Link href="https://github.com/kurosawa-kito" target="_blank">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  colorScheme="blue"
+                  leftIcon={<ExternalLinkIcon />}
+                >
+                  GitHub
+                </Button>
+              </Link>
+            </HStack>
           </CardBody>
         </Card>
 
@@ -133,7 +143,7 @@ export default function Home() {
               👋 はじめまして
             </Heading>
             <Text lineHeight="tall" color="gray.600">
-              現職ではWebアプリケーションの設計・開発に従事しています。業務では「小さな変化でも積み重なれば大きな力を持つ」ことを信じ、日々システムの改善やユーザー体験の向上に取り組んでいます。
+              現職ではWebアプリケーションの設計・開発に従事しています。業務では「小さな変化でも積み重なれば大きな力を持つ」をモットーに、日々システムの改善やユーザー体験の向上に取り組んでいます。
             </Text>
           </CardBody>
         </Card>
