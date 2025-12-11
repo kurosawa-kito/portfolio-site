@@ -505,53 +505,6 @@ export default function ResumePage() {
             </Accordion>
           </CardBody>
         </Card>
-
-        {/* 自己PR */}
-        <Card
-          bg={bgColor}
-          borderWidth="1px"
-          borderColor={borderColor}
-          borderRadius="xl"
-          overflow="hidden"
-          boxShadow="lg"
-        >
-          <Box bgGradient="linear(to-r, pink.400, purple.500)" h="4px" />
-          <CardBody p={6}>
-            <HStack mb={4}>
-              <Icon as={StarIcon} color="pink.500" boxSize={5} />
-              <Heading size="md">自己PR</Heading>
-            </HStack>
-
-            <Text fontSize="sm" mb={4}>
-              業務外でも自己研鑽として個人開発に取り組んでいます。
-            </Text>
-
-            <Box p={4} bg={cardBg} borderRadius="lg">
-              <Text fontWeight="bold" mb={2}>
-                ポートフォリオサイト
-              </Text>
-              <Link
-                href="https://portfolio-site-pearl-mu.vercel.app/"
-                isExternal
-                color="blue.500"
-                fontSize="sm"
-              >
-                https://portfolio-site-pearl-mu.vercel.app/{" "}
-                <ExternalLinkIcon mx="2px" />
-              </Link>
-              <UnorderedList mt={3} fontSize="sm" spacing={1}>
-                <ListItem>
-                  Next.js（App Router）/ TypeScript によるフロントエンド開発
-                </ListItem>
-                <ListItem>Vercel を活用した CI/CD パイプラインの構築</ListItem>
-                <ListItem>
-                  Prisma + PostgreSQL（Neon）によるデータベース設計・運用
-                </ListItem>
-                <ListItem>TailwindCSS を用いたレスポンシブデザイン</ListItem>
-              </UnorderedList>
-            </Box>
-          </CardBody>
-        </Card>
       </VStack>
     </Container>
   );

@@ -21,11 +21,37 @@ import {
 } from "@chakra-ui/react";
 import { ExternalLinkIcon } from "@chakra-ui/icons";
 import Link from "next/link";
+import { useMemo } from "react";
 
 export default function Home() {
   const bgColor = useColorModeValue("white", "gray.800");
   const borderColor = useColorModeValue("gray.200", "gray.700");
   const cardBg = useColorModeValue("gray.50", "gray.700");
+
+  // 2024年4月から現在までの経験年数を計算（0.5単位で繰り上げ）
+  const yearsOfExperience = useMemo(() => {
+    const startDate = new Date(2024, 3, 1); // 2024年4月
+    const currentDate = new Date();
+    let years = currentDate.getFullYear() - startDate.getFullYear();
+    const monthDiff = currentDate.getMonth() - startDate.getMonth();
+    if (monthDiff < 0) {
+      years--;
+    }
+    const months = (monthDiff + 12) % 12;
+    
+    // 年数.月数の小数値を計算
+    const totalMonths = years * 12 + months;
+    const decimalYears = totalMonths / 12;
+    
+    // 0.5単位で繰り上げ（0.3→0.5, 0.8→1.0）
+    const roundedYears = Math.ceil(decimalYears * 2) / 2;
+    
+    if (roundedYears < 1) {
+      return `${Math.round(decimalYears * 12)}ヶ月`;
+    }
+    
+    return `${roundedYears}年`;
+  }, []);
 
   const techStacks = [
     { name: "PHP", color: "purple" },
@@ -78,7 +104,7 @@ export default function Home() {
                   Kurosawa
                 </Heading>
                 <Text color="gray.500" fontSize="lg" fontWeight="medium">
-                  フルスタックエンジニア
+                  エンジニア ({yearsOfExperience})
                 </Text>
                 <HStack spacing={3} mt={2}>
                   <Link href="https://github.com/kurosawa-kito" target="_blank">
@@ -112,9 +138,7 @@ export default function Home() {
               👋 はじめまして
             </Heading>
             <Text lineHeight="tall" color="gray.600">
-              金融業界でシステム開発に従事しているフルスタックエンジニアです。
-              要件定義から設計、開発、運用保守まで幅広く経験しています。
-              業務外でもモダンな技術に積極的に触れ、個人プロジェクトを通じて実践的なスキルを磨いています。
+              金融業界でシステム開発に従事しているエンジニアです。業務では、小さな改善も後に大きな変化となることを信じ、日々の業務改善やシステムの効率化に取り組んでいます。顧客との要件調整や技術的な課題解決を通じて、価値あるシステムの実現に貢献しています。
             </Text>
           </CardBody>
         </Card>

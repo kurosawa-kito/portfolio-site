@@ -44,14 +44,19 @@ export default function Products() {
         </Heading>
 
         {/* RECIPAI セクション */}
-        <Heading
-          size="lg"
-          bgGradient="linear(to-r, orange.400, red.500)"
-          bgClip="text"
-          textAlign="center"
-        >
-          RECIPAI - AIレシピ提案アプリ
-        </Heading>
+        <Box display="flex" alignItems="center" justifyContent="center" gap={3}>
+          <Heading
+            size="lg"
+            bgGradient="linear(to-r, orange.400, red.500)"
+            bgClip="text"
+            textAlign="center"
+          >
+            RECIPAI - AIレシピ提案アプリ
+          </Heading>
+          <Badge colorScheme="orange" fontSize="md">
+            開発中
+          </Badge>
+        </Box>
 
         <Card bg={bgColor} borderWidth="1px" borderColor={borderColor}>
           <CardBody>
@@ -147,14 +152,19 @@ export default function Products() {
         <Divider my={4} />
 
         {/* タスク管理ツール セクション */}
-        <Heading
-          size="lg"
-          bgGradient="linear(to-r, blue.500, purple.500)"
-          bgClip="text"
-          textAlign="center"
-        >
-          タスク管理ツール
-        </Heading>
+        <Box display="flex" alignItems="center" justifyContent="center" gap={3}>
+          <Heading
+            size="lg"
+            bgGradient="linear(to-r, blue.500, purple.500)"
+            bgClip="text"
+            textAlign="center"
+          >
+            タスク管理ツール
+          </Heading>
+          <Badge colorScheme="blue" fontSize="md">
+            開発中
+          </Badge>
+        </Box>
 
         <Card bg={bgColor} borderWidth="1px" borderColor={borderColor}>
           <CardBody>
