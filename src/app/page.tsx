@@ -95,12 +95,8 @@ export default function Home() {
                 boxShadow="lg"
               />
               <VStack align={{ base: "center", md: "start" }} spacing={2}>
-                <Heading
-                  size="xl"
-                  bgGradient="linear(to-r, blue.500, purple.500)"
-                  bgClip="text"
-                >
-                  Kurosawa
+                <Heading size="xl" color="white">
+                  Kiito Kurosawa
                 </Heading>
                 <Text color="gray.500" fontSize="lg" fontWeight="medium">
                   エンジニア ({yearsOfExperience})
